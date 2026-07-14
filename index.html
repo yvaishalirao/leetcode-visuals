@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSA Visualizers</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="index-wrap">
+  <h1>DSA Visualizers</h1>
+  <div class="index-sub">Step-through dry runs of 22 LeetCode solutions.</div>
+  <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()" style="width:100%">
+  <div class="problem-list index-list" id="problem-list"></div>
+</div>
+
+<script src="assets/problems.js"></script>
+<script src="assets/common.js"></script>
+<script>
+buildProblemList(document.getElementById('problem-list'), null, 'problems/');
+</script>
+
+</body>
+</html>

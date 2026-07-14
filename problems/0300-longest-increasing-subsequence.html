@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#300 Longest Increasing Subsequence · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab18" class="viz-section visible">
+  <div class="page-header">
+    <span class="lc-num">300</span>
+    <h1>Longest Increasing Subsequence</h1>
+    <a href="https://leetcode.com/problems/longest-increasing-subsequence/" target="_blank">LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">
+    <p>Given an integer array <code>nums</code>, return the length of the longest strictly increasing subsequence.</p>
+    <p><strong>Example:</strong> <code>nums=[10,9,2,5,3,7,101,18]</code> → <code>4</code> ([2,3,7,101])</p>
+  </div>
+  <details class="code-block"><summary>Solution code</summary><pre>def lengthOfLIS(self, nums):
+    n = len(nums)
+    dp = [1] * n
+    ans = 1
+    for i in range(1, n):
+        for j in range(0, i):
+            if nums[i] > nums[j]:
+                dp[i] = max(dp[i], dp[j] + 1)
+        ans = max(dp[i], ans)
+    return ans</pre></details>
+  <div class="row">
+    <div class="ig"><label>nums</label><input type="text" id="v19-nums" value="10,9,2,5,3,7,101,18" style="width:260px"></div>
+    <button onclick="v19Init()">Run</button>
+  </div>
+  <div class="info-box" id="v19-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">i</div><div class="sval" id="v19-si">—</div></div>
+    <div class="stat"><div class="slabel">j</div><div class="sval" id="v19-sj">—</div></div>
+    <div class="stat"><div class="slabel">nums[i]</div><div class="sval" id="v19-sni">—</div></div>
+    <div class="stat"><div class="slabel">nums[j]</div><div class="sval" id="v19-snj">—</div></div>
+    <div class="stat"><div class="slabel">dp[j]+1</div><div class="sval" id="v19-scand">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v19-sans">—</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v19Back()">← Prev</button><button onclick="v19Fwd()">Next →</button><button onclick="v19Skip()">Skip to end</button>
+    <span class="prog" id="v19-prog"></span>
+  </div>
+  <div class="section-label">nums array — i (blue), j (green)</div>
+  <div style="overflow-x:auto"><div id="v19-nums-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div></div>
+  <div class="section-label">dp array — dp[k] = LIS length ending at index k</div>
+  <div style="overflow-x:auto"><div id="v19-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div></div>
+  <div class="legend">
+    <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current i</div>
+    <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>j being compared</div>
+    <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>dp already computed</div>
+    <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>answer dp[k]</div>
+  </div>
+</div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v19Steps=[],v19Idx=0,v19Nums=[];
+
+function v19BuildSteps(nums){
+  const n=nums.length;
+  const dp=new Array(n).fill(1);
+  let ans=1;
+  const res=[];
+  res.push({phase:'init',i:-1,j:-1,dp:[...dp],ans,cand:undefined,
+    msg:`Init: <code>dp[k]=1</code> for all k — every element alone is an LIS of length 1.`});
+  for(let i=1;i<n;i++){
+    for(let j=0;j<i;j++){
+      const eligible=nums[i]>nums[j];
+      const cand=dp[j]+1;
+      const oldDpi=dp[i];
+      const updated=eligible&&cand>dp[i];
+      if(updated) dp[i]=cand;
+      res.push({phase:'fill',i,j,dp:[...dp],ans,eligible,cand,updated,oldDpi,
+        msg:eligible
+          ?(updated
+            ?`nums[${i}]=${nums[i]} > nums[${j}]=${nums[j]} → dp[${j}]+1=${cand} > ${oldDpi} → dp[${i}] = <strong>${cand}</strong>`
+            :`nums[${i}]=${nums[i]} > nums[${j}]=${nums[j]} → dp[${j}]+1=${cand} ≤ dp[${i}]=${dp[i]}, no update`)
+          :`nums[${i}]=${nums[i]} ≤ nums[${j}]=${nums[j]} — not strictly increasing, skip`});
+    }
+    ans=Math.max(ans,dp[i]);
+  }
+  res.push({phase:'final',i:-1,j:-1,dp:[...dp],ans,cand:undefined,
+    msg:`Done! Longest increasing subsequence length = <strong>${ans}</strong>.`});
+  return res;
+}
+
+function v19Render(){
+  if(!v19Steps.length) return;
+  const s=v19Steps[v19Idx];
+  const n=v19Nums.length;
+  for(let k=0;k<n;k++){
+    const ne=document.getElementById(`v19-n${k}`);
+    const de=document.getElementById(`v19-d${k}`);
+    if(!ne||!de) continue;
+    ne.className='dp-val'; ne.textContent=v19Nums[k];
+    de.className='dp-val'; de.textContent=s.dp[k];
+    if(s.phase==='final'){
+      if(s.dp[k]===s.ans){ ne.classList.add('is-amber'); de.classList.add('is-amber'); }
+      else                  { ne.classList.add('is-filled'); de.classList.add('is-filled'); }
+    } else {
+      const isI=k===s.i, isJ=s.phase==='fill'&&k===s.j;
+      if(isI)           { ne.classList.add('is-cur');    de.classList.add('is-cur');    }
+      else if(isJ)      { ne.classList.add('is-zero');   de.classList.add('is-zero');   }
+      else if(s.i>0&&k<s.i){ ne.classList.add('is-filled'); de.classList.add('is-filled'); }
+    }
+  }
+  document.getElementById('v19-si').textContent   =s.i>=0?s.i:'—';
+  document.getElementById('v19-sj').textContent   =s.j>=0?s.j:'—';
+  document.getElementById('v19-sni').textContent  =s.i>=0?v19Nums[s.i]:'—';
+  document.getElementById('v19-snj').textContent  =s.j>=0?v19Nums[s.j]:'—';
+  document.getElementById('v19-scand').textContent=s.cand!==undefined?s.cand:'—';
+  document.getElementById('v19-sans').textContent =s.phase==='final'?s.ans:'…';
+  document.getElementById('v19-info').innerHTML   =s.msg;
+  document.getElementById('v19-prog').textContent =`Step ${v19Idx+1} / ${v19Steps.length}`;
+}
+
+function v19Init(){
+  v19Nums=document.getElementById('v19-nums').value.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x)).slice(0,14);
+  if(!v19Nums.length) return;
+  v19Steps=v19BuildSteps(v19Nums); v19Idx=0;
+  const nr=document.getElementById('v19-nums-row'); nr.innerHTML='';
+  const dr=document.getElementById('v19-dp-row');   dr.innerHTML='';
+  v19Nums.forEach((_,k)=>{
+    const nw=document.createElement('div'); nw.className='dp-cell';
+    nw.innerHTML=`<div class="dp-idx">${k}</div><div class="dp-val" id="v19-n${k}"></div>`;
+    nr.appendChild(nw);
+    const dw=document.createElement('div'); dw.className='dp-cell';
+    dw.innerHTML=`<div class="dp-idx">${k}</div><div class="dp-val" id="v19-d${k}"></div>`;
+    dr.appendChild(dw);
+  });
+  v19Render();
+}
+function v19Fwd(){if(v19Idx<v19Steps.length-1){v19Idx++;v19Render();}}
+function v19Back(){if(v19Idx>0){v19Idx--;v19Render();}}
+function v19Skip(){v19Idx=v19Steps.length-1;v19Render();}
+
+v19Init();
+initPage('0300-longest-increasing-subsequence.html', v19Fwd, v19Back);
+</script>
+
+</body>
+</html>

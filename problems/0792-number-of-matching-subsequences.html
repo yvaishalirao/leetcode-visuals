@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#792 Number of Matching Subsequences · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab5" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#792</div>
+      <h1>Number of Matching Subsequences</h1>
+      <a href="https://leetcode.com/problems/number-of-matching-subsequences/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given a string <code>s</code> and an array of strings <code>words</code>, return the number of <code>words[i]</code> that is a subsequence of <code>s</code>. A subsequence is a string that can be derived from another by deleting some characters without changing the order of the remaining ones.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution:
+    def numMatchingSubseq(self, s: str, words: List[str]) -> int:
+        def is_sub(word):
+            index = -1
+            for ch in word:
+                index = s.find(ch, index + 1)
+                if index == -1:
+                    return False
+            return True
+        c = 0
+        for word in words:
+            if is_sub(word):
+                c += 1
+        return c</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s</label><input type="text" id="v6-s" value="abtcbdef" style="width:180px"></div>
+      <div class="ig"><label>words</label><input type="text" id="v6-words" value="ab,btc,aef,bc,xyz" style="width:220px"></div>
+      <button onclick="v6Init()">Run</button>
+    </div>
+    <div class="section-label">Words — blue = current, green = matched, red = failed</div>
+    <div id="v6-word-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem"></div>
+    <div class="section-label">s — match positions lit up as found</div>
+    <div id="v6-s-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.5rem"></div>
+    <div class="section-label">word — character being searched</div>
+    <div id="v6-w-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.5rem"></div>
+    <div class="info-box" id="v6-info">Click <strong>Run</strong> to start.</div>
+    <div class="stats">
+      <div class="stat"><div class="slabel">word</div><div class="sval" id="v6-sword">—</div></div>
+      <div class="stat"><div class="slabel">char looked up</div><div class="sval" id="v6-sch">—</div></div>
+      <div class="stat"><div class="slabel">search from</div><div class="sval" id="v6-sfrom">—</div></div>
+      <div class="stat"><div class="slabel">found at</div><div class="sval" id="v6-sfound">—</div></div>
+      <div class="stat best"><div class="slabel">count</div><div class="sval" id="v6-scount">0</div></div>
+    </div>
+    <div class="controls">
+      <button onclick="v6Back()">← Prev</button><button onclick="v6Fwd()">Next →</button><button onclick="v6Skip()">Skip to end</button>
+      <span class="prog" id="v6-prog"></span>
+    </div>
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current pos in s</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>matched</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>not found / failed</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>char being searched</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v6Steps=[],v6Idx=0,v6S='',v6Words=[],v6LastWord=null;
+
+function v6BuildSteps(str,ws){
+  const res=[]; let count=0;
+  const wordStates=ws.map(()=>null);
+  res.push({phase:'init',word:null,wordIdx:-1,ch:null,chIdx:-1,searchFrom:-1,foundAt:null,matchedUpTo:[],wordStates:[...wordStates],count,
+    msg:`Starting. Will check each word as a subsequence of <code>s="${str}"</code>.`});
+  for(let wi=0;wi<ws.length;wi++){
+    const word=ws[wi]; let index=-1; const matchedUpTo=[]; let failed=false;
+    res.push({phase:'word-start',word,wordIdx:wi,ch:null,chIdx:-1,searchFrom:-1,foundAt:null,matchedUpTo:[],wordStates:[...wordStates],count,
+      msg:`Checking <code>"${word}"</code>. Scanning each character through s, advancing index each match.`});
+    for(let ci=0;ci<word.length;ci++){
+      const ch=word[ci],from=index+1,found=str.indexOf(ch,from);
+      if(found===-1){
+        res.push({phase:'char-fail',word,wordIdx:wi,ch,chIdx:ci,searchFrom:from,foundAt:-1,matchedUpTo:[...matchedUpTo],wordStates:[...wordStates],count,
+          msg:`Looking for <code>'${ch}'</code> from index <code>${from}</code> — not found. <code>"${word}"</code> is not a subsequence.`});
+        failed=true; break;
+      } else {
+        index=found; matchedUpTo.push(found);
+        res.push({phase:'char-match',word,wordIdx:wi,ch,chIdx:ci,searchFrom:from,foundAt:found,matchedUpTo:[...matchedUpTo],wordStates:[...wordStates],count,
+          msg:`Looking for <code>'${ch}'</code> from index <code>${from}</code> — found at <code>${found}</code> ✓. Next search starts at <code>${found+1}</code>.`});
+      }
+    }
+    if(!failed){
+      count++; wordStates[wi]=true;
+      res.push({phase:'word-match',word,wordIdx:wi,ch:null,chIdx:-1,searchFrom:-1,foundAt:null,matchedUpTo:[...matchedUpTo],wordStates:[...wordStates],count,
+        msg:`All characters found in order ✓ — <code>"${word}"</code> is a subsequence. count → <code>${count}</code>.`});
+    } else {
+      wordStates[wi]=false;
+      res.push({phase:'word-fail',word,wordIdx:wi,ch:null,chIdx:-1,searchFrom:-1,foundAt:null,matchedUpTo:[...matchedUpTo],wordStates:[...wordStates],count,
+        msg:`<code>"${word}"</code> failed — not a subsequence. count stays <code>${count}</code>.`});
+    }
+  }
+  res.push({phase:'final',word:null,wordIdx:-1,ch:null,chIdx:-1,searchFrom:-1,foundAt:null,matchedUpTo:[],wordStates:[...wordStates],count,
+    msg:`Done! <code>${count}</code> of <code>${ws.length}</code> words are subsequences of s.`});
+  return res;
+}
+
+function v6RebuildStrips(word){
+  const ss=document.getElementById('v6-s-strip'); ss.innerHTML='';
+  for(let i=0;i<v6S.length;i++){
+    const d=document.createElement('div');d.className='char-box';
+    d.innerHTML=`${v6S[i]}<span class="ci">${i}</span>`;ss.appendChild(d);
+  }
+  const ws=document.getElementById('v6-w-strip'); ws.innerHTML='';
+  if(word){for(let i=0;i<word.length;i++){
+    const d=document.createElement('div');d.className='char-box w-pending';
+    d.innerHTML=`${word[i]}<span class="ci">${i}</span>`;ws.appendChild(d);
+  }}
+}
+
+function v6Render(){
+  if(!v6Steps.length) return;
+  const s=v6Steps[v6Idx];
+  if(s.word!==v6LastWord){v6RebuildStrips(s.word);v6LastWord=s.word;}
+  document.querySelectorAll('#v6-word-list .word-chip').forEach((el,wi)=>{
+    el.className='word-chip';
+    const st=s.wordStates[wi];
+    if(wi===s.wordIdx&&s.phase!=='word-match'&&s.phase!=='word-fail') el.classList.add('active');
+    else if(st===true) el.classList.add('matched');
+    else if(st===false) el.classList.add('failed');
+  });
+  document.querySelectorAll('#v6-s-strip .char-box').forEach((el,i)=>{
+    el.className='char-box';
+    if(s.phase==='char-match'||s.phase==='char-fail'){
+      if(i===s.foundAt&&s.phase==='char-match') el.classList.add('s-match');
+      else if(i===s.foundAt&&s.phase==='char-fail') el.classList.add('s-fail');
+      else if(s.matchedUpTo.includes(i)) el.classList.add('s-match');
+      else if(i<(s.searchFrom||0)) el.classList.add('s-past');
+    } else if(s.phase==='word-match') { if(s.matchedUpTo.includes(i)) el.classList.add('s-match'); }
+  });
+  document.querySelectorAll('#v6-w-strip .char-box').forEach((el,ci)=>{
+    el.className='char-box';
+    if(s.chIdx!==-1){ if(ci<s.chIdx) el.classList.add('w-done'); else if(ci===s.chIdx) el.classList.add('w-cur'); else el.classList.add('w-pending'); }
+    else if(s.phase==='word-match') el.classList.add('w-done');
+    else el.classList.add('w-pending');
+  });
+  document.getElementById('v6-sword').textContent=s.word||'—';
+  document.getElementById('v6-sch').textContent=s.ch||'—';
+  document.getElementById('v6-sfrom').textContent=s.searchFrom>=0?s.searchFrom:'—';
+  document.getElementById('v6-sfound').textContent=s.foundAt===null?'—':s.foundAt===-1?'−1':s.foundAt;
+  document.getElementById('v6-scount').textContent=s.count;
+  document.getElementById('v6-info').innerHTML=s.msg;
+  document.getElementById('v6-prog').textContent=`Step ${v6Idx+1} / ${v6Steps.length}`;
+}
+
+function v6Init(){
+  v6S=document.getElementById('v6-s').value.trim();
+  v6Words=document.getElementById('v6-words').value.split(',').map(w=>w.trim()).filter(Boolean);
+  v6Steps=v6BuildSteps(v6S,v6Words); v6Idx=0; v6LastWord=null;
+  const wl=document.getElementById('v6-word-list'); wl.innerHTML='';
+  v6Words.forEach(w=>{const c=document.createElement('div');c.className='word-chip';c.textContent=w;wl.appendChild(c);});
+  v6RebuildStrips(null);
+  v6Render();
+}
+function v6Fwd(){if(v6Idx<v6Steps.length-1){v6Idx++;v6Render();}}
+function v6Back(){if(v6Idx>0){v6Idx--;v6Render();}}
+function v6Skip(){v6Idx=v6Steps.length-1;v6Render();}
+
+v6Init();
+initPage('0792-number-of-matching-subsequences.html', v6Fwd, v6Back);
+</script>
+
+</body>
+</html>

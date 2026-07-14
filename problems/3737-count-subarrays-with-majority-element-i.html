@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#3737 Count Subarrays With Majority Element I · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab1" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#3737</div>
+      <h1>Count Subarrays With Majority Element I</h1>
+      <a href="https://leetcode.com/problems/count-subarrays-with-majority-element-i/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an integer array <code>nums</code> and an integer <code>target</code>, return the number of subarrays of <code>nums</code> where <code>target</code> is the majority element. The majority element of a subarray is the element that appears more than half the length of the subarray.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def countMajoritySubarrays(self, nums, target):
+        n = len(nums)
+        ans = 0
+        for l in range(n):
+            target_count = 0
+            for r in range(l, n):
+                if nums[r] == target:
+                    target_count += 1
+                length = r - l + 1
+                if target_count > length // 2:
+                    ans += 1
+        return ans</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v2-nums" value="2,1,2,2,1,2" style="width:210px"></div>
+      <div class="ig"><label>target</label><input type="number" id="v2-target" value="2" style="width:70px"></div>
+      <button onclick="v2Init()">Run</button>
+    </div>
+
+    <div class="section-label">Array</div>
+    <div class="array-row" id="v2-array"></div>
+
+    <div class="info-box" id="v2-info">Click <strong>Run</strong> to start stepping.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">l (left)</div><div class="sval" id="v2-sl">—</div></div>
+      <div class="stat"><div class="slabel">r (right)</div><div class="sval" id="v2-sr">—</div></div>
+      <div class="stat"><div class="slabel">length</div><div class="sval" id="v2-slen">—</div></div>
+      <div class="stat"><div class="slabel">target count</div><div class="sval" id="v2-stc">—</div></div>
+      <div class="stat"><div class="slabel">length // 2</div><div class="sval" id="v2-shalf">—</div></div>
+      <div class="stat best"><div class="slabel">ans</div><div class="sval" id="v2-sans">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v2Back()">← Prev</button>
+      <button onclick="v2Fwd()">Next →</button>
+      <button onclick="v2Skip()">Skip to end</button>
+      <span class="prog" id="v2-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>l pointer</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>r pointer</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>inside window</div>
+      <div class="leg"><div class="lb" style="outline:2px solid var(--red-border);outline-offset:-2px"></div>= target</div>
+    </div>
+
+    <div style="margin-top:1rem">
+      <div class="section-label">Majority subarrays found so far</div>
+      <div class="history-list" id="v2-hist"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v2Steps=[], v2Idx=0, v2Nums=[], v2Target=0;
+
+function v2Build(arr,t){
+  const n=arr.length, res=[];
+  let ans=0;
+  for(let l=0;l<n;l++){
+    let tc=0;
+    for(let r=l;r<n;r++){
+      if(arr[r]===t) tc++;
+      const len=r-l+1, half=Math.floor(len/2), ok=tc>half;
+      if(ok) ans++;
+      res.push({l,r,tc,len,half,ok,ans});
+    }
+  }
+  return res;
+}
+
+function v2Render(){
+  if(!v2Steps.length) return;
+  const s=v2Steps[v2Idx];
+  document.querySelectorAll('#v2-array .arr-cell').forEach((c,i)=>{
+    c.className='arr-cell';
+    if(i>s.l&&i<s.r) c.classList.add('in-window');
+    if(i===s.l) c.classList.add('is-l');
+    if(i===s.r) c.classList.add('is-r');
+    if(v2Nums[i]===v2Target) c.classList.add('is-target');
+  });
+  document.getElementById('v2-sl').textContent=s.l;
+  document.getElementById('v2-sr').textContent=s.r;
+  document.getElementById('v2-slen').textContent=s.len;
+  document.getElementById('v2-stc').textContent=s.tc;
+  document.getElementById('v2-shalf').textContent=s.half;
+  document.getElementById('v2-sans').textContent=s.ans;
+  const sub='['+v2Nums.slice(s.l,s.r+1).join(', ')+']';
+  const badge=`<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-weight:500;font-size:12px;margin-left:4px;background:${s.ok?'var(--green-bg)':'var(--red-bg)'};color:${s.ok?'var(--green-text)':'var(--red-text)'};border:0.5px solid ${s.ok?'var(--green-border)':'var(--red-border)'}">${s.ok?'count!':'skip'}</span>`;
+  document.getElementById('v2-info').innerHTML=
+    `Subarray <code>${sub}</code> — length <code>${s.len}</code>, target count <code>${s.tc}</code><br>`+
+    `Majority check: <code>${s.tc} > ${s.half}</code> → <code>${s.ok}</code>${badge}`;
+  const hist=document.getElementById('v2-hist'); hist.innerHTML='';
+  for(let k=0;k<=v2Idx;k++){
+    if(v2Steps[k].ok){
+      const chip=document.createElement('span'); chip.className='h-chip';
+      chip.textContent='['+v2Nums.slice(v2Steps[k].l,v2Steps[k].r+1).join(',')+']';
+      hist.appendChild(chip);
+    }
+  }
+  document.getElementById('v2-prog').textContent=`Step ${v2Idx+1} / ${v2Steps.length}`;
+}
+
+function v2Init(){
+  v2Nums=document.getElementById('v2-nums').value.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x));
+  v2Target=parseInt(document.getElementById('v2-target').value.trim());
+  v2Steps=v2Build(v2Nums,v2Target); v2Idx=0;
+  const arr=document.getElementById('v2-array'); arr.innerHTML='';
+  v2Nums.forEach((v,i)=>{const d=document.createElement('div');d.className='arr-cell';d.innerHTML=`${v}<span class="cidx">${i}</span>`;arr.appendChild(d);});
+  document.getElementById('v2-hist').innerHTML='';
+  v2Render();
+}
+function v2Fwd(){if(v2Idx<v2Steps.length-1){v2Idx++;v2Render();}}
+function v2Back(){if(v2Idx>0){v2Idx--;v2Render();}}
+function v2Skip(){v2Idx=v2Steps.length-1;v2Render();}
+
+v2Init();
+initPage('3737-count-subarrays-with-majority-element-i.html', v2Fwd, v2Back);
+</script>
+
+</body>
+</html>

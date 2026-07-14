@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#139 Word Break · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab9" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#139</div>
+      <h1>Word Break</h1>
+      <a href="https://leetcode.com/problems/word-break/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given string <code>s</code> and dictionary <code>wordDict</code>, return <code>true</code> if <code>s</code> can be segmented into dictionary words. <code>dp[i]</code> = can <code>s[0:i]</code> be segmented? For each end position <code>i</code>, try every start <code>j</code>: if <code>dp[j]</code> is true and <code>s[j:i]</code> is in the dict, set <code>dp[i] = true</code>.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def wordBreak(self, s, wordDict):
+        dp = [False] * (len(s) + 1)
+        dp[0] = True
+        for i in range(1, len(s) + 1):
+            for j in range(i):
+                if dp[j] and s[j:i] in wordDict:
+                    dp[i] = True
+                    break
+        return dp[len(s)]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s</label><input type="text" id="v10-s" value="leetcode" style="width:160px"></div>
+      <div class="ig"><label>wordDict</label><input type="text" id="v10-words" value="leet,code" style="width:180px"></div>
+      <button onclick="v10Init()">Run</button>
+    </div>
+
+    <div class="section-label">Dictionary words</div>
+    <div id="v10-dict-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem"></div>
+
+    <div class="section-label">String s — window s[j:i] highlighted</div>
+    <div id="v10-s-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem"></div>
+
+    <div class="section-label">DP array — dp[i] = can s[0:i] be segmented?</div>
+    <div style="overflow-x:auto">
+      <div id="v10-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div>
+    </div>
+
+    <div class="info-box" id="v10-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i (end)</div><div class="sval" id="v10-si">—</div></div>
+      <div class="stat"><div class="slabel">j (start)</div><div class="sval" id="v10-sj">—</div></div>
+      <div class="stat"><div class="slabel">s[j:i]</div><div class="sval" id="v10-ssub" style="font-size:14px">—</div></div>
+      <div class="stat"><div class="slabel">dp[j]</div><div class="sval" id="v10-sdpj">—</div></div>
+      <div class="stat"><div class="slabel">in dict?</div><div class="sval" id="v10-sindict">—</div></div>
+      <div class="stat best"><div class="slabel">result dp[n]</div><div class="sval" id="v10-sresult">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v10Back()">← Prev</button>
+      <button onclick="v10Fwd()">Next →</button>
+      <button onclick="v10Skip()">Skip to end</button>
+      <span class="prog" id="v10-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>dp[j]=T (valid source)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>window s[j:i] being tested</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>matched word (green chars)</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>dp[i] being computed</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer dp[n]</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v10Steps=[], v10Idx=0, v10S='', v10Words=[];
+
+function v10BuildSteps(str, wordArr) {
+  const n = str.length;
+  const wordSet = new Set(wordArr);
+  const dp = new Array(n + 1).fill(false);
+  dp[0] = true;
+  const res = [];
+
+  res.push({phase:'init', i:0, j:-1, sub:'', dpj:true, inDict:false, dp:[...dp],
+    msg:`Base: <code>dp[0] = true</code> — empty prefix is always valid.`});
+
+  for (let i = 1; i <= n; i++) {
+    let found = false;
+    for (let j = 0; j < i && !found; j++) {
+      const sub = str.slice(j, i);
+      const dpj = dp[j];
+      const inDict = wordSet.has(sub);
+      const matched = dpj && inDict;
+      if (matched) { dp[i] = true; found = true; }
+      res.push({
+        phase: matched ? 'matched' : 'check',
+        i, j, sub, dpj, inDict, dp:[...dp],
+        msg: matched
+          ? `i=<code>${i}</code>, j=<code>${j}</code>: <code>dp[${j}]=true</code> ✓ and <code>"${sub}"</code> ∈ dict ✓ → <code>dp[${i}] = true</code>`
+          : !dpj
+            ? `i=<code>${i}</code>, j=<code>${j}</code>: <code>dp[${j}]=false</code> — skip`
+            : `i=<code>${i}</code>, j=<code>${j}</code>: <code>dp[${j}]=true</code> ✓ but <code>"${sub}"</code> ∉ dict ✗`
+      });
+    }
+  }
+
+  res.push({phase:'final', i:n, j:-1, sub:'', dpj:dp[n], inDict:false, dp:[...dp],
+    msg:`Done! <code>dp[${n}] = ${dp[n]}</code> → return <code>${dp[n]}</code>.`});
+  return res;
+}
+
+function v10Render() {
+  if (!v10Steps.length) return;
+  const s = v10Steps[v10Idx];
+  const n = v10S.length;
+
+  // String chars
+  document.querySelectorAll('#v10-s-strip .char-box').forEach((el, k) => {
+    el.className = 'char-box';
+    const inWin = s.j >= 0 && k >= s.j && k < s.i;
+    if (s.phase !== 'init' && s.phase !== 'final' && inWin) {
+      if (s.phase === 'matched') el.classList.add('s-match');
+      else if (s.dpj)            el.classList.add('w-cur');
+      else                        el.classList.add('s-past');
+    }
+  });
+
+  // Dict chips
+  document.querySelectorAll('#v10-dict-chips .word-chip').forEach(el => {
+    el.className = 'word-chip';
+    if (s.sub && el.textContent === s.sub)
+      el.classList.add(s.phase === 'matched' ? 'matched' : s.inDict ? 'active' : '');
+  });
+
+  // DP array
+  document.querySelectorAll('#v10-dp-row .dp-cell').forEach((cell, k) => {
+    const valEl = cell.querySelector('.dp-val');
+    valEl.className = 'dp-val';
+    const val     = s.dp[k];
+    const isCur   = (s.phase === 'check' || s.phase === 'matched') && k === s.i;
+    const isSrc   = (s.phase === 'check' || s.phase === 'matched') && k === s.j;
+    const isFin   = s.phase === 'final' && k === n;
+    const done    = s.phase === 'final' || k < s.i || (k === s.i && s.phase === 'matched');
+
+    if (isFin)       valEl.classList.add(val ? 'is-best' : 'is-amber');
+    else if (isCur)  valEl.classList.add('is-cur');
+    else if (isSrc)  valEl.classList.add(val ? 'is-zero' : 'is-inf');
+    else if (done)   valEl.classList.add(val ? (k === 0 ? 'is-zero' : 'is-filled') : 'is-inf');
+    valEl.textContent = (done || isCur) ? (val ? 'T' : 'F') : '';
+  });
+
+  document.getElementById('v10-si').textContent      = s.i > 0 ? s.i : (s.phase !== 'init' ? s.i : '—');
+  document.getElementById('v10-sj').textContent      = s.j >= 0 ? s.j : '—';
+  document.getElementById('v10-ssub').textContent    = s.sub || '—';
+  document.getElementById('v10-sdpj').textContent    = s.j >= 0 ? String(s.dpj) : '—';
+  document.getElementById('v10-sindict').textContent = s.sub ? String(s.inDict) : '—';
+  document.getElementById('v10-sresult').textContent = s.phase === 'final' ? String(s.dp[n]) : '…';
+  document.getElementById('v10-info').innerHTML      = s.msg;
+  document.getElementById('v10-prog').textContent    = `Step ${v10Idx + 1} / ${v10Steps.length}`;
+}
+
+function v10Init() {
+  v10S     = document.getElementById('v10-s').value.trim();
+  v10Words = document.getElementById('v10-words').value.split(',').map(w => w.trim()).filter(Boolean);
+  if (!v10S || !v10Words.length) return;
+  v10Steps = v10BuildSteps(v10S, v10Words); v10Idx = 0;
+
+  const ss = document.getElementById('v10-s-strip'); ss.innerHTML = '';
+  for (let k = 0; k < v10S.length; k++) {
+    const d = document.createElement('div'); d.className = 'char-box';
+    d.innerHTML = `${v10S[k]}<span class="ci">${k}</span>`; ss.appendChild(d);
+  }
+
+  const dc = document.getElementById('v10-dict-chips'); dc.innerHTML = '';
+  v10Words.forEach(w => {
+    const c = document.createElement('div'); c.className = 'word-chip';
+    c.textContent = w; dc.appendChild(c);
+  });
+
+  const dr = document.getElementById('v10-dp-row'); dr.innerHTML = '';
+  for (let k = 0; k <= v10S.length; k++) {
+    const cell = document.createElement('div'); cell.className = 'dp-cell';
+    cell.innerHTML = `<div class="dp-idx">${k}</div><div class="dp-val"></div>`;
+    dr.appendChild(cell);
+  }
+  v10Render();
+}
+function v10Fwd()  { if (v10Idx < v10Steps.length - 1) { v10Idx++; v10Render(); } }
+function v10Back() { if (v10Idx > 0) { v10Idx--; v10Render(); } }
+function v10Skip() { v10Idx = v10Steps.length - 1; v10Render(); }
+
+v10Init();
+initPage('0139-word-break.html', v10Fwd, v10Back);
+</script>
+
+</body>
+</html>

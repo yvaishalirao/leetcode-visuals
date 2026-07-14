@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#494 Target Sum · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab14" class="viz-section visible">
+  <div class="page-header">
+    <div class="lc-num">#494</div>
+    <h1>Target Sum</h1>
+    <a href="https://leetcode.com/problems/target-sum/" target="_blank">View on LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">You are given an integer array <code>nums</code> and an integer <code>target</code>. Build an expression by placing <code>+</code> or <code>−</code> before each integer. Return the number of different expressions that evaluate to <code>target</code>. Strategy: DP hashmap — track reachable sums and their way-counts, expanding each number.</div>
+  <details class="code-block"><summary>Solution code</summary><pre>def findTargetSumWays(self, nums, target):
+    counter = {0: 1}
+    for n in nums:
+        temp = {}
+        for total, count in counter.items():
+            temp[total + n] = temp.get(total + n, 0) + count
+            temp[total - n] = temp.get(total - n, 0) + count
+        counter = temp
+    return counter.get(target, 0)</pre></details>
+
+  <div class="row">
+    <div class="ig"><label>nums</label><input type="text" id="v15-nums-in" style="width:160px" value="1,1,1,1,1"></div>
+    <div class="ig"><label>target</label><input type="text" id="v15-tgt-in" style="width:60px" value="3"></div>
+    <button onclick="v15Init()">Run</button>
+  </div>
+  <div class="section-label">Numbers</div>
+  <div id="v15-num-strip" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:0.8rem"></div>
+  <div class="section-label">Counter — sum → ways</div>
+  <div id="v15-counter" style="display:flex;flex-wrap:wrap;gap:8px;min-height:72px;align-items:flex-start;padding:4px 0 1rem"></div>
+  <div class="info-box" id="v15-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">num</div><div class="sval" id="v15-snum">—</div></div>
+    <div class="stat"><div class="slabel">idx</div><div class="sval" id="v15-sidx">—</div></div>
+    <div class="stat"><div class="slabel">unique sums</div><div class="sval" id="v15-ssums">—</div></div>
+    <div class="stat best"><div class="slabel">ways to target</div><div class="sval" id="v15-sways">—</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v15Back()">← Prev</button>
+    <button onclick="v15Fwd()">Next →</button>
+    <button onclick="v15Skip()">Skip to end</button>
+    <span class="prog" id="v15-prog"></span>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>reachable sum (current counter)</div>
+    <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>target sum</div>
+    <div class="leg"><div class="lb in-window" style="width:28px;height:20px;border-radius:4px"></div>number processed</div>
+    <div class="leg"><div class="lb is-l" style="width:28px;height:20px;border-radius:4px"></div>number just applied</div>
+  </div>
+</div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v15Steps = [], v15Idx = 0, v15Nums = [], v15Tgt = 0;
+
+function v15BuildSteps(nums, target) {
+  const res = [];
+  let counter = {0: 1};
+  res.push({ phase:'init', numIdx:-1, counter:{...counter},
+    msg:`Start: counter = {0: 1}. Each number branches every reachable sum into +num and −num.` });
+  for (let i = 0; i < nums.length; i++) {
+    const n = nums[i];
+    const prev = {...counter};
+    const temp = {};
+    for (const k of Object.keys(prev)) {
+      const t = parseInt(k);
+      temp[t + n] = (temp[t + n] || 0) + prev[k];
+      temp[t - n] = (temp[t - n] || 0) + prev[k];
+    }
+    counter = temp;
+    const prevSize = Object.keys(prev).length;
+    const newSize  = Object.keys(counter).length;
+    res.push({ phase:'process', numIdx:i, counter:{...counter},
+      msg:`Applied nums[${i}]=${n}: ${prevSize} sum${prevSize>1?'s':''} → ${newSize} sum${newSize>1?'s':''}. Ways to reach ${target}: <code>${counter[target] || 0}</code>` });
+  }
+  res.push({ phase:'final', numIdx:nums.length, counter:{...counter},
+    msg:`Done! counter[${target}] = <code>${counter[target] || 0}</code>` });
+  return res;
+}
+
+function v15Render() {
+  if (!v15Steps.length) return;
+  const s = v15Steps[v15Idx];
+
+  // Number strip
+  v15Nums.forEach((_, i) => {
+    const el = document.getElementById(`v15-n${i}`);
+    if (!el) return;
+    el.className = 'arr-cell';
+    if (s.phase === 'final' || i < s.numIdx) el.classList.add('in-window');
+    else if (s.phase === 'process' && i === s.numIdx) el.classList.add('is-l');
+  });
+
+  // Counter cards
+  const cont = document.getElementById('v15-counter');
+  cont.innerHTML = '';
+  const sorted = Object.entries(s.counter).map(([k,v]) => [parseInt(k), v]).sort((a,b) => a[0]-b[0]);
+  sorted.forEach(([sum, count]) => {
+    const isTgt = s.phase === 'final' && sum === v15Tgt;
+    const card = document.createElement('div');
+    card.className = 'sum-card' + (isTgt ? ' sc-best' : (s.phase !== 'init' ? ' sc-filled' : ''));
+    card.innerHTML = `<div class="sc-sum">${sum >= 0 ? '+'+sum : sum}</div><div class="sc-cnt">${count} way${count > 1 ? 's' : ''}</div>`;
+    cont.appendChild(card);
+  });
+
+  document.getElementById('v15-snum').textContent  = s.phase === 'process' ? v15Nums[s.numIdx] : '—';
+  document.getElementById('v15-sidx').textContent  = s.phase === 'process' ? s.numIdx : '—';
+  document.getElementById('v15-ssums').textContent = sorted.length;
+  document.getElementById('v15-sways').textContent = s.counter[v15Tgt] !== undefined ? s.counter[v15Tgt] : 0;
+  document.getElementById('v15-info').innerHTML    = s.msg;
+  document.getElementById('v15-prog').textContent  = `Step ${v15Idx + 1} / ${v15Steps.length}`;
+}
+
+function v15Init() {
+  v15Nums = document.getElementById('v15-nums-in').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x)).slice(0, 20);
+  v15Tgt  = parseInt(document.getElementById('v15-tgt-in').value.trim());
+  if (!v15Nums.length || isNaN(v15Tgt)) return;
+  v15Steps = v15BuildSteps(v15Nums, v15Tgt);
+  v15Idx = 0;
+
+  const strip = document.getElementById('v15-num-strip');
+  strip.innerHTML = '';
+  v15Nums.forEach((v, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px';
+    const idx = document.createElement('div'); idx.className = 'dp-idx'; idx.textContent = i;
+    const cell = document.createElement('div'); cell.className = 'arr-cell'; cell.id = `v15-n${i}`; cell.textContent = v;
+    wrap.appendChild(idx); wrap.appendChild(cell);
+    strip.appendChild(wrap);
+  });
+  v15Render();
+}
+function v15Fwd()  { if (v15Idx < v15Steps.length - 1) { v15Idx++; v15Render(); } }
+function v15Back() { if (v15Idx > 0) { v15Idx--; v15Render(); } }
+function v15Skip() { v15Idx = v15Steps.length - 1; v15Render(); }
+
+v15Init();
+initPage('0494-target-sum.html', v15Fwd, v15Back);
+</script>
+
+</body>
+</html>

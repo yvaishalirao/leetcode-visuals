@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#120 Triangle · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab12" class="viz-section visible">
+  <div class="page-header">
+    <div class="lc-num">#120</div>
+    <h1>Triangle</h1>
+    <a href="https://leetcode.com/problems/triangle/" target="_blank">View on LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">Given a triangle array, return the minimum path sum from top to bottom. At each step you may move to an adjacent number on the row below. Strategy: bottom-up DP — update each cell in-place by adding the smaller of its two children.</div>
+  <details class="code-block"><summary>Solution code</summary><pre>def minimumTotal(self, t):
+    n = len(t)
+    for i in range(n-2, -1, -1):
+        for j in range(0, len(t[i])):
+            t[i][j] += min(t[i+1][j], t[i+1][j+1])
+    return t[0][0]</pre></details>
+
+  <div class="row">
+    <div class="ig"><label>Rows (separated by /)</label><input type="text" id="v13-input" style="width:280px" value="2 / 3 4 / 6 5 7 / 4 1 8 3"></div>
+    <button onclick="v13Init()">Run</button>
+  </div>
+  <div id="v13-triangle" style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:1rem;"></div>
+  <div class="info-box" id="v13-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">row i</div><div class="sval" id="v13-srow">—</div></div>
+    <div class="stat"><div class="slabel">col j</div><div class="sval" id="v13-scol">—</div></div>
+    <div class="stat"><div class="slabel">t[i+1][j]</div><div class="sval" id="v13-sc1">—</div></div>
+    <div class="stat"><div class="slabel">t[i+1][j+1]</div><div class="sval" id="v13-sc2">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v13-sans">…</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v13Back()">← Prev</button>
+    <button onclick="v13Fwd()">Next →</button>
+    <button onclick="v13Skip()">Skip to end</button>
+    <span class="prog" id="v13-prog"></span>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>smaller child (chosen)</div>
+    <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>larger child</div>
+    <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>cell being updated</div>
+    <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>already updated</div>
+    <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer</div>
+  </div>
+</div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v13Steps = [], v13Idx = 0, v13Tri = [];
+
+function v13BuildSteps(tri) {
+  const t = tri.map(r => [...r]);
+  const n = t.length;
+  const res = [];
+  res.push({ phase:'init', row:-1, col:-1, t:t.map(r=>[...r]), c1:null, c2:null, orig:null,
+    msg:`Triangle loaded (${n} rows). Processing bottom-up: each cell absorbs the smaller of its two children.` });
+  for (let i = n - 2; i >= 0; i--) {
+    for (let j = 0; j < t[i].length; j++) {
+      const c1 = t[i+1][j], c2 = t[i+1][j+1];
+      const chosen = Math.min(c1, c2);
+      const orig = t[i][j];
+      t[i][j] += chosen;
+      res.push({ phase:'compute', row:i, col:j, t:t.map(r=>[...r]), c1, c2, orig,
+        msg:`t[${i}][${j}]: <code>${orig} + min(${c1}, ${c2}) = ${orig} + ${chosen} = ${t[i][j]}</code>` });
+    }
+  }
+  res.push({ phase:'final', row:0, col:0, t:t.map(r=>[...r]), c1:null, c2:null, orig:null,
+    msg:`Done! Minimum path sum = <code>${t[0][0]}</code>.` });
+  return res;
+}
+
+function v13Render() {
+  if (!v13Steps.length) return;
+  const s = v13Steps[v13Idx];
+  const n = s.t.length;
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < s.t[i].length; j++) {
+      const el = document.getElementById(`v13-cell-${i}-${j}`);
+      if (!el) continue;
+      el.className = 'tri-cell';
+      el.textContent = s.t[i][j];
+      const isFin = s.phase === 'final' && i === 0 && j === 0;
+      const isCur = s.phase === 'compute' && i === s.row && j === s.col;
+      const isC1  = s.phase === 'compute' && i === s.row + 1 && j === s.col;
+      const isC2  = s.phase === 'compute' && i === s.row + 1 && j === s.col + 1;
+      const isDone = (s.phase === 'compute' && ((i > s.row && i < n - 1) || (i === s.row && j < s.col))) ||
+                     (s.phase === 'final' && i < n - 1);
+      if (isFin)       el.classList.add('is-best');
+      else if (isCur)  el.classList.add('is-cur');
+      else if (isC1)   el.classList.add(s.c1 <= s.c2 ? 'is-zero' : 'is-amber');
+      else if (isC2)   el.classList.add(s.c2 < s.c1  ? 'is-zero' : 'is-amber');
+      else if (isDone) el.classList.add('is-filled');
+    }
+  }
+  document.getElementById('v13-srow').textContent = s.row >= 0 ? s.row : '—';
+  document.getElementById('v13-scol').textContent = s.col >= 0 ? s.col : '—';
+  document.getElementById('v13-sc1').textContent  = s.c1 !== null ? s.c1 : '—';
+  document.getElementById('v13-sc2').textContent  = s.c2 !== null ? s.c2 : '—';
+  document.getElementById('v13-sans').textContent = s.phase === 'final' ? s.t[0][0] : '…';
+  document.getElementById('v13-info').innerHTML   = s.msg;
+  document.getElementById('v13-prog').textContent = `Step ${v13Idx + 1} / ${v13Steps.length}`;
+}
+
+function v13Init() {
+  const raw = document.getElementById('v13-input').value;
+  v13Tri = raw.split('/').map(r => r.trim().split(/[\s,]+/).map(Number).filter(n => !isNaN(n))).filter(r => r.length > 0);
+  if (!v13Tri.length) return;
+  v13Steps = v13BuildSteps(v13Tri);
+  v13Idx = 0;
+  const cont = document.getElementById('v13-triangle');
+  cont.innerHTML = '';
+  v13Tri.forEach((row, i) => {
+    const rd = document.createElement('div');
+    rd.style.cssText = 'display:flex;gap:6px;';
+    row.forEach((val, j) => {
+      const cell = document.createElement('div');
+      cell.className = 'tri-cell';
+      cell.id = `v13-cell-${i}-${j}`;
+      cell.textContent = val;
+      rd.appendChild(cell);
+    });
+    cont.appendChild(rd);
+  });
+  v13Render();
+}
+function v13Fwd()  { if (v13Idx < v13Steps.length - 1) { v13Idx++; v13Render(); } }
+function v13Back() { if (v13Idx > 0) { v13Idx--; v13Render(); } }
+function v13Skip() { v13Idx = v13Steps.length - 1; v13Render(); }
+
+v13Init();
+initPage('0120-triangle.html', v13Fwd, v13Back);
+</script>
+
+</body>
+</html>

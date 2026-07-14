@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#322 Coin Change · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab3" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#322</div>
+      <h1>Coin Change</h1>
+      <a href="https://leetcode.com/problems/coin-change/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an array of coin denominations and a total <code>amount</code>, return the fewest number of coins needed to make up that amount. If it cannot be made up by any combination, return <code>-1</code>. You may use each coin an unlimited number of times.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def coinChange(self, coins, amount):
+        dp = [float('inf')] * (amount + 1)
+        dp[0] = 0
+        for i in range(1, amount + 1):
+            for coin in coins:
+                if i - coin >= 0:
+                    dp[i] = min(dp[i], 1 + dp[i - coin])
+        return dp[amount] if dp[amount] != float('inf') else -1</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>coins</label><input type="text" id="v4-coins" value="1,3,4" style="width:160px"></div>
+      <div class="ig"><label>amount</label><input type="number" id="v4-amount" value="6" style="width:70px" min="1" max="50"></div>
+      <button onclick="v4Init()">Run</button>
+    </div>
+    <div class="section-label">Coins</div>
+    <div id="v4-coin-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem"></div>
+    <div class="section-label">DP array — dp[i] = min coins for amount i</div>
+    <div style="overflow-x:auto"><div id="v4-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:.5rem;padding-bottom:4px"></div></div>
+    <div class="info-box" id="v4-info">Click <strong>Run</strong> to start.</div>
+    <div class="stats">
+      <div class="stat"><div class="slabel">amount i</div><div class="sval" id="v4-si">—</div></div>
+      <div class="stat"><div class="slabel">coin</div><div class="sval" id="v4-scoin">—</div></div>
+      <div class="stat"><div class="slabel">dp[i−coin]</div><div class="sval" id="v4-sprev">—</div></div>
+      <div class="stat"><div class="slabel">1 + dp[i−coin]</div><div class="sval" id="v4-scand">—</div></div>
+      <div class="stat"><div class="slabel">dp[i] best so far</div><div class="sval" id="v4-scur">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v4-sans">—</div></div>
+    </div>
+    <div class="controls">
+      <button onclick="v4Back()">← Prev</button><button onclick="v4Fwd()">Next →</button><button onclick="v4Skip()">Skip to end</button>
+      <span class="prog" id="v4-prog"></span>
+    </div>
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent)"></div>current cell i</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>filled / updated</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>coin being tried</div>
+      <div class="leg"><div class="lb" style="background:var(--surface-1)"></div>∞ unreachable</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v4Steps=[],v4Idx=0,v4Coins=[],v4Amount=0;
+
+function v4BuildSteps(cs,amt){
+  const dp=new Array(amt+1).fill(Infinity); dp[0]=0;
+  const res=[];
+  res.push({phase:'init',i:0,coin:null,coinIdx:-1,dp:[...dp],prev:null,cand:null,
+    msg:`Base case: <code>dp[0] = 0</code> — zero coins needed for amount 0. All others start at <code>∞</code>.`});
+  for(let i=1;i<=amt;i++){
+    for(let ci=0;ci<cs.length;ci++){
+      const coin=cs[ci];
+      if(i-coin>=0){
+        const prev=dp[i-coin],cand=prev===Infinity?Infinity:1+prev,improved=cand<dp[i];
+        if(improved) dp[i]=cand;
+        res.push({phase:improved?'update':'no-update',i,coin,coinIdx:ci,dp:[...dp],prev,cand,improved,
+          msg:prev===Infinity
+            ?`i=<code>${i}</code>, coin=<code>${coin}</code>: <code>dp[${i-coin}]=∞</code> — can't reach ${i-coin}, skip.`
+            :improved
+              ?`i=<code>${i}</code>, coin=<code>${coin}</code>: <code>1+dp[${i-coin}]=1+${prev}=${cand}</code> — better! <code>dp[${i}]=${cand}</code>`
+              :`i=<code>${i}</code>, coin=<code>${coin}</code>: <code>1+dp[${i-coin}]=1+${prev}=${cand}</code> — not better than <code>dp[${i}]=${dp[i]}</code>, skip.`});
+      } else {
+        res.push({phase:'skip',i,coin,coinIdx:ci,dp:[...dp],prev:null,cand:null,improved:false,
+          msg:`i=<code>${i}</code>, coin=<code>${coin}</code>: <code>${i}−${coin}<0</code> — coin too large, skip.`});
+      }
+    }
+  }
+  const ans=dp[amt]===Infinity?-1:dp[amt];
+  res.push({phase:'final',i:amt,coin:null,coinIdx:-1,dp:[...dp],prev:null,cand:null,improved:false,
+    msg:dp[amt]===Infinity?`Done! <code>dp[${amt}]=∞</code> — not possible. Return <code>-1</code>.`
+      :`Done! <code>dp[${amt}]=${dp[amt]}</code> — minimum <code>${dp[amt]}</code> coin${dp[amt]===1?'':'s'}.`});
+  return res;
+}
+
+function v4Render(){
+  if(!v4Steps.length) return;
+  const s=v4Steps[v4Idx];
+  document.querySelectorAll('#v4-coin-row .coin-pill').forEach((el,ci)=>{
+    el.className='coin-pill'; if(ci===s.coinIdx&&s.phase!=='init'&&s.phase!=='final') el.classList.add('active');
+  });
+  document.querySelectorAll('#v4-dp-row .dp-cell').forEach((cell,j)=>{
+    const valEl=cell.querySelector('.dp-val'); valEl.className='dp-val';
+    const v=s.dp[j];
+    const isCur=s.i===j&&s.phase!=='init'&&s.phase!=='final';
+    if(s.phase==='final'&&j===v4Amount&&v!==Infinity) valEl.classList.add('is-best');
+    else if(isCur) valEl.classList.add('is-cur');
+    else if(j===0||v!==Infinity) valEl.classList.add(j===0?'is-zero':'is-filled');
+    else valEl.classList.add('is-inf');
+    valEl.textContent=v===Infinity?'∞':v;
+  });
+  document.getElementById('v4-si').textContent=s.i;
+  document.getElementById('v4-scoin').textContent=s.coin||'—';
+  document.getElementById('v4-sprev').textContent=s.prev===null?'—':s.prev===Infinity?'∞':s.prev;
+  document.getElementById('v4-scand').textContent=s.cand===null?'—':s.cand===Infinity?'∞':s.cand;
+  const cv=s.dp[s.i]; document.getElementById('v4-scur').textContent=s.phase==='init'?'—':cv===Infinity?'∞':cv;
+  const fv=s.dp[v4Amount]; document.getElementById('v4-sans').textContent=s.phase==='final'?(fv===Infinity?-1:fv):'…';
+  document.getElementById('v4-info').innerHTML=s.msg;
+  document.getElementById('v4-prog').textContent=`Step ${v4Idx+1} / ${v4Steps.length}`;
+}
+
+function v4Init(){
+  v4Coins=document.getElementById('v4-coins').value.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x)&&x>0);
+  v4Amount=Math.min(50,Math.max(1,parseInt(document.getElementById('v4-amount').value)||6));
+  v4Steps=v4BuildSteps(v4Coins,v4Amount); v4Idx=0;
+  const cr=document.getElementById('v4-coin-row'); cr.innerHTML='';
+  v4Coins.forEach(c=>{const p=document.createElement('div');p.className='coin-pill';p.textContent=c;cr.appendChild(p);});
+  const dr=document.getElementById('v4-dp-row'); dr.innerHTML='';
+  for(let j=0;j<=v4Amount;j++){
+    const cell=document.createElement('div');cell.className='dp-cell';
+    cell.innerHTML=`<div class="dp-idx">${j}</div><div class="dp-val is-inf">∞</div>`;dr.appendChild(cell);
+  }
+  v4Render();
+}
+function v4Fwd(){if(v4Idx<v4Steps.length-1){v4Idx++;v4Render();}}
+function v4Back(){if(v4Idx>0){v4Idx--;v4Render();}}
+function v4Skip(){v4Idx=v4Steps.length-1;v4Render();}
+
+v4Init();
+initPage('0322-coin-change.html', v4Fwd, v4Back);
+</script>
+
+</body>
+</html>

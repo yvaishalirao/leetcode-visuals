@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#3020 Find the Maximum Number of Elements in Subset · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab2" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#3020</div>
+      <h1>Find the Maximum Number of Elements in Subset</h1>
+      <a href="https://leetcode.com/problems/find-the-maximum-number-of-elements-in-subset/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an integer array <code>nums</code>, find the maximum length of a subset that can be arranged as <code>[x, x², x⁴, …, x^(2^k), …, x^(2^k), …, x⁴, x², x]</code> — a palindrome-like pattern where each element is the square of the previous. The subset must have odd length.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution:
+    def maximumLength(self, nums):
+        from collections import Counter
+        freq = Counter(nums)
+        ans = 1
+        if 1 in freq:
+            cnt = freq[1]
+            ans = max(ans, cnt if cnt % 2 else cnt - 1)
+        for start in freq:
+            if start == 1: continue
+            cur = start
+            length = 0
+            while cur in freq:
+                if freq[cur] >= 2:
+                    length += 2
+                    cur *= cur
+                else:
+                    length += 1
+                    break
+            if length % 2 == 0:
+                length -= 1
+            ans = max(ans, length)
+        return ans</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v3-nums" value="2,2,4,1,1,1,16" style="width:250px"></div>
+      <button onclick="v3Init()">Run</button>
+    </div>
+
+    <div class="section-label">Frequency map</div>
+    <div class="freq-row" id="v3-freq"></div>
+
+    <div class="section-label">Current chain — cur keeps squaring each step</div>
+    <div class="chain-row" id="v3-chain"></div>
+
+    <div class="info-box" id="v3-info">Click <strong>Run</strong> to start stepping.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">start</div><div class="sval" id="v3-sstart">—</div></div>
+      <div class="stat"><div class="slabel">cur</div><div class="sval" id="v3-scur">—</div></div>
+      <div class="stat"><div class="slabel">length</div><div class="sval" id="v3-slen">—</div></div>
+      <div class="stat best"><div class="slabel">ans (best)</div><div class="sval" id="v3-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v3Back()">← Prev</button>
+      <button onclick="v3Fwd()">Next →</button>
+      <button onclick="v3Skip()">Skip to end</button>
+      <span class="prog" id="v3-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent)"></div>current start</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>in chain (freq ≥ 2)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>single occurrence (stop)</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>not in nums (chain ends)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v3Steps=[], v3Idx=0, v3Freq={}, v3FreqKeys=[];
+
+function v3Build(nums){
+  const f={};
+  for(const x of nums) f[x]=(f[x]||0)+1;
+  const res=[]; let ans=1;
+  res.push({phase:'init',ans,start:null,cur:null,length:null,chain:[],msg:`Frequency map built. Starting <code>ans = 1</code>.`});
+  if(f[1]!==undefined){
+    const cnt=f[1], contrib=cnt%2!==0?cnt:cnt-1;
+    ans=Math.max(ans,contrib);
+    res.push({phase:'ones',ans,start:1,cur:1,length:contrib,
+      chain:[{val:1,cnt,note:cnt%2!==0?`odd → use all ${cnt}`:`even → use ${cnt-1}`,type:'done'}],
+      msg:`Special case <code>1</code>: appears <code>${cnt}</code> times. ${cnt%2!==0?'Odd count':'Even count → subtract 1'} → contribution = <code>${contrib}</code>. ans → <code>${ans}</code>.`});
+  }
+  const starts=Object.keys(f).map(Number).filter(x=>x!==1).sort((a,b)=>a-b);
+  for(const start of starts){
+    let cur=start, length=0; const chain=[];
+    res.push({phase:'start',ans,start,cur,length,chain:[],msg:`New start: <code>${start}</code>. Initialise chain with <code>cur = ${start}</code>.`});
+    while(f[cur]!==undefined){
+      if(f[cur]>=2){
+        length+=2;
+        chain.push({val:cur,cnt:f[cur],note:`freq=${f[cur]} ≥ 2 → +2`,type:'done'});
+        const next=cur*cur;
+        res.push({phase:'extend',ans,start,cur,length,chain:[...chain],
+          msg:`<code>freq[${cur}] = ${f[cur]} ≥ 2</code> → add 2. length = <code>${length}</code>. Next: <code>cur = ${cur} × ${cur} = ${next}</code>.`});
+        cur=next;
+      } else {
+        length+=1;
+        chain.push({val:cur,cnt:f[cur],note:`freq=${f[cur]} = 1 → +1, stop`,type:'break'});
+        res.push({phase:'break',ans,start,cur,length,chain:[...chain],
+          msg:`<code>freq[${cur}] = ${f[cur]} < 2</code> → add 1 and stop. length = <code>${length}</code>.`});
+        break;
+      }
+    }
+    if(f[cur]===undefined&&chain.length>0)
+      res.push({phase:'missing',ans,start,cur,length,chain:[...chain],msg:`<code>${cur}</code> not in nums → chain ends. length = <code>${length}</code>.`});
+    const finalLen=length%2===0?length-1:length;
+    if(length%2===0)
+      res.push({phase:'trim',ans,start,cur,length:finalLen,chain:[...chain],msg:`Length <code>${length}</code> is even — subsequence must be odd length. Trim → <code>${finalLen}</code>.`});
+    ans=Math.max(ans,finalLen);
+    res.push({phase:'done',ans,start,cur,length:finalLen,chain:[...chain],msg:`Chain from <code>${start}</code> contributes <code>${finalLen}</code>. ans → <code>${ans}</code>.`});
+  }
+  res.push({phase:'final',ans,start:null,cur:null,length:null,chain:[],msg:`Done! Maximum subset length = <code>${ans}</code>.`});
+  return {steps:res,freq:f};
+}
+
+function v3Render(){
+  if(!v3Steps.length) return;
+  const s=v3Steps[v3Idx];
+  v3FreqKeys.forEach(k=>{
+    const el=document.getElementById('v3fc-'+k); if(!el) return;
+    el.className='freq-cell';
+    if(s.start===k) el.classList.add('fc-active');
+    else if(s.chain&&s.chain.some(c=>c.val===k&&c.type==='done')) el.classList.add('fc-chain');
+    else if(s.chain&&s.chain.some(c=>c.val===k&&c.type==='break')) el.classList.add('fc-break');
+  });
+  const cr=document.getElementById('v3-chain'); cr.innerHTML='';
+  if(s.chain&&s.chain.length>0){
+    s.chain.forEach((c,i)=>{
+      if(i>0){const a=document.createElement('span');a.className='chain-arrow';a.textContent='→';cr.appendChild(a);}
+      const nd=document.createElement('div');
+      nd.className='chain-node '+(c.type==='done'?'done-node':c.type==='break'?'break-node':'cur-node');
+      nd.innerHTML=`${c.val}<div class="cn-sub">${c.note}</div>`;cr.appendChild(nd);
+    });
+  } else if(s.phase==='start'||s.phase==='ones'){
+    const nd=document.createElement('div');nd.className='chain-node cur-node';
+    nd.innerHTML=`${s.start}<div class="cn-sub">starting</div>`;cr.appendChild(nd);
+  } else cr.innerHTML='<span style="font-size:13px;color:var(--text-muted)">—</span>';
+  document.getElementById('v3-sstart').textContent=s.start!==null?s.start:'—';
+  document.getElementById('v3-scur').textContent=s.cur!==null?s.cur:'—';
+  document.getElementById('v3-slen').textContent=s.length!==null?s.length:'—';
+  document.getElementById('v3-sans').textContent=s.ans;
+  document.getElementById('v3-info').innerHTML=s.msg;
+  document.getElementById('v3-prog').textContent=`Step ${v3Idx+1} / ${v3Steps.length}`;
+}
+
+function v3Init(){
+  const raw=document.getElementById('v3-nums').value.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x));
+  const res=v3Build(raw);
+  v3Steps=res.steps; v3Freq=res.freq;
+  v3FreqKeys=Object.keys(v3Freq).map(Number).sort((a,b)=>a-b);
+  v3Idx=0;
+  const row=document.getElementById('v3-freq'); row.innerHTML='';
+  v3FreqKeys.forEach(k=>{
+    const d=document.createElement('div');d.className='freq-cell';d.id='v3fc-'+k;
+    d.innerHTML=`<span class="fval">${k}</span><span class="fcnt">×${v3Freq[k]}</span>`;row.appendChild(d);
+  });
+  v3Render();
+}
+function v3Fwd(){if(v3Idx<v3Steps.length-1){v3Idx++;v3Render();}}
+function v3Back(){if(v3Idx>0){v3Idx--;v3Render();}}
+function v3Skip(){v3Idx=v3Steps.length-1;v3Render();}
+
+v3Init();
+initPage('3020-find-the-maximum-number-of-elements-in-subset.html', v3Fwd, v3Back);
+</script>
+
+</body>
+</html>

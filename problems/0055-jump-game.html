@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#55 Jump Game · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab8" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#55</div>
+      <h1>Jump Game</h1>
+      <a href="https://leetcode.com/problems/jump-game/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">You are at index 0 of integer array <code>nums</code>. Each element is your max jump length from that position. Return <code>true</code> if you can reach the last index. Strategy: scan backwards and try to walk the goal <code>pos</code> all the way back to index 0.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def canJump(self, nums):
+        if nums[0] == 0 and len(nums) > 1:
+            return False
+        n = len(nums)
+        pos = n - 1
+        for i in range(n - 2, -1, -1):
+            if i + nums[i] >= pos:
+                pos = i
+        return pos &lt; 2</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v9-nums" value="2,3,1,1,4" style="width:220px"></div>
+      <button onclick="v9Init()">Run</button>
+    </div>
+
+    <div class="section-label">Array — green = current goal (pos), amber = current i, blue = reachable from i</div>
+    <div class="array-row" id="v9-arr"></div>
+
+    <div class="info-box" id="v9-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i (scanning)</div><div class="sval" id="v9-si">—</div></div>
+      <div class="stat"><div class="slabel">nums[i]</div><div class="sval" id="v9-snums">—</div></div>
+      <div class="stat"><div class="slabel">max reach i+nums[i]</div><div class="sval" id="v9-sreach">—</div></div>
+      <div class="stat"><div class="slabel">pos (goal)</div><div class="sval" id="v9-spos">—</div></div>
+      <div class="stat best"><div class="slabel">result</div><div class="sval" id="v9-sresult">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v9Back()">← Prev</button>
+      <button onclick="v9Fwd()">Next →</button>
+      <button onclick="v9Skip()">Skip to end</button>
+      <span class="prog" id="v9-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>pos (current goal)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>i (being examined)</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>reachable from i</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border);outline:2px solid var(--red-border);outline-offset:-2px"></div>stuck (false)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v9Steps=[], v9Idx=0, v9Nums=[];
+
+function v9BuildSteps(nums) {
+  const n = nums.length;
+  const res = [];
+
+  if (n === 1) {
+    res.push({phase:'final', i:-1, pos:0, reach:0, result:true,
+      msg:`Single element — already at the last index. Return <code>true</code>.`});
+    return res;
+  }
+
+  if (nums[0] === 0) {
+    res.push({phase:'final', i:0, pos:0, reach:0, result:false,
+      msg:`<code>nums[0] = 0</code> — cannot move from start. Return <code>false</code>.`});
+    return res;
+  }
+
+  let pos = n - 1;
+  res.push({phase:'init', i:-1, pos, reach:0, result:null,
+    msg:`Set <code>pos = ${n-1}</code> (last index — the goal). Scan <strong>backwards</strong>: if index <code>i</code> can reach <code>pos</code>, move the goal to <code>i</code>. Goal is to walk <code>pos</code> back to 0.`});
+
+  for (let i = n - 2; i >= 0; i--) {
+    const reach = nums[i];
+    const maxIdx = i + reach;
+    const canReach = maxIdx >= pos;
+    const oldPos = pos;
+    if (canReach) pos = i;
+    res.push({phase:'scan', i, pos, reach, maxIdx, canReach, oldPos, result:null,
+      msg: canReach
+        ? `i=<code>${i}</code>, nums[i]=<code>${reach}</code>: max reach <code>${i}+${reach}=${maxIdx} ≥ pos(${oldPos})</code> ✓ → goal moves: <code>pos = ${i}</code>`
+        : `i=<code>${i}</code>, nums[i]=<code>${reach}</code>: max reach <code>${i}+${reach}=${maxIdx} < pos(${pos})</code> ✗ — can't reach goal`
+    });
+  }
+
+  const result = pos < 2;
+  res.push({phase:'final', i:-1, pos, reach:0, result,
+    msg: result
+      ? `Done! <code>pos = ${pos}</code> — goal reached back to start. Return <code>true</code>.`
+      : `Done! <code>pos = ${pos}</code> ≥ 2 — gap exists before index 0. Return <code>false</code>.`
+  });
+  return res;
+}
+
+function v9Render() {
+  if (!v9Steps.length) return;
+  const s = v9Steps[v9Idx];
+  const n = v9Nums.length;
+
+  document.querySelectorAll('#v9-arr .arr-cell').forEach((el, j) => {
+    el.className = 'arr-cell';
+    if (s.phase === 'init') {
+      if (j === s.pos) el.classList.add('is-l');
+    } else if (s.phase === 'scan') {
+      if (j === s.pos)       el.classList.add('is-l');
+      else if (j === s.i)    el.classList.add('is-r');
+      else if (j > s.i && j <= Math.min(s.maxIdx, n - 1)) el.classList.add('in-window');
+    } else if (s.phase === 'final') {
+      if (s.result) {
+        if (j === 0) el.classList.add('is-l');
+      } else {
+        if (j === s.pos) { el.classList.add('is-r'); el.classList.add('is-target'); }
+      }
+    }
+  });
+
+  document.getElementById('v9-si').textContent     = s.i >= 0 ? s.i : '—';
+  document.getElementById('v9-snums').textContent  = s.i >= 0 ? v9Nums[s.i] : '—';
+  document.getElementById('v9-sreach').textContent = s.i >= 0 ? s.maxIdx : '—';
+  document.getElementById('v9-spos').textContent   = s.pos;
+  document.getElementById('v9-sresult').textContent = s.phase === 'final' ? (s.result ? 'true' : 'false') : '…';
+  document.getElementById('v9-info').innerHTML     = s.msg;
+  document.getElementById('v9-prog').textContent   = `Step ${v9Idx + 1} / ${v9Steps.length}`;
+}
+
+function v9Init() {
+  v9Nums = document.getElementById('v9-nums').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x) && x >= 0);
+  if (!v9Nums.length) return;
+  v9Steps = v9BuildSteps(v9Nums); v9Idx = 0;
+  const arr = document.getElementById('v9-arr'); arr.innerHTML = '';
+  v9Nums.forEach((v, i) => {
+    const d = document.createElement('div'); d.className = 'arr-cell';
+    d.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    arr.appendChild(d);
+  });
+  v9Render();
+}
+function v9Fwd()  { if (v9Idx < v9Steps.length - 1) { v9Idx++; v9Render(); } }
+function v9Back() { if (v9Idx > 0) { v9Idx--; v9Render(); } }
+function v9Skip() { v9Idx = v9Steps.length - 1; v9Render(); }
+
+v9Init();
+initPage('0055-jump-game.html', v9Fwd, v9Back);
+</script>
+
+</body>
+</html>

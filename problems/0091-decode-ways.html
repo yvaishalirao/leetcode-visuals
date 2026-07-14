@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#91 Decode Ways · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab16" class="viz-section visible">
+  <div class="page-header">
+    <div class="lc-num">#91</div>
+    <h1>Decode Ways</h1>
+    <a href="https://leetcode.com/problems/decode-ways/" target="_blank">View on LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">A message is encoded as a string of digits ("1"→A, "2"→B, …, "26"→Z). Given a string <code>s</code>, return the number of ways to decode it. Strategy: 1-D DP — at each position check if the last 1 digit or last 2 digits form a valid code.</div>
+  <details class="code-block"><summary>Solution code</summary><pre>def numDecodings(self, s):
+    n = len(s)
+    dp = [0] * (n + 1)
+    c = [str(i+1) for i in range(26)]
+    if s[0] == '0':
+        return 0
+    dp[0] = dp[1] = 1
+    for i in range(2, n + 1):
+        a = dp[i-1] if s[i-1] in c else 0
+        b = dp[i-2] if s[i-2:i] in c else 0
+        dp[i] = a + b
+    return dp[-1]</pre></details>
+
+  <div class="row">
+    <div class="ig"><label>s</label><input type="text" id="v17-sin" style="width:140px" value="226"></div>
+    <button onclick="v17Init()">Run</button>
+  </div>
+  <div class="section-label">String s — character strip</div>
+  <div style="overflow-x:auto;margin-bottom:0.4rem">
+    <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:6px">
+      <span style="font-size:11px;color:var(--text-sec);font-family:monospace;width:22px;flex-shrink:0;text-align:right">s</span>
+      <div id="v17-char-row" style="display:flex;gap:6px"></div>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:8px">
+      <span style="font-size:11px;color:var(--text-sec);font-family:monospace;width:22px;flex-shrink:0;text-align:right">dp</span>
+      <div id="v17-dp-row" style="display:flex;gap:6px"></div>
+    </div>
+  </div>
+  <div class="info-box" id="v17-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">i</div><div class="sval" id="v17-si">—</div></div>
+    <div class="stat"><div class="slabel">single s[i-1]</div><div class="sval" id="v17-schar">—</div></div>
+    <div class="stat"><div class="slabel">pair s[i-2:i]</div><div class="sval" id="v17-spair">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v17-sans">…</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v17Back()">← Prev</button>
+    <button onclick="v17Fwd()">Next →</button>
+    <button onclick="v17Skip()">Skip to end</button>
+    <span class="prog" id="v17-prog"></span>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="lb is-l" style="width:28px;height:20px;border-radius:4px"></div>single-digit char / dp[i-1] source</div>
+    <div class="leg"><div class="lb is-r" style="width:28px;height:20px;border-radius:4px"></div>two-digit pair chars / dp[i-2] source</div>
+    <div class="leg"><div class="lb dp-val is-cur" style="width:28px;height:20px;border-radius:4px"></div>dp[i] being computed</div>
+    <div class="leg"><div class="lb dp-val is-filled" style="width:28px;height:20px;border-radius:4px"></div>already computed</div>
+    <div class="leg"><div class="lb dp-val is-best" style="width:28px;height:20px;border-radius:4px"></div>answer dp[n]</div>
+  </div>
+</div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v17Steps = [], v17Idx = 0, v17S = '';
+
+function v17BuildSteps(str) {
+  const n = str.length;
+  const dp = Array(n + 1).fill(0);
+  const codes = new Set(Array.from({length: 26}, (_, i) => String(i + 1)));
+  dp[0] = 1;
+  dp[1] = str[0] !== '0' ? 1 : 0;
+  const res = [];
+  res.push({ phase:'init', idx:1, dp:[...dp], singleValid:false, doubleValid:false,
+    msg:`dp[0]=1 (empty prefix). dp[1]=${dp[1]} — '${str[0]}' is ${str[0]!=='0'?'a valid single digit':'0, invalid'}. Loop starts at i=2.` });
+  for (let i = 2; i <= n; i++) {
+    const single = str[i-1], pair = str.slice(i-2, i);
+    const sv = codes.has(single), dv = codes.has(pair);
+    dp[i] = (sv ? dp[i-1] : 0) + (dv ? dp[i-2] : 0);
+    const sp = sv ? `'${single}' ✓ → +dp[${i-1}]=${dp[i-1]}` : `'${single}' ✗`;
+    const dp2 = dv ? `'${pair}' ✓ → +dp[${i-2}]=${dp[i-2]}` : `'${pair}' ✗`;
+    res.push({ phase:'fill', idx:i, dp:[...dp], singleValid:sv, doubleValid:dv,
+      msg:`i=${i}: single ${sp} | two-digit ${dp2} → dp[${i}] = <code>${dp[i]}</code>` });
+  }
+  res.push({ phase:'final', idx:n, dp:[...dp], singleValid:false, doubleValid:false,
+    msg:`Done! Total decode ways = <code>${dp[n]}</code>` });
+  return res;
+}
+
+function v17Render() {
+  if (!v17Steps.length) return;
+  const s = v17Steps[v17Idx];
+  const n = v17S.length;
+
+  // DP cells
+  for (let k = 0; k <= n; k++) {
+    const el = document.getElementById(`v17-d${k}`);
+    if (!el) continue;
+    el.className = 'dp-val';
+    if (s.phase === 'final') {
+      el.classList.add(k === n ? 'is-best' : 'is-filled');
+    } else if (s.phase === 'init') {
+      if (k <= 1) el.classList.add('is-filled');
+    } else {
+      if      (k === s.idx)              el.classList.add('is-cur');
+      else if (k === s.idx-1 && s.singleValid) el.classList.add('is-zero');
+      else if (k === s.idx-2 && s.doubleValid) el.classList.add('is-amber');
+      else if (k < s.idx)               el.classList.add('is-filled');
+    }
+    el.textContent = k <= s.idx ? s.dp[k] : '';
+  }
+
+  // Char cells
+  for (let k = 0; k < n; k++) {
+    const el = document.getElementById(`v17-c${k}`);
+    if (!el) continue;
+    el.className = 'arr-cell';
+    if (s.phase === 'fill') {
+      if (k === s.idx - 1) {
+        el.classList.add(s.singleValid ? 'is-l' : (s.doubleValid ? 'is-r' : ''));
+      } else if (k === s.idx - 2 && s.doubleValid) {
+        el.classList.add('is-r');
+      }
+    }
+  }
+
+  document.getElementById('v17-si').textContent    = s.phase === 'fill' ? s.idx : '—';
+  document.getElementById('v17-schar').textContent = s.phase === 'fill' ? v17S[s.idx-1] : '—';
+  document.getElementById('v17-spair').textContent = (s.phase === 'fill' && s.idx >= 2) ? v17S.slice(s.idx-2, s.idx) : '—';
+  document.getElementById('v17-sans').textContent  = s.phase === 'final' ? s.dp[n] : '…';
+  document.getElementById('v17-info').innerHTML    = s.msg;
+  document.getElementById('v17-prog').textContent  = `Step ${v17Idx + 1} / ${v17Steps.length}`;
+}
+
+function v17Init() {
+  v17S = document.getElementById('v17-sin').value.trim().replace(/[^0-9]/g,'').slice(0, 14);
+  if (!v17S) return;
+  const n = v17S.length;
+  v17Steps = v17BuildSteps(v17S);
+  v17Idx = 0;
+
+  const cr = document.getElementById('v17-char-row');
+  cr.innerHTML = '';
+  // Placeholder cell aligned with dp[0]
+  const ph = document.createElement('div'); ph.className = 'dp-cell';
+  ph.innerHTML = `<div class="dp-idx"></div><div class="arr-cell" style="opacity:.3;font-size:12px">&#949;</div>`;
+  cr.appendChild(ph);
+  for (let k = 0; k < n; k++) {
+    const wrap = document.createElement('div'); wrap.className = 'dp-cell';
+    wrap.innerHTML = `<div class="dp-idx">${k}</div><div class="arr-cell" id="v17-c${k}">${v17S[k]}</div>`;
+    cr.appendChild(wrap);
+  }
+
+  const dr = document.getElementById('v17-dp-row');
+  dr.innerHTML = '';
+  for (let k = 0; k <= n; k++) {
+    const wrap = document.createElement('div'); wrap.className = 'dp-cell';
+    wrap.innerHTML = `<div class="dp-idx">${k}</div><div class="dp-val" id="v17-d${k}"></div>`;
+    dr.appendChild(wrap);
+  }
+  v17Render();
+}
+function v17Fwd()  { if (v17Idx < v17Steps.length - 1) { v17Idx++; v17Render(); } }
+function v17Back() { if (v17Idx > 0) { v17Idx--; v17Render(); } }
+function v17Skip() { v17Idx = v17Steps.length - 1; v17Render(); }
+
+v17Init();
+initPage('0091-decode-ways.html', v17Fwd, v17Back);
+</script>
+
+</body>
+</html>

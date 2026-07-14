@@ -1,0 +1,26 @@
+/* Problem manifest — the drawer and index are generated from this list.
+   To add a problem: create problems/<file>.html and add one entry here. */
+const PROBLEMS = [
+  { num: '97', title: "Interleaving String", file: '0097-interleaving-string.html' },
+  { num: '3737', title: "Count Subarrays With Majority Element I", file: '3737-count-subarrays-with-majority-element-i.html' },
+  { num: '3020', title: "Find the Maximum Number of Elements in Subset", file: '3020-find-the-maximum-number-of-elements-in-subset.html' },
+  { num: '322', title: "Coin Change", file: '0322-coin-change.html' },
+  { num: '518', title: "Coin Change II", file: '0518-coin-change-ii.html' },
+  { num: '792', title: "Number of Matching Subsequences", file: '0792-number-of-matching-subsequences.html' },
+  { num: '70', title: "Climbing Stairs", file: '0070-climbing-stairs.html' },
+  { num: '198', title: "House Robber", file: '0198-house-robber.html' },
+  { num: '55', title: "Jump Game", file: '0055-jump-game.html' },
+  { num: '139', title: "Word Break", file: '0139-word-break.html' },
+  { num: '45', title: "Jump Game II", file: '0045-jump-game-ii.html' },
+  { num: '746', title: "Min Cost Climbing Stairs", file: '0746-min-cost-climbing-stairs.html' },
+  { num: '120', title: "Triangle", file: '0120-triangle.html' },
+  { num: '1143', title: "Longest Common Subsequence", file: '1143-longest-common-subsequence.html' },
+  { num: '494', title: "Target Sum", file: '0494-target-sum.html' },
+  { num: '72', title: "Edit Distance", file: '0072-edit-distance.html' },
+  { num: '91', title: "Decode Ways", file: '0091-decode-ways.html' },
+  { num: '718', title: "Maximum Length of Repeated Subarray", file: '0718-maximum-length-of-repeated-subarray.html' },
+  { num: '300', title: "Longest Increasing Subsequence", file: '0300-longest-increasing-subsequence.html' },
+  { num: '62', title: "Unique Paths", file: '0062-unique-paths.html' },
+  { num: '64', title: "Minimum Path Sum", file: '0064-minimum-path-sum.html' },
+  { num: '63', title: "Unique Paths II", file: '0063-unique-paths-ii.html' },
+];

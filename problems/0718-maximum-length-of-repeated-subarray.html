@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#718 Maximum Length of Repeated Subarray · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab17" class="viz-section visible">
+  <div class="page-header">
+    <div class="lc-num">#718</div>
+    <h1>Maximum Length of Repeated Subarray</h1>
+    <a href="https://leetcode.com/problems/maximum-length-of-repeated-subarray/" target="_blank">View on LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">Given two integer arrays <code>nums1</code> and <code>nums2</code>, return the maximum length of a subarray that appears in both. Strategy: 2-D DP — dp[i][j] is the length of the longest common subarray ending at nums1[i-1] and nums2[j-1]; reset to 0 on mismatch, track global max.</div>
+  <details class="code-block"><summary>Solution code</summary><pre>def findLength(self, nums1, nums2):
+    m, n = len(nums1), len(nums2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    maxx = 0
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if nums1[i-1] == nums2[j-1]:
+                dp[i][j] = dp[i-1][j-1] + 1
+                maxx = max(dp[i][j], maxx)
+            else:
+                dp[i][j] = 0
+    return maxx</pre></details>
+
+  <div class="row">
+    <div class="ig"><label>nums1</label><input type="text" id="v18-a1" style="width:150px" value="1,2,3,2,1"></div>
+    <div class="ig"><label>nums2</label><input type="text" id="v18-a2" style="width:150px" value="3,2,1,4,7"></div>
+    <button onclick="v18Init()">Run</button>
+  </div>
+  <div class="section-label">DP table — dp[i][j] = common subarray length ending here (0 on mismatch)</div>
+  <div style="overflow-x:auto;margin-bottom:1rem">
+    <div id="v18-table"></div>
+  </div>
+  <div class="info-box" id="v18-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">row i</div><div class="sval" id="v18-si">—</div></div>
+    <div class="stat"><div class="slabel">col j</div><div class="sval" id="v18-sj">—</div></div>
+    <div class="stat"><div class="slabel">nums1[i-1]</div><div class="sval" id="v18-sv1">—</div></div>
+    <div class="stat"><div class="slabel">nums2[j-1]</div><div class="sval" id="v18-sv2">—</div></div>
+    <div class="stat best"><div class="slabel">max len</div><div class="sval" id="v18-smax">0</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v18Back()">← Prev</button>
+    <button onclick="v18Fwd()">Next →</button>
+    <button onclick="v18Skip()">Skip to end</button>
+    <span class="prog" id="v18-prog"></span>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="lb cell-zero"></div>diagonal source (match)</div>
+    <div class="leg"><div class="lb cell-cur" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current match cell</div>
+    <div class="leg"><div class="lb cell-best"></div>new max / final max cells</div>
+    <div class="leg"><div class="lb cell-amber"></div>mismatch → reset to 0</div>
+    <div class="leg"><div class="lb cell-filled"></div>already computed</div>
+  </div>
+</div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v18Steps = [], v18Idx = 0, v18A1 = [], v18A2 = [];
+
+function v18BuildSteps(a1, a2) {
+  const m = a1.length, n = a2.length;
+  const dp = Array.from({length: m+1}, () => Array(n+1).fill(0));
+  const res = [];
+  let maxVal = 0;
+  res.push({ phase:'init', i:0, j:0, dp:dp.map(r=>[...r]), match:false, isNewMax:false, maxVal:0,
+    msg:`nums1=[${a1}], nums2=[${a2}]. dp[i][j] = dp[i-1][j-1]+1 on match, 0 on mismatch. Track max.` });
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const match = a1[i-1] === a2[j-1];
+      if (match) {
+        dp[i][j] = dp[i-1][j-1] + 1;
+        const isNewMax = dp[i][j] > maxVal;
+        if (isNewMax) maxVal = dp[i][j];
+        res.push({ phase:'fill', i, j, dp:dp.map(r=>[...r]), match:true, isNewMax, maxVal,
+          msg: isNewMax
+            ? `nums1[${i-1}]=${a1[i-1]} = nums2[${j-1}]=${a2[j-1]} ✓ → dp[${i}][${j}] = dp[${i-1}][${j-1}]+1 = <code>${dp[i][j]}</code> ★ new max!`
+            : `nums1[${i-1}]=${a1[i-1]} = nums2[${j-1}]=${a2[j-1]} ✓ → dp[${i}][${j}] = dp[${i-1}][${j-1}]+1 = <code>${dp[i][j]}</code>` });
+      } else {
+        dp[i][j] = 0;
+        res.push({ phase:'fill', i, j, dp:dp.map(r=>[...r]), match:false, isNewMax:false, maxVal,
+          msg:`nums1[${i-1}]=${a1[i-1]} ≠ nums2[${j-1}]=${a2[j-1]} → dp[${i}][${j}] = <code>0</code> (streak broken)` });
+      }
+    }
+  }
+  res.push({ phase:'final', i:m, j:n, dp:dp.map(r=>[...r]), match:false, isNewMax:false, maxVal,
+    msg:`Done! Max length of repeated subarray = <code>${maxVal}</code>` });
+  return res;
+}
+
+function v18CellClass(s, m, n, ci, cj) {
+  const isBase = ci === 0 || cj === 0;
+  if (s.phase === 'final') {
+    if (isBase) return '';
+    if (s.maxVal > 0 && s.dp[ci][cj] === s.maxVal) return 'cell-best';
+    return 'cell-filled';
+  }
+  if (s.phase !== 'fill') return '';
+  if (ci === s.i && cj === s.j) {
+    return !s.match ? 'cell-amber' : (s.isNewMax ? 'cell-best' : 'cell-cur');
+  }
+  if (s.match && ci === s.i-1 && cj === s.j-1) return 'cell-zero';
+  if (isBase) return '';
+  const done = ci < s.i || (ci === s.i && cj < s.j);
+  return done ? 'cell-filled' : '';
+}
+
+function v18Render() {
+  if (!v18Steps.length) return;
+  const s = v18Steps[v18Idx];
+  const m = v18A1.length, n = v18A2.length;
+  for (let i = 0; i <= m; i++) {
+    for (let j = 0; j <= n; j++) {
+      const el = document.getElementById(`v18-${i}-${j}`);
+      if (!el) continue;
+      el.className = v18CellClass(s, m, n, i, j);
+      const isBase = i === 0 || j === 0;
+      const isComp = !isBase && (s.phase === 'final' ||
+        (s.phase === 'fill' && (i < s.i || (i === s.i && j <= s.j))));
+      el.textContent = isComp ? s.dp[i][j] : '';
+    }
+  }
+  document.getElementById('v18-si').textContent  = s.phase === 'fill' ? s.i : '—';
+  document.getElementById('v18-sj').textContent  = s.phase === 'fill' ? s.j : '—';
+  document.getElementById('v18-sv1').textContent = s.phase === 'fill' ? v18A1[s.i-1] : '—';
+  document.getElementById('v18-sv2').textContent = s.phase === 'fill' ? v18A2[s.j-1] : '—';
+  document.getElementById('v18-smax').textContent = s.maxVal;
+  document.getElementById('v18-info').innerHTML  = s.msg;
+  document.getElementById('v18-prog').textContent = `Step ${v18Idx + 1} / ${v18Steps.length}`;
+}
+
+function v18Init() {
+  v18A1 = document.getElementById('v18-a1').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x)).slice(0, 10);
+  v18A2 = document.getElementById('v18-a2').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x)).slice(0, 10);
+  if (!v18A1.length || !v18A2.length) return;
+  const m = v18A1.length, n = v18A2.length;
+  v18Steps = v18BuildSteps(v18A1, v18A2);
+  v18Idx = 0;
+  let html = '<table class="dp-table"><thead><tr><th></th><th></th>';
+  for (let j = 0; j < n; j++) html += `<th>${v18A2[j]}</th>`;
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i <= m; i++) {
+    html += `<tr><th class="row-header">${i > 0 ? v18A1[i-1] : ''}</th>`;
+    for (let j = 0; j <= n; j++) html += `<td id="v18-${i}-${j}"></td>`;
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('v18-table').innerHTML = html;
+  v18Render();
+}
+function v18Fwd()  { if (v18Idx < v18Steps.length - 1) { v18Idx++; v18Render(); } }
+function v18Back() { if (v18Idx > 0) { v18Idx--; v18Render(); } }
+function v18Skip() { v18Idx = v18Steps.length - 1; v18Render(); }
+
+v18Init();
+initPage('0718-maximum-length-of-repeated-subarray.html', v18Fwd, v18Back);
+</script>
+
+</body>
+</html>

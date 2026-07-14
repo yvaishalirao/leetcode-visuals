@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#70 Climbing Stairs · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab6" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#70</div>
+      <h1>Climbing Stairs (same like fibonacci series)</h1>
+      <a href="https://leetcode.com/problems/climbing-stairs/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">You are climbing a staircase. It takes <code>n</code> steps to reach the top. Each time you can either climb 1 or 2 steps. Return the number of distinct ways you can climb to the top.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def climbStairs(self, n):
+        if n &lt;= 2:
+            return n
+        a = 1
+        b = 2
+        for i in range(3, n + 1):
+            curr = a + b
+            a = b
+            b = curr
+        return b</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>n</label><input type="number" id="v7-n" value="6" style="width:80px" min="1" max="30"></div>
+      <button onclick="v7Init()">Run</button>
+    </div>
+
+    <div class="section-label">DP array — dp[i] = ways to reach step i</div>
+    <div style="overflow-x:auto">
+      <div id="v7-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:4px;padding-bottom:2px"></div>
+      <div id="v7-ptr-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem"></div>
+    </div>
+
+    <div class="info-box" id="v7-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v7-si">—</div></div>
+      <div class="stat"><div class="slabel">a = dp[i−2]</div><div class="sval" id="v7-sa">—</div></div>
+      <div class="stat"><div class="slabel">b = dp[i−1]</div><div class="sval" id="v7-sb">—</div></div>
+      <div class="stat"><div class="slabel">curr = a + b</div><div class="sval" id="v7-scurr">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v7-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v7Back()">← Prev</button>
+      <button onclick="v7Fwd()">Next →</button>
+      <button onclick="v7Skip()">Skip to end</button>
+      <span class="prog" id="v7-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>a (dp[i−2])</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>b (dp[i−1])</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>curr being computed</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>filled</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v7Steps=[], v7Idx=0, v7N=0;
+
+function v7BuildSteps(n) {
+  const res = [];
+  const dp = new Array(n + 1).fill(0);
+  dp[1] = 1;
+  if (n >= 2) dp[2] = 2;
+
+  if (n <= 2) {
+    const b = dp[n];
+    res.push({phase:'final', i:n, dp:[...dp], a:dp[1], b, curr:null, aIdx:1, bIdx:n,
+      msg:`n ≤ 2 → return <code>${b}</code> directly.`});
+    return res;
+  }
+
+  let a = 1, b = 2;
+  res.push({phase:'init', i:2, dp:[...dp], a, b, curr:null, aIdx:1, bIdx:2,
+    msg:`Base cases: <code>dp[1] = 1</code> (one way to climb 1 stair), <code>dp[2] = 2</code> (two ways). Set <code>a = 1</code>, <code>b = 2</code>.`});
+
+  for (let i = 3; i <= n; i++) {
+    const curr = a + b;
+    res.push({phase:'compute', i, dp:[...dp], a, b, curr, aIdx:i-2, bIdx:i-1,
+      msg:`i = <code>${i}</code>: <code>curr = a + b = ${a} + ${b} = ${curr}</code> — sum ways from one and two steps back.`});
+    dp[i] = curr;
+    a = b; b = curr;
+    res.push({phase:'update', i, dp:[...dp], a, b, curr, aIdx:i-1, bIdx:i,
+      msg:`Stored <code>dp[${i}] = ${curr}</code>. Slide window: <code>a = ${a}</code>, <code>b = ${curr}</code>.`});
+  }
+
+  res.push({phase:'final', i:n, dp:[...dp], a, b, curr:null, aIdx:n-1, bIdx:n,
+    msg:`Done! <code>dp[${n}] = ${b}</code> — <strong>${b}</strong> distinct way${b===1?'':'s'} to climb ${n} stairs.`});
+  return res;
+}
+
+function v7Render() {
+  if (!v7Steps.length) return;
+  const s = v7Steps[v7Idx];
+
+  document.querySelectorAll('#v7-dp-row .dp-cell').forEach((cell, j) => {
+    const valEl = cell.querySelector('.dp-val');
+    valEl.className = 'dp-val';
+    const idx = j + 1;
+    const v = s.dp[idx] || 0;
+    const isFinal = s.phase === 'final' && idx === v7N;
+    const isCurr  = s.phase === 'compute' && idx === s.i;
+    const isA = idx === s.aIdx && s.phase !== 'final';
+    const isB = idx === s.bIdx && s.phase !== 'final';
+
+    if (isFinal)      valEl.classList.add('is-best');
+    else if (isCurr)  valEl.classList.add('is-cur');
+    else if (isA)     valEl.classList.add('is-zero');
+    else if (isB)     valEl.classList.add('is-amber');
+    else if (v > 0)   valEl.classList.add('is-filled');
+    valEl.textContent = v > 0 ? v : '';
+  });
+
+  document.querySelectorAll('#v7-ptr-row .v7-ptr').forEach((el, j) => {
+    const idx = j + 1;
+    const isA    = idx === s.aIdx && s.phase !== 'final';
+    const isB    = idx === s.bIdx && s.phase !== 'final';
+    const isCurr = s.phase === 'compute' && idx === s.i;
+    let label = '', color = '';
+    if (isA && isB) { label = 'a/b'; color = 'var(--accent-text)'; }
+    else if (isA)   { label = 'a';   color = 'var(--green-text)'; }
+    else if (isB)   { label = 'b';   color = 'var(--amber-text)'; }
+    if (isCurr) { label = label ? label + '/curr' : 'curr'; color = 'var(--accent-text)'; }
+    el.textContent = label; el.style.color = color;
+  });
+
+  document.getElementById('v7-si').textContent    = s.i;
+  document.getElementById('v7-sa').textContent    = s.a;
+  document.getElementById('v7-sb').textContent    = s.b;
+  document.getElementById('v7-scurr').textContent = s.curr !== null ? s.curr : '—';
+  document.getElementById('v7-sans').textContent  = s.phase === 'final' ? s.b : '…';
+  document.getElementById('v7-info').innerHTML    = s.msg;
+  document.getElementById('v7-prog').textContent  = `Step ${v7Idx + 1} / ${v7Steps.length}`;
+}
+
+function v7Init() {
+  v7N = Math.min(30, Math.max(1, parseInt(document.getElementById('v7-n').value) || 6));
+  v7Steps = v7BuildSteps(v7N); v7Idx = 0;
+  const dr = document.getElementById('v7-dp-row'); dr.innerHTML = '';
+  for (let j = 1; j <= v7N; j++) {
+    const cell = document.createElement('div'); cell.className = 'dp-cell';
+    cell.innerHTML = `<div class="dp-idx">${j}</div><div class="dp-val"></div>`;
+    dr.appendChild(cell);
+  }
+  const pr = document.getElementById('v7-ptr-row'); pr.innerHTML = '';
+  for (let j = 1; j <= v7N; j++) {
+    const el = document.createElement('div'); el.className = 'v7-ptr';
+    el.style.cssText = 'width:52px;height:18px;text-align:center;font-size:11px;font-weight:600;font-family:monospace;';
+    pr.appendChild(el);
+  }
+  v7Render();
+}
+function v7Fwd()  { if (v7Idx < v7Steps.length - 1) { v7Idx++; v7Render(); } }
+function v7Back() { if (v7Idx > 0) { v7Idx--; v7Render(); } }
+function v7Skip() { v7Idx = v7Steps.length - 1; v7Render(); }
+
+v7Init();
+initPage('0070-climbing-stairs.html', v7Fwd, v7Back);
+</script>
+
+</body>
+</html>

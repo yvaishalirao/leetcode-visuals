@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#518 Coin Change II · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab4" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#518</div>
+      <h1>Coin Change II</h1>
+      <a href="https://leetcode.com/problems/coin-change-ii/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an array of coin denominations and a total <code>amount</code>, return the number of distinct combinations that make up that amount. Order does not matter — <code>[1,2]</code> and <code>[2,1]</code> are the same combination. You may use each coin an unlimited number of times.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>def change(self, amount, coins):
+    dp = [0] * (amount + 1)
+    dp[0] = 1
+    for c in coins:
+        for i in range(c, amount + 1):
+            if dp[i - c]:
+                dp[i] += dp[i - c]
+    return dp[-1]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>coins</label><input type="text" id="v5-coins" value="1,2,5" style="width:160px"></div>
+      <div class="ig"><label>amount</label><input type="number" id="v5-amount" value="5" style="width:70px" min="1" max="30"></div>
+      <button onclick="v5Init()">Run</button>
+    </div>
+    <div class="section-label">Coins — current coin highlighted</div>
+    <div id="v5-coin-badges" style="display:flex;flex-wrap:wrap;margin-bottom:1rem"></div>
+    <div class="info-box" id="v5-info">Click <strong>Run</strong> to start.</div>
+    <div class="stats">
+      <div class="stat"><div class="slabel">coin c</div><div class="sval" id="v5-sc">—</div></div>
+      <div class="stat"><div class="slabel">amount i</div><div class="sval" id="v5-si">—</div></div>
+      <div class="stat"><div class="slabel">dp[i−c]</div><div class="sval" id="v5-ssrc">—</div></div>
+      <div class="stat best"><div class="slabel">answer dp[amt]</div><div class="sval" id="v5-sans">—</div></div>
+    </div>
+    <div class="controls">
+      <button onclick="v5Back()">← Prev</button><button onclick="v5Fwd()">Next →</button><button onclick="v5Skip()">Skip to end</button>
+      <span class="prog" id="v5-prog"></span>
+    </div>
+    <div class="section-label">DP array — dp[i] = combinations making amount i</div>
+    <div style="overflow-x:auto"><div id="v5-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div></div>
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>dp[0] base / dp[i−c] source</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>dp[i] being updated</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>accumulated &gt; 0</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer dp[amount]</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v5Steps=[],v5Idx=0,v5Coins=[],v5Amount=0;
+
+function v5BuildSteps(cs,amt){
+  const dp=new Array(amt+1).fill(0); dp[0]=1;
+  const res=[];
+  res.push({phase:'init',coin:null,coinIdx:-1,i:-1,src:null,dp:[...dp],
+    msg:`Init: <code>dp[0]=1</code> (one way to make amount 0). All other dp[i]=0.`});
+  cs.forEach((c,ci)=>{
+    for(let i=c;i<=amt;i++){
+      const src=dp[i-c];
+      if(src>0){ dp[i]+=src; }
+      res.push({phase:'fill',coin:c,coinIdx:ci,i,src,dp:[...dp],updated:src>0,
+        msg:src>0
+          ?`coin=<code>${c}</code>, i=<code>${i}</code>: dp[${i-c}]=${src} → dp[${i}] += ${src} = <strong>${dp[i]}</strong>`
+          :`coin=<code>${c}</code>, i=<code>${i}</code>: dp[${i-c}]=0 — no contribution, dp[${i}] stays ${dp[i]}`});
+    }
+  });
+  res.push({phase:'final',coin:null,coinIdx:-1,i:-1,src:null,dp:[...dp],
+    msg:`Done! <code>dp[${amt}]=${dp[amt]}</code> — ${dp[amt]} distinct combination${dp[amt]===1?'':'s'}.`});
+  return res;
+}
+
+function v5Render(){
+  if(!v5Steps.length) return;
+  const s=v5Steps[v5Idx];
+  document.querySelectorAll('#v5-coin-badges .coin-badge').forEach((el,ci)=>{
+    el.className='coin-badge'; if(ci===s.coinIdx) el.classList.add('active');
+  });
+  for(let k=0;k<=v5Amount;k++){
+    const el=document.getElementById(`v5-dp${k}`); if(!el) continue;
+    el.className='dp-val'; el.textContent=s.dp[k];
+    const isSrc=s.phase==='fill'&&s.src>0&&k===s.i-s.coin;
+    const isCur=s.phase==='fill'&&k===s.i;
+    const isBest=s.phase==='final'&&k===v5Amount;
+    if(isBest)            el.classList.add('is-best');
+    else if(isSrc)        el.classList.add('is-zero');
+    else if(isCur)        el.classList.add('is-cur');
+    else if(k===0)        el.classList.add('is-zero');
+    else if(s.dp[k]>0)   el.classList.add('is-filled');
+  }
+  document.getElementById('v5-sc').textContent  =s.coin!==null?s.coin:'—';
+  document.getElementById('v5-si').textContent  =s.i>=0?s.i:'—';
+  document.getElementById('v5-ssrc').textContent=s.phase==='fill'?s.src:'—';
+  document.getElementById('v5-sans').textContent=s.phase==='final'?s.dp[v5Amount]:'…';
+  document.getElementById('v5-info').innerHTML  =s.msg;
+  document.getElementById('v5-prog').textContent=`Step ${v5Idx+1} / ${v5Steps.length}`;
+}
+
+function v5Init(){
+  v5Coins=document.getElementById('v5-coins').value.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x)&&x>0);
+  v5Amount=Math.min(30,Math.max(1,parseInt(document.getElementById('v5-amount').value)||5));
+  v5Steps=v5BuildSteps(v5Coins,v5Amount); v5Idx=0;
+  const cb=document.getElementById('v5-coin-badges'); cb.innerHTML='';
+  v5Coins.forEach(c=>{const b=document.createElement('div');b.className='coin-badge';b.textContent=c;cb.appendChild(b);});
+  const dr=document.getElementById('v5-dp-row'); dr.innerHTML='';
+  for(let k=0;k<=v5Amount;k++){
+    const w=document.createElement('div'); w.className='dp-cell';
+    w.innerHTML=`<div class="dp-idx">${k}</div><div class="dp-val" id="v5-dp${k}"></div>`;
+    dr.appendChild(w);
+  }
+  v5Render();
+}
+function v5Fwd(){if(v5Idx<v5Steps.length-1){v5Idx++;v5Render();}}
+function v5Back(){if(v5Idx>0){v5Idx--;v5Render();}}
+function v5Skip(){v5Idx=v5Steps.length-1;v5Render();}
+
+v5Init();
+initPage('0518-coin-change-ii.html', v5Fwd, v5Back);
+</script>
+
+</body>
+</html>

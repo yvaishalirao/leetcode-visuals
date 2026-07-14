@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#62 Unique Paths · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab19" class="viz-section visible">
+  <div class="page-header">
+    <span class="lc-num">62</span>
+    <h1>Unique Paths</h1>
+    <a href="https://leetcode.com/problems/unique-paths/" target="_blank">LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">
+    <p>A robot at top-left of an <code>m×n</code> grid can only move right or down. Count unique paths to bottom-right.</p>
+    <p><strong>Example:</strong> m=3, n=7 → 28 &nbsp;|&nbsp; m=3, n=2 → 3</p>
+  </div>
+  <details class="code-block"><summary>Solution code</summary><pre>def uniquePaths(self, m, n):
+    dp = [[0] * n for _ in range(m)]
+    for i in range(0, m):
+        dp[i][0] = 1
+    for i in range(0, n):
+        dp[0][i] = 1
+    for i in range(1, m):
+        for j in range(1, n):
+            dp[i][j] = dp[i][j-1] + dp[i-1][j]
+    return dp[m-1][n-1]</pre></details>
+  <div class="row">
+    <div class="ig"><label>m (rows)</label><input type="number" id="v20-m" value="3" style="width:60px" min="1" max="8"></div>
+    <div class="ig"><label>n (cols)</label><input type="number" id="v20-n" value="7" style="width:60px" min="1" max="8"></div>
+    <button onclick="v20Init()">Run</button>
+  </div>
+  <div class="info-box" id="v20-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">i (row)</div><div class="sval" id="v20-si">—</div></div>
+    <div class="stat"><div class="slabel">j (col)</div><div class="sval" id="v20-sj">—</div></div>
+    <div class="stat"><div class="slabel">dp[i][j−1]</div><div class="sval" id="v20-sleft">—</div></div>
+    <div class="stat"><div class="slabel">dp[i−1][j]</div><div class="sval" id="v20-sabove">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v20-sans">—</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v20Back()">← Prev</button><button onclick="v20Fwd()">Next →</button><button onclick="v20Skip()">Skip to end</button>
+    <span class="prog" id="v20-prog"></span>
+  </div>
+  <div class="section-label">DP table — dp[i][j] = unique paths to reach (i, j)</div>
+  <div style="overflow-x:auto"><div id="v20-table-wrap"></div></div>
+  <div class="legend">
+    <div class="leg"><div class="lb cell-cur"></div>current dp[i][j]</div>
+    <div class="leg"><div class="lb" style="background:var(--amber-bg);color:var(--amber-text)"></div>dp[i][j−1] left</div>
+    <div class="leg"><div class="lb" style="background:#eeedfe;color:#3c3489"></div>dp[i−1][j] above</div>
+    <div class="leg"><div class="lb cell-zero"></div>base case (= 1)</div>
+    <div class="leg"><div class="lb cell-filled"></div>already computed</div>
+    <div class="leg"><div class="lb cell-best"></div>answer</div>
+  </div>
+</div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v20Steps=[],v20Idx=0,v20M=3,v20N=7;
+
+function v20BuildSteps(m,n){
+  const dp=Array.from({length:m},()=>new Array(n).fill(0));
+  const res=[];
+  res.push({phase:'init',i:-1,j:-1,ci:-1,cj:-1,dp:dp.map(r=>[...r]),left:null,above:null,
+    msg:`Grid is ${m}×${n}. Robot starts at (0,0) and must reach (${m-1},${n-1}) moving only right or down.`});
+  for(let r=0;r<m;r++){
+    dp[r][0]=1;
+    res.push({phase:'col',i:-1,j:-1,ci:r,cj:0,dp:dp.map(row=>[...row]),left:null,above:null,
+      msg:`Base: dp[${r}][0]=1 — only one way to reach any cell in column 0 (keep moving down).`});
+  }
+  for(let c=1;c<n;c++){
+    dp[0][c]=1;
+    res.push({phase:'row',i:-1,j:-1,ci:0,cj:c,dp:dp.map(row=>[...row]),left:null,above:null,
+      msg:`Base: dp[0][${c}]=1 — only one way to reach any cell in row 0 (keep moving right).`});
+  }
+  for(let i=1;i<m;i++){
+    for(let j=1;j<n;j++){
+      const left=dp[i][j-1],above=dp[i-1][j];
+      dp[i][j]=left+above;
+      res.push({phase:'fill',i,j,ci:-1,cj:-1,dp:dp.map(r=>[...r]),left,above,
+        msg:`dp[${i}][${j}] = dp[${i}][${j-1}] + dp[${i-1}][${j}] = ${left} + ${above} = <strong>${dp[i][j]}</strong>`});
+    }
+  }
+  res.push({phase:'final',i:m-1,j:n-1,ci:-1,cj:-1,dp:dp.map(r=>[...r]),left:null,above:null,
+    msg:`Done! <code>dp[${m-1}][${n-1}] = ${dp[m-1][n-1]}</code> unique paths from (0,0) to (${m-1},${n-1}).`});
+  return res;
+}
+
+function v20BuildTable(s){
+  const m=v20M,n=v20N;
+  let h='<table class="dp-table"><thead><tr><th class="row-header"></th>';
+  for(let j=0;j<n;j++) h+=`<th>j=${j}</th>`;
+  h+='</tr></thead><tbody>';
+  for(let r=0;r<m;r++){
+    h+=`<tr><th class="row-header" style="font-size:12px">i=${r}</th>`;
+    for(let c=0;c<n;c++){
+      const v=s.dp[r][c];
+      let cls='cell-empty';
+      if(s.phase==='final'&&r===m-1&&c===n-1)          cls='cell-best';
+      else if(s.phase==='fill'&&r===s.i&&c===s.j)       cls='cell-cur';
+      else if(s.phase==='fill'&&r===s.i&&c===s.j-1)     cls='cell-src-same';
+      else if(s.phase==='fill'&&r===s.i-1&&c===s.j)     cls='cell-src-above';
+      else if((s.phase==='col'||s.phase==='row')&&r===s.ci&&c===s.cj) cls='cell-cur';
+      else if(v>0) cls=(r===0||c===0)?'cell-zero':'cell-filled';
+      h+=`<td class="${cls}">${v>0||cls==='cell-cur'?v:''}</td>`;
+    }
+    h+='</tr>';
+  }
+  return h+'</tbody></table>';
+}
+
+function v20Render(){
+  if(!v20Steps.length) return;
+  const s=v20Steps[v20Idx];
+  document.getElementById('v20-table-wrap').innerHTML=v20BuildTable(s);
+  document.getElementById('v20-si').textContent    =s.i>=0?s.i:'—';
+  document.getElementById('v20-sj').textContent    =s.j>=0?s.j:'—';
+  document.getElementById('v20-sleft').textContent =s.left!==null?s.left:'—';
+  document.getElementById('v20-sabove').textContent=s.above!==null?s.above:'—';
+  document.getElementById('v20-sans').textContent  =s.phase==='final'?s.dp[v20M-1][v20N-1]:'…';
+  document.getElementById('v20-info').innerHTML    =s.msg;
+  document.getElementById('v20-prog').textContent  =`Step ${v20Idx+1} / ${v20Steps.length}`;
+}
+
+function v20Init(){
+  v20M=Math.min(8,Math.max(1,parseInt(document.getElementById('v20-m').value)||3));
+  v20N=Math.min(8,Math.max(1,parseInt(document.getElementById('v20-n').value)||7));
+  v20Steps=v20BuildSteps(v20M,v20N); v20Idx=0;
+  v20Render();
+}
+function v20Fwd(){if(v20Idx<v20Steps.length-1){v20Idx++;v20Render();}}
+function v20Back(){if(v20Idx>0){v20Idx--;v20Render();}}
+function v20Skip(){v20Idx=v20Steps.length-1;v20Render();}
+
+v20Init();
+initPage('0062-unique-paths.html', v20Fwd, v20Back);
+</script>
+
+</body>
+</html>

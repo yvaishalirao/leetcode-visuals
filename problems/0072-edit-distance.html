@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#72 Edit Distance · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab15" class="viz-section visible">
+  <div class="page-header">
+    <div class="lc-num">#72</div>
+    <h1>Edit Distance</h1>
+    <a href="https://leetcode.com/problems/edit-distance/" target="_blank">View on LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">Given two strings <code>word1</code> and <code>word2</code>, return the minimum number of operations to convert <code>word1</code> to <code>word2</code>. Allowed operations: insert, delete, or replace a character. Strategy: 2-D DP — dp[i][j] = min ops for word1[0..i-1] → word2[0..j-1].</div>
+  <details class="code-block"><summary>Solution code</summary><pre>def minDistance(self, word1, word2):
+    m, n = len(word1), len(word2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(1, m + 1):
+        dp[i][0] = i
+    for j in range(1, n + 1):
+        dp[0][j] = j
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if word1[i-1] == word2[j-1]:
+                dp[i][j] = dp[i-1][j-1]
+            else:
+                dp[i][j] = min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]) + 1
+    return dp[m][n]</pre></details>
+
+  <div class="row">
+    <div class="ig"><label>word1</label><input type="text" id="v16-w1" style="width:120px" value="horse"></div>
+    <div class="ig"><label>word2</label><input type="text" id="v16-w2" style="width:120px" value="ros"></div>
+    <button onclick="v16Init()">Run</button>
+  </div>
+  <div class="section-label">DP table — dp[i][j] = min ops to convert word1[0..i-1] → word2[0..j-1]</div>
+  <div style="overflow-x:auto;margin-bottom:1rem">
+    <div id="v16-table"></div>
+  </div>
+  <div class="info-box" id="v16-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">row i</div><div class="sval" id="v16-si">—</div></div>
+    <div class="stat"><div class="slabel">col j</div><div class="sval" id="v16-sj">—</div></div>
+    <div class="stat"><div class="slabel">word1[i-1]</div><div class="sval" id="v16-sc1">—</div></div>
+    <div class="stat"><div class="slabel">word2[j-1]</div><div class="sval" id="v16-sc2">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v16-sans">…</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v16Back()">← Prev</button>
+    <button onclick="v16Fwd()">Next →</button>
+    <button onclick="v16Skip()">Skip to end</button>
+    <span class="prog" id="v16-prog"></span>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="lb cell-zero"></div>min-cost source (diagonal=replace, top=delete, left=insert)</div>
+    <div class="leg"><div class="lb cell-amber"></div>non-minimum sources</div>
+    <div class="leg"><div class="lb cell-cur" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>cell being computed</div>
+    <div class="leg"><div class="lb cell-filled"></div>computed / base case</div>
+    <div class="leg"><div class="lb cell-best"></div>answer dp[m][n]</div>
+  </div>
+</div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v16Steps = [], v16Idx = 0, v16W1 = '', v16W2 = '';
+
+function v16BuildSteps(w1, w2) {
+  const m = w1.length, n = w2.length;
+  const dp = Array.from({length: m+1}, () => Array(n+1).fill(0));
+  for (let i = 1; i <= m; i++) dp[i][0] = i;
+  for (let j = 1; j <= n; j++) dp[0][j] = j;
+  const res = [];
+  res.push({ phase:'init', i:-1, j:-1, dp:dp.map(r=>[...r]), match:false, minSrc:[],
+    msg:`word1="${w1}" (len ${m}), word2="${w2}" (len ${n}). Base cases: dp[i][0]=i (delete), dp[0][j]=j (insert).` });
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const c1 = w1[i-1], c2 = w2[j-1];
+      const match = c1 === c2;
+      let minSrc, msg;
+      if (match) {
+        dp[i][j] = dp[i-1][j-1];
+        minSrc = ['diag'];
+        msg = `w1[${i-1}]='${c1}' = w2[${j-1}]='${c2}' ✓ no op → dp[${i}][${j}] = dp[${i-1}][${j-1}] = <code>${dp[i][j]}</code>`;
+      } else {
+        const dv = dp[i-1][j-1], tv = dp[i-1][j], lv = dp[i][j-1];
+        const minVal = Math.min(dv, tv, lv);
+        dp[i][j] = minVal + 1;
+        minSrc = [];
+        if (dv === minVal) minSrc.push('diag');
+        if (tv === minVal) minSrc.push('top');
+        if (lv === minVal) minSrc.push('left');
+        msg = `w1[${i-1}]='${c1}' ≠ w2[${j-1}]='${c2}' → min(rep=${dv}, del=${tv}, ins=${lv})+1 = <code>${dp[i][j]}</code>`;
+      }
+      res.push({ phase:'fill', i, j, dp:dp.map(r=>[...r]), match, minSrc, msg });
+    }
+  }
+  res.push({ phase:'final', i:m, j:n, dp:dp.map(r=>[...r]), match:false, minSrc:[],
+    msg:`Done! Min edit distance = <code>${dp[m][n]}</code>` });
+  return res;
+}
+
+function v16CellClass(s, m, n, ci, cj) {
+  const isAnswer = ci === m && cj === n;
+  if (s.phase === 'final') return isAnswer ? 'cell-best' : 'cell-filled';
+  const isBase = ci === 0 || cj === 0;
+  if (s.phase === 'init') return isBase ? 'cell-filled' : '';
+  // fill phase
+  if (ci === s.i && cj === s.j) return 'cell-cur';
+  if (isBase) return 'cell-filled';
+  const isDiag = ci === s.i-1 && cj === s.j-1;
+  const isTop  = ci === s.i-1 && cj === s.j;
+  const isLeft = ci === s.i   && cj === s.j-1;
+  if (s.match) {
+    if (isDiag) return 'cell-zero';
+  } else if (isDiag || isTop || isLeft) {
+    const nm = isDiag ? 'diag' : isTop ? 'top' : 'left';
+    return s.minSrc.includes(nm) ? 'cell-zero' : 'cell-amber';
+  }
+  const done = ci < s.i || (ci === s.i && cj < s.j);
+  return done ? 'cell-filled' : '';
+}
+
+function v16Render() {
+  if (!v16Steps.length) return;
+  const s = v16Steps[v16Idx];
+  const m = v16W1.length, n = v16W2.length;
+  for (let i = 0; i <= m; i++) {
+    for (let j = 0; j <= n; j++) {
+      const el = document.getElementById(`v16-${i}-${j}`);
+      if (!el) continue;
+      el.className = v16CellClass(s, m, n, i, j);
+      const isBase = i === 0 || j === 0;
+      const isComp = s.phase === 'final' ||
+        (s.phase === 'fill' && (i < s.i || (i === s.i && j <= s.j)));
+      el.textContent = (isBase || isComp) ? s.dp[i][j] : '';
+    }
+  }
+  document.getElementById('v16-si').textContent  = s.phase === 'fill' ? s.i : '—';
+  document.getElementById('v16-sj').textContent  = s.phase === 'fill' ? s.j : '—';
+  document.getElementById('v16-sc1').textContent = s.phase === 'fill' ? v16W1[s.i-1] : '—';
+  document.getElementById('v16-sc2').textContent = s.phase === 'fill' ? v16W2[s.j-1] : '—';
+  document.getElementById('v16-sans').textContent = s.phase === 'final' ? s.dp[m][n] : '…';
+  document.getElementById('v16-info').innerHTML  = s.msg;
+  document.getElementById('v16-prog').textContent = `Step ${v16Idx + 1} / ${v16Steps.length}`;
+}
+
+function v16Init() {
+  v16W1 = document.getElementById('v16-w1').value.trim().slice(0, 10);
+  v16W2 = document.getElementById('v16-w2').value.trim().slice(0, 10);
+  if (!v16W1 && !v16W2) return;
+  const m = v16W1.length, n = v16W2.length;
+  v16Steps = v16BuildSteps(v16W1, v16W2);
+  v16Idx = 0;
+  let html = '<table class="dp-table"><thead><tr><th></th><th></th>';
+  for (let j = 0; j < n; j++) html += `<th>${v16W2[j]}</th>`;
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i <= m; i++) {
+    html += `<tr><th class="row-header">${i > 0 ? v16W1[i-1] : ''}</th>`;
+    for (let j = 0; j <= n; j++) html += `<td id="v16-${i}-${j}"></td>`;
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('v16-table').innerHTML = html;
+  v16Render();
+}
+function v16Fwd()  { if (v16Idx < v16Steps.length - 1) { v16Idx++; v16Render(); } }
+function v16Back() { if (v16Idx > 0) { v16Idx--; v16Render(); } }
+function v16Skip() { v16Idx = v16Steps.length - 1; v16Render(); }
+
+v16Init();
+initPage('0072-edit-distance.html', v16Fwd, v16Back);
+</script>
+
+</body>
+</html>

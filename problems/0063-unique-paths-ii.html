@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#63 Unique Paths II · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab21" class="viz-section visible">
+  <div class="page-header">
+    <span class="lc-num">63</span>
+    <h1>Unique Paths II</h1>
+    <a href="https://leetcode.com/problems/unique-paths-ii/" target="_blank">LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">
+    <p>Robot at (0,0) must reach (m-1,n-1), moving only right or down. Cells with <code>1</code> are obstacles. Count unique paths.</p>
+    <p><strong>Example:</strong> [[0,0,0],[0,1,0],[0,0,0]] → 2</p>
+  </div>
+  <details class="code-block"><summary>Solution code</summary><pre>def uniquePathsWithObstacles(self, obstacleGrid):
+    m, n = len(obstacleGrid), len(obstacleGrid[0])
+    dp = [[0] * n for _ in range(m)]
+    if obstacleGrid[0][0] == 1:
+        return 0
+    dp[0][0] = 1
+    for i in range(m):
+        for j in range(n):
+            if obstacleGrid[i][j] == 1:
+                dp[i][j] = 0
+            else:
+                if i > 0: dp[i][j] += dp[i-1][j]
+                if j > 0: dp[i][j] += dp[i][j-1]
+    return dp[m-1][n-1]</pre></details>
+  <div class="row">
+    <div class="ig"><label>grid (1=obstacle, rows by ;)</label><input type="text" id="v22-grid" value="0,0,0;0,1,0;0,0,0" style="width:240px"></div>
+    <button onclick="v22Init()">Run</button>
+  </div>
+  <div class="info-box" id="v22-info">Click <strong>Run</strong> to start. <strong>✖</strong> = obstacle (dp forced to 0).</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">i</div><div class="sval" id="v22-si">—</div></div>
+    <div class="stat"><div class="slabel">j</div><div class="sval" id="v22-sj">—</div></div>
+    <div class="stat"><div class="slabel">from above</div><div class="sval" id="v22-sabove">—</div></div>
+    <div class="stat"><div class="slabel">from left</div><div class="sval" id="v22-sleft">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v22-sans">—</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v22Back()">← Prev</button><button onclick="v22Fwd()">Next →</button><button onclick="v22Skip()">Skip to end</button>
+    <span class="prog" id="v22-prog"></span>
+  </div>
+  <div class="section-label">DP table — ✖ obstacle · numbers = unique paths to reach cell</div>
+  <div style="overflow-x:auto"><div id="v22-table-wrap"></div></div>
+  <div class="legend">
+    <div class="leg"><div class="lb" style="background:var(--red-bg);border:1px solid var(--red-border);color:var(--red-border);font-weight:700;font-size:12px">✖</div>obstacle (dp=0)</div>
+    <div class="leg"><div class="lb cell-cur"></div>current cell</div>
+    <div class="leg"><div class="lb" style="background:var(--amber-bg);color:var(--amber-text)"></div>from left dp[i][j−1]</div>
+    <div class="leg"><div class="lb" style="background:#eeedfe;color:#3c3489"></div>from above dp[i−1][j]</div>
+    <div class="leg"><div class="lb cell-filled"></div>paths &gt; 0</div>
+    <div class="leg"><div class="lb cell-best"></div>answer</div>
+  </div>
+</div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v22Steps=[],v22Idx=0,v22OG=[];
+
+function v22BuildSteps(og){
+  const m=og.length,n=og[0].length;
+  const dp=Array.from({length:m},()=>new Array(n).fill(0));
+  const shown=Array.from({length:m},()=>new Array(n).fill(false));
+  const res=[];
+  res.push({phase:'init',i:-1,j:-1,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),above:null,left:null,
+    msg:`Grid is ${m}×${n}. Cells marked 1 are obstacles (✖). dp[i][j] = unique paths to reach (i,j).`});
+  if(og[0][0]===1){
+    shown[0][0]=true;
+    res.push({phase:'blocked',i:0,j:0,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),above:null,left:null,
+      msg:`Start (0,0) is an <strong>obstacle</strong> — return 0 immediately.`});
+    return res;
+  }
+  dp[0][0]=1; shown[0][0]=true;
+  res.push({phase:'corner',i:0,j:0,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),above:null,left:null,
+    msg:`dp[0][0] = 1 — robot starts here (not an obstacle).`});
+  for(let i=0;i<m;i++){
+    for(let j=0;j<n;j++){
+      if(i===0&&j===0) continue;
+      const isObs=og[i][j]===1;
+      const fromAbove=i>0?dp[i-1][j]:null;
+      const fromLeft=j>0?dp[i][j-1]:null;
+      if(isObs){
+        dp[i][j]=0;
+      } else {
+        dp[i][j]=(fromAbove||0)+(fromLeft||0);
+      }
+      shown[i][j]=true;
+      let msg;
+      if(isObs){
+        msg=`(${i},${j}) is an <strong>obstacle</strong> → dp[${i}][${j}] = 0`;
+      } else {
+        const parts=[];
+        if(i>0) parts.push(`dp[${i-1}][${j}]=${fromAbove}`);
+        if(j>0) parts.push(`dp[${i}][${j-1}]=${fromLeft}`);
+        msg=`dp[${i}][${j}] = ${parts.length?parts.join(' + '):'0 (no valid neighbors)'} = <strong>${dp[i][j]}</strong>`;
+      }
+      res.push({phase:'loop',i,j,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),above:fromAbove,left:fromLeft,isObs,msg});
+    }
+  }
+  res.push({phase:'final',i:m-1,j:n-1,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),above:null,left:null,
+    msg:`Done! Unique paths = <strong>${dp[m-1][n-1]}</strong>.`});
+  return res;
+}
+
+function v22BuildTable(s){
+  const og=v22OG,m=og.length,n=og[0].length;
+  let h='<table class="dp-table"><thead><tr><th class="row-header"></th>';
+  for(let j=0;j<n;j++) h+=`<th>j=${j}</th>`;
+  h+='</tr></thead><tbody>';
+  for(let r=0;r<m;r++){
+    h+=`<tr><th class="row-header" style="font-size:12px">i=${r}</th>`;
+    for(let c=0;c<n;c++){
+      const v=s.dp[r][c],isShown=s.shown[r][c],isObs=og[r][c]===1;
+      if(isObs){
+        const isCur=s.phase==='loop'&&r===s.i&&c===s.j;
+        h+=`<td style="background:var(--red-bg);border:.5px solid var(--red-border);color:var(--red-border);font-weight:700;font-size:14px${isCur?';outline:2.5px solid var(--red-border);outline-offset:-2px':''}">✖</td>`;
+        continue;
+      }
+      if(!isShown){ h+=`<td class="cell-empty"></td>`; continue; }
+      let cls;
+      if(s.phase==='final'&&r===m-1&&c===n-1)           cls='cell-best';
+      else if((s.phase==='loop'||s.phase==='corner')&&r===s.i&&c===s.j) cls='cell-cur';
+      else if(s.phase==='loop'&&r===s.i&&c===s.j-1&&s.j>0)  cls='cell-src-same';
+      else if(s.phase==='loop'&&r===s.i-1&&c===s.j&&s.i>0)  cls='cell-src-above';
+      else cls=v>0?'cell-filled':'cell-empty';
+      h+=`<td class="${cls}">${v}</td>`;
+    }
+    h+='</tr>';
+  }
+  return h+'</tbody></table>';
+}
+
+function v22Render(){
+  if(!v22Steps.length) return;
+  const s=v22Steps[v22Idx];
+  document.getElementById('v22-table-wrap').innerHTML=v22BuildTable(s);
+  document.getElementById('v22-si').textContent    =s.i>=0?s.i:'—';
+  document.getElementById('v22-sj').textContent    =s.j>=0?s.j:'—';
+  document.getElementById('v22-sabove').textContent=s.above!==null?s.above:'—';
+  document.getElementById('v22-sleft').textContent =s.left!==null?s.left:'—';
+  document.getElementById('v22-sans').textContent  =s.phase==='final'?s.dp[v22OG.length-1][v22OG[0].length-1]:'…';
+  document.getElementById('v22-info').innerHTML    =s.msg;
+  document.getElementById('v22-prog').textContent  =`Step ${v22Idx+1} / ${v22Steps.length}`;
+}
+
+function v22Init(){
+  v22OG=document.getElementById('v22-grid').value.trim().split(';')
+    .map(row=>row.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x)))
+    .filter(r=>r.length>0).slice(0,7);
+  if(!v22OG.length) return;
+  const maxN=Math.max(...v22OG.map(r=>r.length));
+  v22OG=v22OG.map(r=>r.slice(0,Math.min(maxN,7)));
+  v22Steps=v22BuildSteps(v22OG); v22Idx=0;
+  v22Render();
+}
+function v22Fwd(){if(v22Idx<v22Steps.length-1){v22Idx++;v22Render();}}
+function v22Back(){if(v22Idx>0){v22Idx--;v22Render();}}
+function v22Skip(){v22Idx=v22Steps.length-1;v22Render();}
+
+v22Init();
+initPage('0063-unique-paths-ii.html', v22Fwd, v22Back);
+</script>
+
+</body>
+</html>

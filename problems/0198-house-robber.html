@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#198 House Robber · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab7" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#198</div>
+      <h1>House Robber</h1>
+      <a href="https://leetcode.com/problems/house-robber/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an integer array <code>nums</code> representing the amount of money at each house, return the maximum amount you can rob tonight. You cannot rob two adjacent houses — they share an alarm system.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def rob(self, nums):
+        n = len(nums)
+        if n &lt; 2:
+            return nums[0]
+        dp = [0] * n
+        dp[0] = nums[0]
+        dp[1] = max(nums[0], nums[1])
+        for i in range(2, n):
+            dp[i] = max(dp[i-2] + nums[i], dp[i-1])
+        return dp[-1]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v8-nums" value="2,7,9,3,1" style="width:200px"></div>
+      <button onclick="v8Init()">Run</button>
+    </div>
+
+    <div class="section-label">Houses — money stashed ($)</div>
+    <div style="overflow-x:auto">
+      <div id="v8-house-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div>
+    </div>
+
+    <div class="section-label">DP array — dp[i] = max loot reachable up to house i</div>
+    <div style="overflow-x:auto">
+      <div id="v8-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div>
+    </div>
+
+    <div class="info-box" id="v8-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i (house)</div><div class="sval" id="v8-si">—</div></div>
+      <div class="stat"><div class="slabel">nums[i]</div><div class="sval" id="v8-snums">—</div></div>
+      <div class="stat"><div class="slabel">rob: dp[i−2]+nums[i]</div><div class="sval" id="v8-sopt1">—</div></div>
+      <div class="stat"><div class="slabel">skip: dp[i−1]</div><div class="sval" id="v8-sopt2">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v8-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v8Back()">← Prev</button>
+      <button onclick="v8Fwd()">Next →</button>
+      <button onclick="v8Skip()">Skip to end</button>
+      <span class="prog" id="v8-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>dp[i−2] / house i−2 (rob source)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>dp[i−1] (skip source)</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current i</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>filled</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v8Steps=[], v8Idx=0, v8Nums=[];
+
+function v8BuildSteps(nums) {
+  const n = nums.length;
+  const dp = new Array(n).fill(0);
+  const res = [];
+
+  if (n === 1) {
+    dp[0] = nums[0];
+    res.push({phase:'final', i:0, dp:[...dp], opt1:null, opt2:null, chosen:dp[0],
+      msg:`Only one house — rob it for <code>${nums[0]}</code>.`});
+    return res;
+  }
+
+  dp[0] = nums[0];
+  res.push({phase:'base0', i:0, dp:[...dp], opt1:null, opt2:null, chosen:dp[0],
+    msg:`Base: <code>dp[0] = nums[0] = ${nums[0]}</code> — only one house so far, rob it.`});
+
+  dp[1] = Math.max(nums[0], nums[1]);
+  res.push({phase:'base1', i:1, dp:[...dp], opt1:nums[0], opt2:nums[1], chosen:dp[1],
+    msg:`Base: <code>dp[1] = max(nums[0], nums[1]) = max(${nums[0]}, ${nums[1]}) = ${dp[1]}</code> — take the richer of the first two houses.`});
+
+  for (let i = 2; i < n; i++) {
+    const opt1 = dp[i-2] + nums[i];
+    const opt2 = dp[i-1];
+    const chosen = Math.max(opt1, opt2);
+    dp[i] = chosen;
+    const robCurrent = opt1 >= opt2;
+    res.push({phase:'compute', i, dp:[...dp], opt1, opt2, chosen, robCurrent,
+      msg:`i=<code>${i}</code>, house=<code>$${nums[i]}</code>: `+
+        `rob = <code>dp[${i-2}]+${nums[i]}=${dp[i-2]}+${nums[i]}=${opt1}</code>, `+
+        `skip = <code>dp[${i-1}]=${opt2}</code> → `+
+        `<code>dp[${i}] = ${chosen}</code> `+
+        `<span style="font-size:12px;padding:2px 8px;border-radius:20px;font-weight:500;`+
+        `background:${robCurrent?'var(--green-bg)':'var(--amber-bg)'};`+
+        `color:${robCurrent?'var(--green-text)':'var(--amber-text)'};`+
+        `border:0.5px solid ${robCurrent?'var(--green-border)':'var(--amber-border)'}">`+
+        `${robCurrent?'rob house '+i:'skip house '+i}</span>`});
+  }
+
+  res.push({phase:'final', i:n-1, dp:[...dp], opt1:null, opt2:null, chosen:dp[n-1],
+    msg:`Done! Maximum loot = <code>${dp[n-1]}</code>.`});
+  return res;
+}
+
+function v8Render() {
+  if (!v8Steps.length) return;
+  const s = v8Steps[v8Idx];
+  const n = v8Nums.length;
+
+  // House row — always show all houses; highlight sources
+  document.querySelectorAll('#v8-house-row .dp-cell').forEach((cell, i) => {
+    const valEl = cell.querySelector('.dp-val');
+    valEl.className = 'dp-val is-filled';
+    if (s.phase === 'base0' && i === 0) {
+      valEl.className = 'dp-val is-cur';
+    } else if (s.phase === 'base1') {
+      if (i === 0) valEl.className = 'dp-val is-zero';
+      else if (i === 1) valEl.className = 'dp-val is-cur';
+    } else if (s.phase === 'compute') {
+      if (i === s.i)   valEl.className = 'dp-val is-cur';
+      else if (i === s.i - 2) valEl.className = 'dp-val is-zero';
+    }
+  });
+
+  // DP row
+  document.querySelectorAll('#v8-dp-row .dp-cell').forEach((cell, j) => {
+    const valEl = cell.querySelector('.dp-val');
+    valEl.className = 'dp-val';
+    const computed = j <= s.i;
+    const isFinal = s.phase === 'final' && j === n - 1;
+    const isCur   = (s.phase === 'base0' || s.phase === 'base1' || s.phase === 'compute') && j === s.i;
+    const isSrc1  = (s.phase === 'compute' && j === s.i - 2) || (s.phase === 'base1' && j === 0);
+    const isSrc2  = s.phase === 'compute' && j === s.i - 1;
+
+    if (isFinal)     valEl.classList.add('is-best');
+    else if (isCur)  valEl.classList.add('is-cur');
+    else if (isSrc1) valEl.classList.add('is-zero');
+    else if (isSrc2) valEl.classList.add('is-amber');
+    else if (computed) valEl.classList.add('is-filled');
+    valEl.textContent = computed ? s.dp[j] : '';
+  });
+
+  document.getElementById('v8-si').textContent    = s.i;
+  document.getElementById('v8-snums').textContent = v8Nums[s.i] !== undefined ? v8Nums[s.i] : '—';
+  document.getElementById('v8-sopt1').textContent = s.opt1 !== null ? s.opt1 : '—';
+  document.getElementById('v8-sopt2').textContent = s.opt2 !== null ? s.opt2 : '—';
+  document.getElementById('v8-sans').textContent  = s.phase === 'final' ? s.chosen : '…';
+  document.getElementById('v8-info').innerHTML    = s.msg;
+  document.getElementById('v8-prog').textContent  = `Step ${v8Idx + 1} / ${v8Steps.length}`;
+}
+
+function v8Init() {
+  v8Nums = document.getElementById('v8-nums').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x) && x >= 0);
+  if (!v8Nums.length) return;
+  v8Steps = v8BuildSteps(v8Nums); v8Idx = 0;
+
+  const hr = document.getElementById('v8-house-row'); hr.innerHTML = '';
+  v8Nums.forEach((v, i) => {
+    const cell = document.createElement('div'); cell.className = 'dp-cell';
+    cell.innerHTML = `<div class="dp-idx">${i}</div><div class="dp-val is-filled">$${v}</div>`;
+    hr.appendChild(cell);
+  });
+
+  const dr = document.getElementById('v8-dp-row'); dr.innerHTML = '';
+  for (let j = 0; j < v8Nums.length; j++) {
+    const cell = document.createElement('div'); cell.className = 'dp-cell';
+    cell.innerHTML = `<div class="dp-idx">${j}</div><div class="dp-val"></div>`;
+    dr.appendChild(cell);
+  }
+  v8Render();
+}
+function v8Fwd()  { if (v8Idx < v8Steps.length - 1) { v8Idx++; v8Render(); } }
+function v8Back() { if (v8Idx > 0) { v8Idx--; v8Render(); } }
+function v8Skip() { v8Idx = v8Steps.length - 1; v8Render(); }
+
+v8Init();
+initPage('0198-house-robber.html', v8Fwd, v8Back);
+</script>
+
+</body>
+</html>

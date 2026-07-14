@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#746 Min Cost Climbing Stairs · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab11" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#746</div>
+      <h1>Min Cost Climbing Stairs</h1>
+      <a href="https://leetcode.com/problems/min-cost-climbing-stairs/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given <code>cost[i]</code> — the cost to step on stair <code>i</code> — find the minimum cost to reach the top. You can start at index 0 or 1 and take 1 or 2 steps each time. <code>dp[i] = cost[i] + min(dp[i−1], dp[i−2])</code>. Answer: <code>min(dp[n−1], dp[n−2])</code>.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def minCostClimbingStairs(self, cost):
+        n = len(cost)
+        dp = [0] * n
+        dp[0] = cost[0]
+        dp[1] = cost[1]
+        for i in range(2, n):
+            dp[i] = cost[i] + min(dp[i-1], dp[i-2])
+        return min(dp[n-1], dp[n-2])</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>cost</label><input type="text" id="v12-cost" value="10,15,20" style="width:220px"></div>
+      <button onclick="v12Init()">Run</button>
+    </div>
+
+    <div class="section-label">Cost array</div>
+    <div style="overflow-x:auto">
+      <div id="v12-cost-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div>
+    </div>
+
+    <div class="section-label">DP array — dp[i] = min cost to step on stair i</div>
+    <div style="overflow-x:auto">
+      <div id="v12-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div>
+    </div>
+
+    <div class="info-box" id="v12-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v12-si">—</div></div>
+      <div class="stat"><div class="slabel">cost[i]</div><div class="sval" id="v12-scost">—</div></div>
+      <div class="stat"><div class="slabel">dp[i−2]</div><div class="sval" id="v12-sopt1">—</div></div>
+      <div class="stat"><div class="slabel">dp[i−1]</div><div class="sval" id="v12-sopt2">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v12-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v12Back()">← Prev</button>
+      <button onclick="v12Fwd()">Next →</button>
+      <button onclick="v12Skip()">Skip to end</button>
+      <span class="prog" id="v12-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>dp[i−2] source</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>dp[i−1] source</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>dp[i] being computed</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>filled</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v12Steps=[], v12Idx=0, v12Nums=[];
+
+function v12BuildSteps(cost) {
+  const n = cost.length;
+  const dp = new Array(n).fill(0);
+  const res = [];
+
+  dp[0] = cost[0];
+  res.push({phase:'base0', i:0, dp:[...dp], opt1:null, opt2:null, chosen:dp[0],
+    msg:`Base: <code>dp[0] = cost[0] = ${cost[0]}</code>.`});
+
+  if (n === 1) {
+    res.push({phase:'final', i:0, dp:[...dp], opt1:dp[0], opt2:null, chosen:dp[0],
+      msg:`Only one stair — answer is <code>${dp[0]}</code>.`});
+    return res;
+  }
+
+  dp[1] = cost[1];
+  res.push({phase:'base1', i:1, dp:[...dp], opt1:null, opt2:null, chosen:dp[1],
+    msg:`Base: <code>dp[1] = cost[1] = ${cost[1]}</code>.`});
+
+  for (let i = 2; i < n; i++) {
+    const opt1 = dp[i-2];
+    const opt2 = dp[i-1];
+    dp[i] = cost[i] + Math.min(opt1, opt2);
+    res.push({phase:'compute', i, dp:[...dp], opt1, opt2, chosen:dp[i],
+      msg:`i=<code>${i}</code>, cost[i]=<code>${cost[i]}</code>: `+
+        `<code>dp[${i}] = ${cost[i]} + min(dp[${i-2}], dp[${i-1}]) = ${cost[i]} + min(${opt1}, ${opt2}) = ${dp[i]}</code>`
+    });
+  }
+
+  const ans = Math.min(dp[n-2], dp[n-1]);
+  res.push({phase:'final', i:n-1, dp:[...dp], opt1:dp[n-2], opt2:dp[n-1], chosen:ans,
+    msg:`Done! <code>min(dp[${n-2}], dp[${n-1}]) = min(${dp[n-2]}, ${dp[n-1]}) = ${ans}</code>. Answer: <code>${ans}</code>.`});
+  return res;
+}
+
+function v12Render() {
+  if (!v12Steps.length) return;
+  const s = v12Steps[v12Idx];
+  const n = v12Nums.length;
+
+  // Cost row
+  document.querySelectorAll('#v12-cost-row .dp-cell').forEach((cell, i) => {
+    const valEl = cell.querySelector('.dp-val');
+    valEl.className = 'dp-val is-filled';
+    if (s.phase === 'base0' && i === 0)      valEl.className = 'dp-val is-cur';
+    else if (s.phase === 'base1' && i === 1)  valEl.className = 'dp-val is-cur';
+    else if (s.phase === 'compute') {
+      if (i === s.i)       valEl.className = 'dp-val is-cur';
+      else if (i === s.i-2) valEl.className = 'dp-val is-zero';
+      else if (i === s.i-1) valEl.className = 'dp-val is-amber';
+    }
+  });
+
+  // DP row
+  document.querySelectorAll('#v12-dp-row .dp-cell').forEach((cell, j) => {
+    const valEl = cell.querySelector('.dp-val');
+    valEl.className = 'dp-val';
+    const v      = s.dp[j];
+    const done   = j <= s.i || s.phase === 'final';
+    const isCur  = (s.phase === 'base0' || s.phase === 'base1' || s.phase === 'compute') && j === s.i;
+    const isSrc1 = s.phase === 'compute' && j === s.i - 2;
+    const isSrc2 = s.phase === 'compute' && j === s.i - 1;
+
+    if (s.phase === 'final' && (j === n-1 || j === n-2)) {
+      valEl.classList.add(v === s.chosen ? 'is-best' : 'is-amber');
+    } else if (isCur)  valEl.classList.add('is-cur');
+    else if (isSrc1)   valEl.classList.add('is-zero');
+    else if (isSrc2)   valEl.classList.add('is-amber');
+    else if (done)     valEl.classList.add(j === 0 ? 'is-zero' : 'is-filled');
+    valEl.textContent = done ? v : '';
+  });
+
+  document.getElementById('v12-si').textContent    = s.i;
+  document.getElementById('v12-scost').textContent = v12Nums[s.i] !== undefined ? v12Nums[s.i] : '—';
+  document.getElementById('v12-sopt1').textContent = s.opt1 !== null ? s.opt1 : '—';
+  document.getElementById('v12-sopt2').textContent = s.opt2 !== null ? s.opt2 : '—';
+  document.getElementById('v12-sans').textContent  = s.phase === 'final' ? s.chosen : '…';
+  document.getElementById('v12-info').innerHTML    = s.msg;
+  document.getElementById('v12-prog').textContent  = `Step ${v12Idx + 1} / ${v12Steps.length}`;
+}
+
+function v12Init() {
+  v12Nums = document.getElementById('v12-cost').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x) && x >= 0);
+  if (!v12Nums.length) return;
+  v12Steps = v12BuildSteps(v12Nums); v12Idx = 0;
+
+  const cr = document.getElementById('v12-cost-row'); cr.innerHTML = '';
+  v12Nums.forEach((v, i) => {
+    const cell = document.createElement('div'); cell.className = 'dp-cell';
+    cell.innerHTML = `<div class="dp-idx">${i}</div><div class="dp-val is-filled">${v}</div>`;
+    cr.appendChild(cell);
+  });
+
+  const dr = document.getElementById('v12-dp-row'); dr.innerHTML = '';
+  for (let j = 0; j < v12Nums.length; j++) {
+    const cell = document.createElement('div'); cell.className = 'dp-cell';
+    cell.innerHTML = `<div class="dp-idx">${j}</div><div class="dp-val"></div>`;
+    dr.appendChild(cell);
+  }
+  v12Render();
+}
+function v12Fwd()  { if (v12Idx < v12Steps.length - 1) { v12Idx++; v12Render(); } }
+function v12Back() { if (v12Idx > 0) { v12Idx--; v12Render(); } }
+function v12Skip() { v12Idx = v12Steps.length - 1; v12Render(); }
+
+v12Init();
+initPage('0746-min-cost-climbing-stairs.html', v12Fwd, v12Back);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#97 Interleaving String · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab0" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#97</div>
+      <h1>Interleaving String</h1>
+      <a href="https://leetcode.com/problems/interleaving-string/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given strings <code>s1</code>, <code>s2</code>, and <code>s3</code>, return <code>true</code> if <code>s3</code> is formed by an interleaving of <code>s1</code> and <code>s2</code>. An interleaving maintains the relative order of characters from each string but can mix them in any order.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution:
+    def isInterleave(self, s1, s2, s3):
+        if len(s1) + len(s2) != len(s3): return False
+        m, n = len(s1), len(s2)
+        dp = [[False] * (n + 1) for _ in range(m + 1)]
+        dp[0][0] = True
+        for i in range(m + 1):
+            for j in range(n + 1):
+                if not dp[i][j]: continue
+                if i &lt; m and s1[i] == s3[i + j]:
+                    dp[i + 1][j] = True
+                if j &lt; n and s2[j] == s3[i + j]:
+                    dp[i][j + 1] = True
+        return dp[m][n]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s1</label><input type="text" id="v1-s1" value="aab" style="width:90px"></div>
+      <div class="ig"><label>s2</label><input type="text" id="v1-s2" value="bc" style="width:90px"></div>
+      <div class="ig"><label>s3</label><input type="text" id="v1-s3" value="ababc" style="width:130px"></div>
+      <button onclick="v1Init()">Run</button>
+    </div>
+
+    <div class="section-label">Strings — current position</div>
+    <div class="str-vis" id="v1-strvis"></div>
+
+    <div class="info-box" id="v1-info">Click <strong>Run</strong> to start stepping.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i (s1 consumed)</div><div class="sval" id="v1-si">—</div></div>
+      <div class="stat"><div class="slabel">j (s2 consumed)</div><div class="sval" id="v1-sj">—</div></div>
+      <div class="stat best"><div class="slabel">result dp[m][n]</div><div class="sval" id="v1-ans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v1Back()">← Prev</button>
+      <button onclick="v1Fwd()">Next →</button>
+      <button onclick="v1Skip()">Skip to end</button>
+      <span class="prog" id="v1-prog"></span>
+    </div>
+
+    <div class="section-label">DP table — dp[i][j] = can s3[:i+j] be formed by interleaving s1[:i] and s2[:j]?</div>
+    <div class="table-wrap"><div id="v1-table"></div></div>
+
+    <div class="legend" style="margin-top:12px">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>True</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>False</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>Not yet filled</div>
+      <div class="leg"><div class="lb" style="outline:2px solid var(--accent);outline-offset:-2px"></div>Current cell</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+let v1Steps = [], v1Idx = 0, v1s1 = '', v1s2 = '', v1s3 = '';
+
+function v1Compute(a, b, c) {
+  if (a.length + b.length !== c.length) return null;
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, () => Array(n+1).fill(null));
+  const steps = [];
+  dp[0][0] = true;
+  steps.push({ i:0, j:0, val:true, msg:`Base case: <code>dp[0][0] = True</code> — empty prefixes of s1 and s2 trivially interleave into the empty prefix of s3.` });
+  const queue = [[0,0]], seen = new Set(['0,0']);
+  while (queue.length) {
+    const [i,j] = queue.shift();
+    if (!dp[i][j]) continue;
+    if (i < m && c[i+j] === a[i] && !seen.has(`${i+1},${j}`)) {
+      seen.add(`${i+1},${j}`); dp[i+1][j] = true; queue.push([i+1,j]);
+      steps.push({ i:i+1, j, val:true, msg:`<code>dp[${i}][${j}]</code> is True → <code>s1[${i}] = '${a[i]}'</code> matches <code>s3[${i+j}] = '${c[i+j]}'</code> ✓ → spread <strong>down</strong> → <code>dp[${i+1}][${j}] = True</code>` });
+    }
+    if (j < n && c[i+j] === b[j] && !seen.has(`${i},${j+1}`)) {
+      seen.add(`${i},${j+1}`); dp[i][j+1] = true; queue.push([i,j+1]);
+      steps.push({ i, j:j+1, val:true, msg:`<code>dp[${i}][${j}]</code> is True → <code>s2[${j}] = '${b[j]}'</code> matches <code>s3[${i+j}] = '${c[i+j]}'</code> ✓ → spread <strong>right</strong> → <code>dp[${i}][${j+1}] = True</code>` });
+    }
+  }
+  for (let i=0;i<=m;i++) for (let j=0;j<=n;j++) if (dp[i][j]===null) dp[i][j]=false;
+  return { steps, dp, m, n };
+}
+
+function v1BuildTable(m, n, curStep) {
+  const grid = Array.from({length:m+1},()=>Array(n+1).fill(null));
+  let cur = null;
+  for (let k=0; k<=curStep; k++) {
+    const s=v1Steps[k]; grid[s.i][s.j]=s.val;
+    if (k===curStep) cur=[s.i,s.j];
+  }
+  let h = '<table class="dp-table"><thead><tr><th></th>';
+  for (let j=0;j<=n;j++) h+=`<th>j=${j}&nbsp;&nbsp;<span style="font-weight:400;color:var(--text-muted)">${j>0?'s2['+( j-1)+']='+v1s2[j-1]:'ε'}</span></th>`;
+  h+='</tr></thead><tbody>';
+  for (let i=0;i<=m;i++) {
+    h+=`<tr><th>i=${i}&nbsp;&nbsp;<span style="font-weight:400;color:var(--text-muted)">${i>0?'s1['+(i-1)+']='+v1s1[i-1]:'ε'}</span></th>`;
+    for (let j=0;j<=n;j++) {
+      const v=grid[i][j], isCur=cur&&cur[0]===i&&cur[1]===j;
+      let cls=v===null?'cell-empty':(v?'cell-true':'cell-false');
+      if (isCur) cls+=' cell-current';
+      h+=`<td class="${cls}">${v===null?'':v?'T':'F'}<span class="cell-idx">${i},${j}</span></td>`;
+    }
+    h+='</tr>';
+  }
+  return h+'</tbody></table>';
+}
+
+function v1Render() {
+  if (!v1Steps.length) return;
+  const s = v1Steps[v1Idx];
+  document.getElementById('v1-table').innerHTML = v1BuildTable(v1s1.length, v1s2.length, v1Idx);
+  document.getElementById('v1-info').innerHTML = s.msg;
+  document.getElementById('v1-si').textContent = s.i;
+  document.getElementById('v1-sj').textContent = s.j;
+  const isEnd = v1Idx === v1Steps.length-1;
+  const lastS = v1Steps[v1Steps.length-1];
+  document.getElementById('v1-ans').textContent = isEnd ? (v1Steps.some(st=>st.i===v1s1.length&&st.j===v1s2.length&&st.val)?'True':'False') : '…';
+  document.getElementById('v1-prog').textContent = `Step ${v1Idx+1} / ${v1Steps.length}`;
+  let h='';
+  const pos=s.i+s.j;
+  [[v1s1,s.i,'s1'],[v1s2,s.j,'s2'],[v1s3,pos,'s3']].forEach(([str,used,lbl],gi)=>{
+    if(gi>0) h+=`<span style="margin:0 6px;color:var(--text-muted)">|</span>`;
+    h+=`<span class="sv-label">${lbl}:</span>`;
+    for(let k=0;k<str.length;k++) h+=`<span class="sv-char ${k<used?'used':k===used?'active':''}">${str[k]}</span>`;
+  });
+  document.getElementById('v1-strvis').innerHTML=h;
+}
+
+function v1Init() {
+  v1s1=document.getElementById('v1-s1').value.trim();
+  v1s2=document.getElementById('v1-s2').value.trim();
+  v1s3=document.getElementById('v1-s3').value.trim();
+  const res=v1Compute(v1s1,v1s2,v1s3);
+  if(!res){document.getElementById('v1-info').innerHTML=`<span style="color:var(--red-text)">len(s1)+len(s2) ≠ len(s3) — cannot interleave.</span>`;return;}
+  v1Steps=res.steps; v1Idx=0; v1Render();
+}
+function v1Fwd(){if(v1Idx<v1Steps.length-1){v1Idx++;v1Render();}}
+function v1Back(){if(v1Idx>0){v1Idx--;v1Render();}}
+function v1Skip(){v1Idx=v1Steps.length-1;v1Render();}
+
+v1Init();
+initPage('0097-interleaving-string.html', v1Fwd, v1Back);
+</script>
+
+</body>
+</html>
