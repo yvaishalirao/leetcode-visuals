@@ -1,0 +1,3805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSA Visualizers</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --s1: #f1efe8;
+  --s2: #e8e6df;
+  --border: rgba(0,0,0,0.1);
+  --border-strong: rgba(0,0,0,0.18);
+  --text: #1a1a18;
+  --text-sec: #5f5e5a;
+  --text-muted: #888780;
+  --radius: 8px;
+  --accent: #185fa5;
+  --accent-bg: #e6f1fb;
+  --accent-text: #0c447c;
+  --accent-border: #85b7eb;
+  --green-bg: #eaf3de;
+  --green-border: #3b6d11;
+  --green-text: #27500a;
+  --amber-bg: #faeeda;
+  --amber-border: #854f0b;
+  --amber-text: #633806;
+  --red-bg: #fcebeb;
+  --red-border: #a32d2d;
+  --red-text: #791f1f;
+  --drawer-w: 300px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1a; --surface: #2a2a28; --s1: #242422; --s2: #1e1e1c;
+    --border: rgba(255,255,255,0.1); --border-strong: rgba(255,255,255,0.18);
+    --text: #e8e6e0; --text-sec: #9c9a92; --text-muted: #6a6864;
+    --accent: #378add; --accent-bg: #0c2a44; --accent-text: #85b7eb; --accent-border: #185fa5;
+    --green-bg: #173404; --green-border: #639922; --green-text: #c0dd97;
+    --amber-bg: #412402; --amber-border: #ba7517; --amber-text: #fac775;
+    --red-bg: #501313; --red-border: #e24b4a; --red-text: #f7c1c1;
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex;
+}
+
+/* ── Drawer ── */
+#drawer {
+  position: fixed; top: 0; left: 0; height: 100vh;
+  width: var(--drawer-w); background: var(--surface);
+  border-right: 0.5px solid var(--border-strong);
+  transform: translateX(calc(-1 * var(--drawer-w)));
+  transition: transform 0.25s ease; z-index: 100;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#drawer.open { transform: translateX(0); }
+
+.drawer-header {
+  padding: 16px; border-bottom: 0.5px solid var(--border);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.drawer-title { font-size: 14px; font-weight: 500; color: var(--text); }
+#search {
+  width: 100%; padding: 7px 10px; border-radius: var(--radius);
+  border: 0.5px solid var(--border-strong);
+  background: var(--s1); color: var(--text);
+  font-size: 13px; outline: none;
+}
+#search:focus { border-color: var(--accent); }
+
+.problem-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+.problem-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 16px; cursor: pointer; transition: background 0.15s;
+  border-left: 2px solid transparent;
+}
+.problem-item:hover { background: var(--s1); }
+.problem-item.active { background: var(--accent-bg); border-left-color: var(--accent); }
+.problem-item.active .p-num { color: var(--accent-text); }
+.problem-item.active .p-title { color: var(--accent-text); }
+.p-num {
+  font-size: 11px; font-weight: 500; color: var(--text-muted);
+  font-family: monospace; min-width: 36px; padding-top: 1px;
+}
+.p-title { font-size: 13px; color: var(--text-sec); line-height: 1.4; }
+
+/* ── Overlay ── */
+#overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.3); z-index: 99;
+}
+#overlay.show { display: block; }
+
+/* ── Toggle button ── */
+#toggle-btn {
+  position: fixed; top: 16px; left: 16px; z-index: 101;
+  width: 36px; height: 36px; border-radius: var(--radius);
+  border: 0.5px solid var(--border-strong);
+  background: var(--surface); color: var(--text);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 18px; transition: background 0.15s;
+}
+#toggle-btn:hover { background: var(--s1); }
+
+/* ── Main content ── */
+#main {
+  flex: 1; padding: 1.5rem 1.5rem 2rem;
+  max-width: 800px; margin: 0 auto; width: 100%;
+  padding-left: 72px;
+}
+
+.page-header { margin-bottom: 1.5rem; padding-top: 4px; }
+.page-header .lc-num {
+  font-size: 12px; font-weight: 500; color: var(--text-muted);
+  font-family: monospace; margin-bottom: 4px;
+}
+.page-header h1 { font-size: 20px; font-weight: 500; margin-bottom: 6px; }
+.page-header a {
+  font-size: 12px; color: var(--accent); text-decoration: none;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.page-header a:hover { text-decoration: underline; }
+
+.viz-section { display: none; }
+.viz-section.visible { display: block; }
+
+/* ── Controls & inputs ── */
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1.2rem; }
+.ig { display: flex; flex-direction: column; gap: 4px; }
+.ig label { font-size: 12px; color: var(--text-sec); }
+input[type=text], input[type=number] {
+  padding: 6px 10px; border-radius: var(--radius);
+  border: 0.5px solid var(--border-strong);
+  background: var(--surface); color: var(--text);
+  font-family: 'Menlo','Courier New',monospace; font-size: 13px; outline: none;
+}
+input:focus { border-color: var(--accent); }
+
+button {
+  padding: 7px 16px; border-radius: var(--radius);
+  border: 0.5px solid var(--border-strong);
+  background: var(--surface); color: var(--text);
+  font-size: 13px; cursor: pointer; transition: background 0.15s, transform 0.1s;
+}
+button:hover { background: var(--s1); }
+button:active { transform: scale(0.97); }
+
+.section-label {
+  font-size: 11px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin-bottom: 6px; margin-top: 1rem;
+}
+
+.info-box {
+  background: var(--s1); border: 0.5px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; font-size: 13px;
+  margin: 0.8rem 0; line-height: 1.7;
+}
+.info-box code {
+  font-family: 'Menlo',monospace; background: var(--bg);
+  padding: 1px 5px; border-radius: 3px; font-size: 12px;
+}
+
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px; margin: 0.8rem 0;
+}
+.stat { background: var(--s1); border-radius: var(--radius); padding: 8px 12px; }
+.stat .slabel { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+.stat .sval { font-size: 18px; font-weight: 500; font-family: monospace; }
+.stat.best .sval { color: var(--accent); }
+
+.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0.8rem 0; }
+.prog { font-size: 12px; color: var(--text-muted); }
+
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-sec); margin-top: 8px; }
+.leg { display: flex; align-items: center; gap: 5px; }
+.lb { width: 12px; height: 12px; border-radius: 3px; border: 0.5px solid var(--border); flex-shrink: 0; }
+
+/* ── VIZ 1 — DP Table ── */
+.table-wrap { overflow-x: auto; margin: 0.5rem 0; }
+.dp-table { border-collapse: collapse; font-size: 13px; }
+.dp-table th {
+  background: var(--s1); font-weight: 500; color: var(--text-sec);
+  font-size: 12px; padding: 6px 12px; border: 0.5px solid var(--border-strong);
+  text-align: center; white-space: nowrap;
+}
+.dp-table td {
+  width: 52px; height: 48px; text-align: center;
+  border: 0.5px solid var(--border-strong);
+  font-family: monospace; font-weight: 500; font-size: 14px;
+  transition: background 0.2s; position: relative;
+}
+.dp-table td .cell-idx {
+  position: absolute; top: 2px; right: 4px;
+  font-size: 9px; color: var(--text-muted); font-weight: 400;
+}
+.cell-true  { background: var(--green-bg) !important; color: var(--green-text) !important; }
+.cell-false { background: var(--red-bg) !important; color: var(--red-text) !important; }
+.cell-empty { background: var(--surface); color: var(--text-muted); }
+.cell-current { outline: 2px solid var(--accent); outline-offset: -2px; z-index: 2; }
+
+.str-vis { display: flex; gap: 6px; font-family: monospace; font-size: 13px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+.sv-label { font-size: 11px; color: var(--text-sec); min-width: 22px; }
+.sv-char { padding: 4px 8px; border-radius: 4px; border: 0.5px solid var(--border); background: var(--s1); }
+.sv-char.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent-text); font-weight: 500; }
+.sv-char.used { background: var(--bg); color: var(--text-muted); }
+
+/* ── VIZ 2 — Array ── */
+.array-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+.arr-cell {
+  width: 48px; height: 48px; border-radius: var(--radius);
+  border: 0.5px solid var(--border-strong); background: var(--s1);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 500; transition: background 0.2s, border-color 0.2s;
+  position: relative;
+}
+.arr-cell .cidx { position: absolute; bottom: 2px; font-size: 10px; color: var(--text-muted); font-weight: 400; }
+.arr-cell.in-window { background: var(--accent-bg); border-color: var(--accent-border); color: var(--accent-text); }
+.arr-cell.is-l { background: var(--green-bg); border-color: var(--green-border); color: var(--green-text); }
+.arr-cell.is-r { background: var(--amber-bg); border-color: var(--amber-border); color: var(--amber-text); }
+.arr-cell.is-target { outline: 2px solid var(--red-border); outline-offset: -2px; }
+
+.history-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; min-height: 24px; }
+.h-chip {
+  font-size: 12px; font-family: monospace; padding: 3px 10px; border-radius: 20px;
+  background: var(--green-bg); color: var(--green-text); border: 0.5px solid var(--green-border);
+}
+
+/* ── VIZ 3 — Freq & Chain ── */
+.freq-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+.freq-cell {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 56px; min-height: 56px; border-radius: var(--radius);
+  border: 0.5px solid var(--border-strong); background: var(--s1);
+  gap: 2px; transition: background 0.2s, border-color 0.2s;
+}
+.freq-cell .fval { font-weight: 500; font-size: 16px; font-family: monospace; }
+.freq-cell .fcnt { font-size: 11px; color: var(--text-muted); }
+.freq-cell.fc-active { background: var(--accent-bg); border-color: var(--accent); }
+.freq-cell.fc-active .fval { color: var(--accent-text); }
+.freq-cell.fc-active .fcnt { color: var(--accent); }
+.freq-cell.fc-chain { background: var(--green-bg); border-color: var(--green-border); }
+.freq-cell.fc-chain .fval { color: var(--green-text); }
+.freq-cell.fc-break { background: var(--red-bg); border-color: var(--red-border); }
+.freq-cell.fc-break .fval { color: var(--red-text); }
+
+.chain-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 56px; margin-bottom: 1rem; }
+.chain-node {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 6px 14px; border-radius: var(--radius);
+  border: 0.5px solid var(--border-strong); background: var(--surface);
+  font-family: monospace; font-size: 14px; font-weight: 500; text-align: center;
+}
+.chain-node .cn-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+.chain-node.cur-node { background: var(--accent-bg); border-color: var(--accent); color: var(--accent-text); }
+.chain-node.done-node { background: var(--green-bg); border-color: var(--green-border); color: var(--green-text); }
+.chain-node.break-node { background: var(--amber-bg); border-color: var(--amber-border); color: var(--amber-text); }
+.chain-arrow { color: var(--text-muted); font-size: 18px; }
+
+  .prob-desc { font-size:13px;color:var(--text-sec);line-height:1.65;margin-bottom:1rem;max-width:640px }
+  .prob-desc code { font-family:monospace;font-size:12px;background:var(--s1);padding:1px 5px;border-radius:3px }
+  .code-block { border:.5px solid var(--border-strong);border-radius:var(--radius);margin-bottom:1.2rem;overflow:hidden }
+  .code-block summary { padding:8px 14px;font-size:12px;font-weight:500;color:var(--text-sec);cursor:pointer;user-select:none;background:var(--s1);list-style:none;display:flex;align-items:center;gap:6px }
+  .code-block summary::before { content:'▶';font-size:10px;transition:transform .15s }
+  .code-block[open] summary::before { transform:rotate(90deg) }
+  .code-block pre { margin:0;padding:14px 16px;font-family:'Menlo','Courier New',monospace;font-size:12px;line-height:1.6;color:var(--text);background:var(--surface);overflow-x:auto;border-top:.5px solid var(--border) }
+  .coin-pill{display:inline-flex;align-items:center;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;font-family:monospace;border:.5px solid var(--border-strong);background:var(--surface-1);color:var(--text-sec);transition:background .2s}
+  .coin-pill.active{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber-text)}
+  .coin-badge{display:inline-flex;align-items:center;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:500;font-family:monospace;border:.5px solid var(--border-strong);background:var(--surface-1);color:var(--text-sec);transition:background .2s;margin:3px}
+  .coin-badge.active{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber-text)}
+  .dp-cell{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .dp-idx{font-size:11px;color:var(--text-muted);font-family:monospace}
+  .dp-val{width:52px;height:52px;border-radius:var(--radius);border:.5px solid var(--border-strong);background:var(--surface-1);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;font-family:monospace;transition:background .2s}
+  .dp-val.is-zero{background:var(--green-bg);border-color:var(--green-border);color:var(--green-text)}
+  .dp-val.is-filled{background:var(--accent-bg);border-color:var(--accent-border);color:var(--accent-text)}
+  .dp-val.is-cur{outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg);color:var(--accent-text)}
+  .dp-val.is-inf{background:var(--surface-1);color:var(--text-muted)}
+  .dp-val.is-best{background:var(--green-bg);border-color:var(--green-border);color:var(--green-text);outline:2px solid var(--green-border);outline-offset:-2px}
+  .dp-val.is-amber{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber-text)}
+  .tri-cell{width:44px;height:44px;border-radius:var(--radius);border:.5px solid var(--border-strong);background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:14px;font-weight:500;transition:background .2s;flex-shrink:0}
+  .tri-cell.is-cur{outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg);color:var(--accent-text)}
+  .tri-cell.is-zero{background:var(--green-bg);border-color:var(--green-border);color:var(--green-text)}
+  .tri-cell.is-amber{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber-text)}
+  .tri-cell.is-filled{background:var(--accent-bg);border-color:var(--accent-border);color:var(--accent-text)}
+  .tri-cell.is-best{background:var(--green-bg);border-color:var(--green-border);color:var(--green-text);outline:2px solid var(--green-border);outline-offset:-2px}
+  .dp-table{border-collapse:collapse;font-size:13px;font-family:monospace}
+  .dp-table th{background:var(--s1);font-weight:500;font-size:12px;color:var(--text-sec);padding:6px 10px;border:.5px solid var(--border-strong);text-align:center;white-space:nowrap;font-family:var(--font-sans,-apple-system,sans-serif)}
+  .dp-table th.row-header{text-align:right;min-width:100px}
+  .dp-table td{width:48px;height:42px;text-align:center;border:.5px solid var(--border-strong);font-weight:500;font-size:14px;transition:background .2s}
+  .cell-zero{background:var(--green-bg);color:var(--green-text)}
+  .cell-filled{background:var(--accent-bg);color:var(--accent-text)}
+  .cell-cur{outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg);color:var(--accent-text)}
+  .cell-src-same{background:var(--amber-bg);color:var(--amber-text)}
+  .cell-src-above{background:#eeedfe;color:#3c3489}
+  .cell-empty{background:var(--surface);color:var(--text-muted)}
+  .cell-best{background:var(--green-bg);color:var(--green-text);outline:2px solid var(--green-border);outline-offset:-2px}
+  .cell-amber{background:var(--amber-bg);color:var(--amber-text)}
+  .sum-card{min-width:62px;padding:6px 10px;border-radius:var(--radius);border:.5px solid var(--border-strong);background:var(--surface-1);display:flex;flex-direction:column;align-items:center;gap:2px;transition:background .2s;font-family:monospace}
+  .sum-card .sc-sum{font-size:14px;font-weight:600;color:var(--text)}
+  .sum-card .sc-cnt{font-size:11px;color:var(--text-sec)}
+  .sum-card.sc-filled{background:var(--accent-bg);border-color:var(--accent-border)}
+  .sum-card.sc-filled .sc-sum,.sum-card.sc-filled .sc-cnt{color:var(--accent-text)}
+  .sum-card.sc-best{background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px}
+  .sum-card.sc-best .sc-sum,.sum-card.sc-best .sc-cnt{color:var(--green-text)}
+  .word-chip{padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;font-family:monospace;border:.5px solid var(--border-strong);background:var(--surface-1);color:var(--text-sec);transition:background .2s}
+  .word-chip.active{background:var(--accent-bg);border-color:var(--accent-border);color:var(--accent-text)}
+  .word-chip.matched{background:var(--green-bg);border-color:var(--green-border);color:var(--green-text)}
+  .word-chip.failed{background:var(--red-bg);border-color:var(--red-border);color:var(--red-text)}
+  .char-box{width:36px;height:36px;border-radius:var(--radius);border:.5px solid var(--border-strong);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:monospace;font-size:14px;font-weight:500;background:var(--surface-1);color:var(--text-primary);transition:background .2s;position:relative}
+  .char-box .ci{position:absolute;bottom:1px;font-size:9px;color:var(--text-muted);font-weight:400}
+  .char-box.s-past{background:var(--surface-1);color:var(--text-muted)}
+  .char-box.s-match{background:var(--green-bg);border-color:var(--green-border);color:var(--green-text)}
+  .char-box.s-cur{outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg);color:var(--accent-text)}
+  .char-box.s-fail{background:var(--red-bg);border-color:var(--red-border);color:var(--red-text)}
+  .char-box.w-done{background:var(--green-bg);border-color:var(--green-border);color:var(--green-text)}
+  .char-box.w-cur{outline:2.5px solid var(--amber-border);outline-offset:-2px;background:var(--amber-bg);color:var(--amber-text)}
+  .char-box.w-pending{background:var(--surface-1);color:var(--text-muted)}
+</style>
+</head>
+<body>
+
+<!-- Overlay -->
+<div id="overlay" onclick="closeDrawer()"></div>
+
+<!-- Toggle -->
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<!-- Drawer -->
+<div id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-title">Problems</div>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list">
+    <div class="problem-item active" data-idx="0" onclick="selectProblem(0)">
+      <span class="p-num">#97</span>
+      <span class="p-title">Interleaving String</span>
+    </div>
+    <div class="problem-item" data-idx="1" onclick="selectProblem(1)">
+      <span class="p-num">#3737</span>
+      <span class="p-title">Count Subarrays With Majority Element I</span>
+    </div>
+    <div class="problem-item" data-idx="2" onclick="selectProblem(2)">
+      <span class="p-num">#3020</span>
+      <span class="p-title">Find the Maximum Number of Elements in Subset</span>
+    </div>
+    <div class="problem-item" data-idx="3" onclick="selectProblem(3)">
+      <span class="p-num">#322</span>
+      <span class="p-title">Coin Change</span>
+    </div>
+    <div class="problem-item" data-idx="4" onclick="selectProblem(4)">
+      <span class="p-num">#518</span>
+      <span class="p-title">Coin Change II</span>
+    </div>
+    <div class="problem-item" data-idx="5" onclick="selectProblem(5)">
+      <span class="p-num">#792</span>
+      <span class="p-title">Number of Matching Subsequences</span>
+    </div>
+    <div class="problem-item" data-idx="6" onclick="selectProblem(6)">
+      <span class="p-num">#70</span>
+      <span class="p-title">Climbing Stairs</span>
+    </div>
+    <div class="problem-item" data-idx="7" onclick="selectProblem(7)">
+      <span class="p-num">#198</span>
+      <span class="p-title">House Robber</span>
+    </div>
+    <div class="problem-item" data-idx="8" onclick="selectProblem(8)">
+      <span class="p-num">#55</span>
+      <span class="p-title">Jump Game</span>
+    </div>
+    <div class="problem-item" data-idx="9" onclick="selectProblem(9)">
+      <span class="p-num">#139</span>
+      <span class="p-title">Word Break</span>
+    </div>
+    <div class="problem-item" data-idx="10" onclick="selectProblem(10)">
+      <span class="p-num">#45</span>
+      <span class="p-title">Jump Game II</span>
+    </div>
+    <div class="problem-item" data-idx="11" onclick="selectProblem(11)">
+      <span class="p-num">#746</span>
+      <span class="p-title">Min Cost Climbing Stairs</span>
+    </div>
+    <div class="problem-item" data-idx="12" onclick="selectProblem(12)">
+      <span class="p-num">#120</span>
+      <span class="p-title">Triangle</span>
+    </div>
+    <div class="problem-item" data-idx="13" onclick="selectProblem(13)">
+      <span class="p-num">#1143</span>
+      <span class="p-title">Longest Common Subsequence</span>
+    </div>
+    <div class="problem-item" data-idx="14" onclick="selectProblem(14)">
+      <span class="p-num">#494</span>
+      <span class="p-title">Target Sum</span>
+    </div>
+    <div class="problem-item" data-idx="15" onclick="selectProblem(15)">
+      <span class="p-num">#2</span>
+      <span class="p-title">Edit Distance</span>
+    </div>
+    <div class="problem-item" data-idx="16" onclick="selectProblem(16)">
+      <span class="p-num">#91</span>
+      <span class="p-title">Decode Ways</span>
+    </div>
+    <div class="problem-item" data-idx="17" onclick="selectProblem(17)">
+      <span class="p-num">#718</span>
+      <span class="p-title">Maximum Length of Repeated Subarray</span>
+    </div>
+    <div class="problem-item" data-idx="18" onclick="selectProblem(18)">
+      <span class="p-num">#300</span>
+      <span class="p-title">Longest Increasing Subsequence</span>
+    </div>
+    <div class="problem-item" data-idx="19" onclick="selectProblem(19)">
+      <span class="p-num">#62</span>
+      <span class="p-title">Unique Paths</span>
+    </div>
+    <div class="problem-item" data-idx="20" onclick="selectProblem(20)">
+      <span class="p-num">#64</span>
+      <span class="p-title">Minimum Path Sum</span>
+    </div>
+    <div class="problem-item" data-idx="21" onclick="selectProblem(21)">
+      <span class="p-num">#63</span>
+      <span class="p-title">Unique Paths II</span>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div id="main">
+
+  <!-- ── VIZ 0: Interleaving String ── -->
+  <div id="tab0" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#97</div>
+      <h1>Interleaving String</h1>
+      <a href="https://leetcode.com/problems/interleaving-string/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given strings <code>s1</code>, <code>s2</code>, and <code>s3</code>, return <code>true</code> if <code>s3</code> is formed by an interleaving of <code>s1</code> and <code>s2</code>. An interleaving maintains the relative order of characters from each string but can mix them in any order.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution:
+    def isInterleave(self, s1, s2, s3):
+        if len(s1) + len(s2) != len(s3): return False
+        m, n = len(s1), len(s2)
+        dp = [[False] * (n + 1) for _ in range(m + 1)]
+        dp[0][0] = True
+        for i in range(m + 1):
+            for j in range(n + 1):
+                if not dp[i][j]: continue
+                if i &lt; m and s1[i] == s3[i + j]:
+                    dp[i + 1][j] = True
+                if j &lt; n and s2[j] == s3[i + j]:
+                    dp[i][j + 1] = True
+        return dp[m][n]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s1</label><input type="text" id="v1-s1" value="aab" style="width:90px"></div>
+      <div class="ig"><label>s2</label><input type="text" id="v1-s2" value="bc" style="width:90px"></div>
+      <div class="ig"><label>s3</label><input type="text" id="v1-s3" value="ababc" style="width:130px"></div>
+      <button onclick="v1Init()">Run</button>
+    </div>
+
+    <div class="section-label">Strings — current position</div>
+    <div class="str-vis" id="v1-strvis"></div>
+
+    <div class="info-box" id="v1-info">Click <strong>Run</strong> to start stepping.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i (s1 consumed)</div><div class="sval" id="v1-si">—</div></div>
+      <div class="stat"><div class="slabel">j (s2 consumed)</div><div class="sval" id="v1-sj">—</div></div>
+      <div class="stat best"><div class="slabel">result dp[m][n]</div><div class="sval" id="v1-ans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v1Back()">← Prev</button>
+      <button onclick="v1Fwd()">Next →</button>
+      <button onclick="v1Skip()">Skip to end</button>
+      <span class="prog" id="v1-prog"></span>
+    </div>
+
+    <div class="section-label">DP table — dp[i][j] = can s3[:i+j] be formed by interleaving s1[:i] and s2[:j]?</div>
+    <div class="table-wrap"><div id="v1-table"></div></div>
+
+    <div class="legend" style="margin-top:12px">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>True</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>False</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>Not yet filled</div>
+      <div class="leg"><div class="lb" style="outline:2px solid var(--accent);outline-offset:-2px"></div>Current cell</div>
+    </div>
+  </div>
+
+  <!-- ── VIZ 1: Majority subarrays ── -->
+  <div id="tab1" class="viz-section">
+    <div class="page-header">
+      <div class="lc-num">#3737</div>
+      <h1>Count Subarrays With Majority Element I</h1>
+      <a href="https://leetcode.com/problems/count-subarrays-with-majority-element-i/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an integer array <code>nums</code> and an integer <code>target</code>, return the number of subarrays of <code>nums</code> where <code>target</code> is the majority element. The majority element of a subarray is the element that appears more than half the length of the subarray.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def countMajoritySubarrays(self, nums, target):
+        n = len(nums)
+        ans = 0
+        for l in range(n):
+            target_count = 0
+            for r in range(l, n):
+                if nums[r] == target:
+                    target_count += 1
+                length = r - l + 1
+                if target_count > length // 2:
+                    ans += 1
+        return ans</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v2-nums" value="2,1,2,2,1,2" style="width:210px"></div>
+      <div class="ig"><label>target</label><input type="number" id="v2-target" value="2" style="width:70px"></div>
+      <button onclick="v2Init()">Run</button>
+    </div>
+
+    <div class="section-label">Array</div>
+    <div class="array-row" id="v2-array"></div>
+
+    <div class="info-box" id="v2-info">Click <strong>Run</strong> to start stepping.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">l (left)</div><div class="sval" id="v2-sl">—</div></div>
+      <div class="stat"><div class="slabel">r (right)</div><div class="sval" id="v2-sr">—</div></div>
+      <div class="stat"><div class="slabel">length</div><div class="sval" id="v2-slen">—</div></div>
+      <div class="stat"><div class="slabel">target count</div><div class="sval" id="v2-stc">—</div></div>
+      <div class="stat"><div class="slabel">length // 2</div><div class="sval" id="v2-shalf">—</div></div>
+      <div class="stat best"><div class="slabel">ans</div><div class="sval" id="v2-sans">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v2Back()">← Prev</button>
+      <button onclick="v2Fwd()">Next →</button>
+      <button onclick="v2Skip()">Skip to end</button>
+      <span class="prog" id="v2-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>l pointer</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>r pointer</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>inside window</div>
+      <div class="leg"><div class="lb" style="outline:2px solid var(--red-border);outline-offset:-2px"></div>= target</div>
+    </div>
+
+    <div style="margin-top:1rem">
+      <div class="section-label">Majority subarrays found so far</div>
+      <div class="history-list" id="v2-hist"></div>
+    </div>
+  </div>
+
+  <!-- ── VIZ 2: Maximum length ── -->
+  <div id="tab2" class="viz-section">
+    <div class="page-header">
+      <div class="lc-num">#3020</div>
+      <h1>Find the Maximum Number of Elements in Subset</h1>
+      <a href="https://leetcode.com/problems/find-the-maximum-number-of-elements-in-subset/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an integer array <code>nums</code>, find the maximum length of a subset that can be arranged as <code>[x, x², x⁴, …, x^(2^k), …, x^(2^k), …, x⁴, x², x]</code> — a palindrome-like pattern where each element is the square of the previous. The subset must have odd length.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution:
+    def maximumLength(self, nums):
+        from collections import Counter
+        freq = Counter(nums)
+        ans = 1
+        if 1 in freq:
+            cnt = freq[1]
+            ans = max(ans, cnt if cnt % 2 else cnt - 1)
+        for start in freq:
+            if start == 1: continue
+            cur = start
+            length = 0
+            while cur in freq:
+                if freq[cur] >= 2:
+                    length += 2
+                    cur *= cur
+                else:
+                    length += 1
+                    break
+            if length % 2 == 0:
+                length -= 1
+            ans = max(ans, length)
+        return ans</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v3-nums" value="2,2,4,1,1,1,16" style="width:250px"></div>
+      <button onclick="v3Init()">Run</button>
+    </div>
+
+    <div class="section-label">Frequency map</div>
+    <div class="freq-row" id="v3-freq"></div>
+
+    <div class="section-label">Current chain — cur keeps squaring each step</div>
+    <div class="chain-row" id="v3-chain"></div>
+
+    <div class="info-box" id="v3-info">Click <strong>Run</strong> to start stepping.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">start</div><div class="sval" id="v3-sstart">—</div></div>
+      <div class="stat"><div class="slabel">cur</div><div class="sval" id="v3-scur">—</div></div>
+      <div class="stat"><div class="slabel">length</div><div class="sval" id="v3-slen">—</div></div>
+      <div class="stat best"><div class="slabel">ans (best)</div><div class="sval" id="v3-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v3Back()">← Prev</button>
+      <button onclick="v3Fwd()">Next →</button>
+      <button onclick="v3Skip()">Skip to end</button>
+      <span class="prog" id="v3-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent)"></div>current start</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>in chain (freq ≥ 2)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>single occurrence (stop)</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>not in nums (chain ends)</div>
+    </div>
+  </div>
+
+  <!-- ── VIZ 3: Coin Change ── -->
+  <div id="tab3" class="viz-section">
+    <div class="page-header">
+      <div class="lc-num">#322</div>
+      <h1>Coin Change</h1>
+      <a href="https://leetcode.com/problems/coin-change/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an array of coin denominations and a total <code>amount</code>, return the fewest number of coins needed to make up that amount. If it cannot be made up by any combination, return <code>-1</code>. You may use each coin an unlimited number of times.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def coinChange(self, coins, amount):
+        dp = [float('inf')] * (amount + 1)
+        dp[0] = 0
+        for i in range(1, amount + 1):
+            for coin in coins:
+                if i - coin >= 0:
+                    dp[i] = min(dp[i], 1 + dp[i - coin])
+        return dp[amount] if dp[amount] != float('inf') else -1</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>coins</label><input type="text" id="v4-coins" value="1,3,4" style="width:160px"></div>
+      <div class="ig"><label>amount</label><input type="number" id="v4-amount" value="6" style="width:70px" min="1" max="50"></div>
+      <button onclick="v4Init()">Run</button>
+    </div>
+    <div class="section-label">Coins</div>
+    <div id="v4-coin-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem"></div>
+    <div class="section-label">DP array — dp[i] = min coins for amount i</div>
+    <div style="overflow-x:auto"><div id="v4-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:.5rem;padding-bottom:4px"></div></div>
+    <div class="info-box" id="v4-info">Click <strong>Run</strong> to start.</div>
+    <div class="stats">
+      <div class="stat"><div class="slabel">amount i</div><div class="sval" id="v4-si">—</div></div>
+      <div class="stat"><div class="slabel">coin</div><div class="sval" id="v4-scoin">—</div></div>
+      <div class="stat"><div class="slabel">dp[i−coin]</div><div class="sval" id="v4-sprev">—</div></div>
+      <div class="stat"><div class="slabel">1 + dp[i−coin]</div><div class="sval" id="v4-scand">—</div></div>
+      <div class="stat"><div class="slabel">dp[i] best so far</div><div class="sval" id="v4-scur">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v4-sans">—</div></div>
+    </div>
+    <div class="controls">
+      <button onclick="v4Back()">← Prev</button><button onclick="v4Fwd()">Next →</button><button onclick="v4Skip()">Skip to end</button>
+      <span class="prog" id="v4-prog"></span>
+    </div>
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent)"></div>current cell i</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>filled / updated</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>coin being tried</div>
+      <div class="leg"><div class="lb" style="background:var(--surface-1)"></div>∞ unreachable</div>
+    </div>
+  </div>
+
+  <!-- ── VIZ 4: Coin Change II ── -->
+  <div id="tab4" class="viz-section">
+    <div class="page-header">
+      <div class="lc-num">#518</div>
+      <h1>Coin Change II</h1>
+      <a href="https://leetcode.com/problems/coin-change-ii/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an array of coin denominations and a total <code>amount</code>, return the number of distinct combinations that make up that amount. Order does not matter — <code>[1,2]</code> and <code>[2,1]</code> are the same combination. You may use each coin an unlimited number of times.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>def change(self, amount, coins):
+    dp = [0] * (amount + 1)
+    dp[0] = 1
+    for c in coins:
+        for i in range(c, amount + 1):
+            if dp[i - c]:
+                dp[i] += dp[i - c]
+    return dp[-1]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>coins</label><input type="text" id="v5-coins" value="1,2,5" style="width:160px"></div>
+      <div class="ig"><label>amount</label><input type="number" id="v5-amount" value="5" style="width:70px" min="1" max="30"></div>
+      <button onclick="v5Init()">Run</button>
+    </div>
+    <div class="section-label">Coins — current coin highlighted</div>
+    <div id="v5-coin-badges" style="display:flex;flex-wrap:wrap;margin-bottom:1rem"></div>
+    <div class="info-box" id="v5-info">Click <strong>Run</strong> to start.</div>
+    <div class="stats">
+      <div class="stat"><div class="slabel">coin c</div><div class="sval" id="v5-sc">—</div></div>
+      <div class="stat"><div class="slabel">amount i</div><div class="sval" id="v5-si">—</div></div>
+      <div class="stat"><div class="slabel">dp[i−c]</div><div class="sval" id="v5-ssrc">—</div></div>
+      <div class="stat best"><div class="slabel">answer dp[amt]</div><div class="sval" id="v5-sans">—</div></div>
+    </div>
+    <div class="controls">
+      <button onclick="v5Back()">← Prev</button><button onclick="v5Fwd()">Next →</button><button onclick="v5Skip()">Skip to end</button>
+      <span class="prog" id="v5-prog"></span>
+    </div>
+    <div class="section-label">DP array — dp[i] = combinations making amount i</div>
+    <div style="overflow-x:auto"><div id="v5-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div></div>
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>dp[0] base / dp[i−c] source</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>dp[i] being updated</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>accumulated &gt; 0</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer dp[amount]</div>
+    </div>
+  </div>
+
+  <!-- ── VIZ 5: Matching Subsequences ── -->
+  <div id="tab5" class="viz-section">
+    <div class="page-header">
+      <div class="lc-num">#792</div>
+      <h1>Number of Matching Subsequences</h1>
+      <a href="https://leetcode.com/problems/number-of-matching-subsequences/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given a string <code>s</code> and an array of strings <code>words</code>, return the number of <code>words[i]</code> that is a subsequence of <code>s</code>. A subsequence is a string that can be derived from another by deleting some characters without changing the order of the remaining ones.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution:
+    def numMatchingSubseq(self, s: str, words: List[str]) -> int:
+        def is_sub(word):
+            index = -1
+            for ch in word:
+                index = s.find(ch, index + 1)
+                if index == -1:
+                    return False
+            return True
+        c = 0
+        for word in words:
+            if is_sub(word):
+                c += 1
+        return c</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s</label><input type="text" id="v6-s" value="abtcbdef" style="width:180px"></div>
+      <div class="ig"><label>words</label><input type="text" id="v6-words" value="ab,btc,aef,bc,xyz" style="width:220px"></div>
+      <button onclick="v6Init()">Run</button>
+    </div>
+    <div class="section-label">Words — blue = current, green = matched, red = failed</div>
+    <div id="v6-word-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem"></div>
+    <div class="section-label">s — match positions lit up as found</div>
+    <div id="v6-s-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.5rem"></div>
+    <div class="section-label">word — character being searched</div>
+    <div id="v6-w-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.5rem"></div>
+    <div class="info-box" id="v6-info">Click <strong>Run</strong> to start.</div>
+    <div class="stats">
+      <div class="stat"><div class="slabel">word</div><div class="sval" id="v6-sword">—</div></div>
+      <div class="stat"><div class="slabel">char looked up</div><div class="sval" id="v6-sch">—</div></div>
+      <div class="stat"><div class="slabel">search from</div><div class="sval" id="v6-sfrom">—</div></div>
+      <div class="stat"><div class="slabel">found at</div><div class="sval" id="v6-sfound">—</div></div>
+      <div class="stat best"><div class="slabel">count</div><div class="sval" id="v6-scount">0</div></div>
+    </div>
+    <div class="controls">
+      <button onclick="v6Back()">← Prev</button><button onclick="v6Fwd()">Next →</button><button onclick="v6Skip()">Skip to end</button>
+      <span class="prog" id="v6-prog"></span>
+    </div>
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current pos in s</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>matched</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>not found / failed</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>char being searched</div>
+    </div>
+  </div>
+
+  <!-- ── VIZ 6: Climbing Stairs ── -->
+  <div id="tab6" class="viz-section">
+    <div class="page-header">
+      <div class="lc-num">#70</div>
+      <h1>Climbing Stairs (same like fibonacci series)</h1>
+      <a href="https://leetcode.com/problems/climbing-stairs/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">You are climbing a staircase. It takes <code>n</code> steps to reach the top. Each time you can either climb 1 or 2 steps. Return the number of distinct ways you can climb to the top.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def climbStairs(self, n):
+        if n &lt;= 2:
+            return n
+        a = 1
+        b = 2
+        for i in range(3, n + 1):
+            curr = a + b
+            a = b
+            b = curr
+        return b</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>n</label><input type="number" id="v7-n" value="6" style="width:80px" min="1" max="30"></div>
+      <button onclick="v7Init()">Run</button>
+    </div>
+
+    <div class="section-label">DP array — dp[i] = ways to reach step i</div>
+    <div style="overflow-x:auto">
+      <div id="v7-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:4px;padding-bottom:2px"></div>
+      <div id="v7-ptr-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem"></div>
+    </div>
+
+    <div class="info-box" id="v7-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v7-si">—</div></div>
+      <div class="stat"><div class="slabel">a = dp[i−2]</div><div class="sval" id="v7-sa">—</div></div>
+      <div class="stat"><div class="slabel">b = dp[i−1]</div><div class="sval" id="v7-sb">—</div></div>
+      <div class="stat"><div class="slabel">curr = a + b</div><div class="sval" id="v7-scurr">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v7-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v7Back()">← Prev</button>
+      <button onclick="v7Fwd()">Next →</button>
+      <button onclick="v7Skip()">Skip to end</button>
+      <span class="prog" id="v7-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>a (dp[i−2])</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>b (dp[i−1])</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>curr being computed</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>filled</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer</div>
+    </div>
+  </div>
+
+  <!-- ── VIZ 7: House Robber ── -->
+  <div id="tab7" class="viz-section">
+    <div class="page-header">
+      <div class="lc-num">#198</div>
+      <h1>House Robber</h1>
+      <a href="https://leetcode.com/problems/house-robber/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an integer array <code>nums</code> representing the amount of money at each house, return the maximum amount you can rob tonight. You cannot rob two adjacent houses — they share an alarm system.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def rob(self, nums):
+        n = len(nums)
+        if n &lt; 2:
+            return nums[0]
+        dp = [0] * n
+        dp[0] = nums[0]
+        dp[1] = max(nums[0], nums[1])
+        for i in range(2, n):
+            dp[i] = max(dp[i-2] + nums[i], dp[i-1])
+        return dp[-1]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v8-nums" value="2,7,9,3,1" style="width:200px"></div>
+      <button onclick="v8Init()">Run</button>
+    </div>
+
+    <div class="section-label">Houses — money stashed ($)</div>
+    <div style="overflow-x:auto">
+      <div id="v8-house-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div>
+    </div>
+
+    <div class="section-label">DP array — dp[i] = max loot reachable up to house i</div>
+    <div style="overflow-x:auto">
+      <div id="v8-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div>
+    </div>
+
+    <div class="info-box" id="v8-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i (house)</div><div class="sval" id="v8-si">—</div></div>
+      <div class="stat"><div class="slabel">nums[i]</div><div class="sval" id="v8-snums">—</div></div>
+      <div class="stat"><div class="slabel">rob: dp[i−2]+nums[i]</div><div class="sval" id="v8-sopt1">—</div></div>
+      <div class="stat"><div class="slabel">skip: dp[i−1]</div><div class="sval" id="v8-sopt2">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v8-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v8Back()">← Prev</button>
+      <button onclick="v8Fwd()">Next →</button>
+      <button onclick="v8Skip()">Skip to end</button>
+      <span class="prog" id="v8-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>dp[i−2] / house i−2 (rob source)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>dp[i−1] (skip source)</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current i</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>filled</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer</div>
+    </div>
+  </div>
+
+  <!-- ── VIZ 8: Jump Game ── -->
+  <div id="tab8" class="viz-section">
+    <div class="page-header">
+      <div class="lc-num">#55</div>
+      <h1>Jump Game</h1>
+      <a href="https://leetcode.com/problems/jump-game/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">You are at index 0 of integer array <code>nums</code>. Each element is your max jump length from that position. Return <code>true</code> if you can reach the last index. Strategy: scan backwards and try to walk the goal <code>pos</code> all the way back to index 0.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def canJump(self, nums):
+        if nums[0] == 0 and len(nums) > 1:
+            return False
+        n = len(nums)
+        pos = n - 1
+        for i in range(n - 2, -1, -1):
+            if i + nums[i] >= pos:
+                pos = i
+        return pos &lt; 2</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v9-nums" value="2,3,1,1,4" style="width:220px"></div>
+      <button onclick="v9Init()">Run</button>
+    </div>
+
+    <div class="section-label">Array — green = current goal (pos), amber = current i, blue = reachable from i</div>
+    <div class="array-row" id="v9-arr"></div>
+
+    <div class="info-box" id="v9-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i (scanning)</div><div class="sval" id="v9-si">—</div></div>
+      <div class="stat"><div class="slabel">nums[i]</div><div class="sval" id="v9-snums">—</div></div>
+      <div class="stat"><div class="slabel">max reach i+nums[i]</div><div class="sval" id="v9-sreach">—</div></div>
+      <div class="stat"><div class="slabel">pos (goal)</div><div class="sval" id="v9-spos">—</div></div>
+      <div class="stat best"><div class="slabel">result</div><div class="sval" id="v9-sresult">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v9Back()">← Prev</button>
+      <button onclick="v9Fwd()">Next →</button>
+      <button onclick="v9Skip()">Skip to end</button>
+      <span class="prog" id="v9-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>pos (current goal)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>i (being examined)</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>reachable from i</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border);outline:2px solid var(--red-border);outline-offset:-2px"></div>stuck (false)</div>
+    </div>
+  </div>
+
+  <!-- ── VIZ 9: Word Break ── -->
+  <div id="tab9" class="viz-section">
+    <div class="page-header">
+      <div class="lc-num">#139</div>
+      <h1>Word Break</h1>
+      <a href="https://leetcode.com/problems/word-break/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given string <code>s</code> and dictionary <code>wordDict</code>, return <code>true</code> if <code>s</code> can be segmented into dictionary words. <code>dp[i]</code> = can <code>s[0:i]</code> be segmented? For each end position <code>i</code>, try every start <code>j</code>: if <code>dp[j]</code> is true and <code>s[j:i]</code> is in the dict, set <code>dp[i] = true</code>.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def wordBreak(self, s, wordDict):
+        dp = [False] * (len(s) + 1)
+        dp[0] = True
+        for i in range(1, len(s) + 1):
+            for j in range(i):
+                if dp[j] and s[j:i] in wordDict:
+                    dp[i] = True
+                    break
+        return dp[len(s)]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s</label><input type="text" id="v10-s" value="leetcode" style="width:160px"></div>
+      <div class="ig"><label>wordDict</label><input type="text" id="v10-words" value="leet,code" style="width:180px"></div>
+      <button onclick="v10Init()">Run</button>
+    </div>
+
+    <div class="section-label">Dictionary words</div>
+    <div id="v10-dict-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem"></div>
+
+    <div class="section-label">String s — window s[j:i] highlighted</div>
+    <div id="v10-s-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem"></div>
+
+    <div class="section-label">DP array — dp[i] = can s[0:i] be segmented?</div>
+    <div style="overflow-x:auto">
+      <div id="v10-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div>
+    </div>
+
+    <div class="info-box" id="v10-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i (end)</div><div class="sval" id="v10-si">—</div></div>
+      <div class="stat"><div class="slabel">j (start)</div><div class="sval" id="v10-sj">—</div></div>
+      <div class="stat"><div class="slabel">s[j:i]</div><div class="sval" id="v10-ssub" style="font-size:14px">—</div></div>
+      <div class="stat"><div class="slabel">dp[j]</div><div class="sval" id="v10-sdpj">—</div></div>
+      <div class="stat"><div class="slabel">in dict?</div><div class="sval" id="v10-sindict">—</div></div>
+      <div class="stat best"><div class="slabel">result dp[n]</div><div class="sval" id="v10-sresult">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v10Back()">← Prev</button>
+      <button onclick="v10Fwd()">Next →</button>
+      <button onclick="v10Skip()">Skip to end</button>
+      <span class="prog" id="v10-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>dp[j]=T (valid source)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>window s[j:i] being tested</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>matched word (green chars)</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>dp[i] being computed</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer dp[n]</div>
+    </div>
+  </div>
+
+  <!-- ── VIZ 10: Jump Game II ── -->
+  <div id="tab10" class="viz-section">
+    <div class="page-header">
+      <div class="lc-num">#45</div>
+      <h1>Jump Game II</h1>
+      <a href="https://leetcode.com/problems/jump-game-ii/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Return the minimum number of jumps to reach the last index. <code>curr_end</code> is the boundary of the current jump's window. Scan forward updating <code>max_reach</code>; the moment <code>i</code> hits <code>curr_end</code>, take a jump and extend the window to <code>max_reach</code>.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution:
+    def jump(self, nums):
+        n = len(nums)
+        if n &lt;= 1:
+            return 0
+        jumps = 0
+        curr_end = 0
+        max_reach = 0
+        for i in range(n - 1):
+            max_reach = max(max_reach, i + nums[i])
+            if i == curr_end:
+                jumps += 1
+                curr_end = max_reach
+                if curr_end >= n - 1:
+                    break
+        return jumps</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v11-nums" value="2,3,1,1,4" style="width:220px"></div>
+      <button onclick="v11Init()">Run</button>
+    </div>
+
+    <div class="section-label">Array — green = curr_end boundary, amber = i, blue = next jump's reach</div>
+    <div style="overflow-x:auto">
+      <div id="v11-arr" style="display:flex;gap:6px;min-width:max-content;margin-bottom:4px"></div>
+      <div id="v11-ptr-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem"></div>
+    </div>
+
+    <div class="info-box" id="v11-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v11-si">—</div></div>
+      <div class="stat"><div class="slabel">nums[i]</div><div class="sval" id="v11-snums">—</div></div>
+      <div class="stat"><div class="slabel">max_reach</div><div class="sval" id="v11-sreach">—</div></div>
+      <div class="stat"><div class="slabel">curr_end</div><div class="sval" id="v11-scend">—</div></div>
+      <div class="stat best"><div class="slabel">jumps</div><div class="sval" id="v11-sjumps">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v11Back()">← Prev</button>
+      <button onclick="v11Fwd()">Next →</button>
+      <button onclick="v11Skip()">Skip to end</button>
+      <span class="prog" id="v11-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>curr_end (window boundary)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>i (current)</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>reachable beyond curr_end</div>
+    </div>
+  </div>
+
+  <!-- ── VIZ 11: Min Cost Climbing Stairs ── -->
+  <div id="tab11" class="viz-section">
+    <div class="page-header">
+      <div class="lc-num">#746</div>
+      <h1>Min Cost Climbing Stairs</h1>
+      <a href="https://leetcode.com/problems/min-cost-climbing-stairs/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given <code>cost[i]</code> — the cost to step on stair <code>i</code> — find the minimum cost to reach the top. You can start at index 0 or 1 and take 1 or 2 steps each time. <code>dp[i] = cost[i] + min(dp[i−1], dp[i−2])</code>. Answer: <code>min(dp[n−1], dp[n−2])</code>.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def minCostClimbingStairs(self, cost):
+        n = len(cost)
+        dp = [0] * n
+        dp[0] = cost[0]
+        dp[1] = cost[1]
+        for i in range(2, n):
+            dp[i] = cost[i] + min(dp[i-1], dp[i-2])
+        return min(dp[n-1], dp[n-2])</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>cost</label><input type="text" id="v12-cost" value="10,15,20" style="width:220px"></div>
+      <button onclick="v12Init()">Run</button>
+    </div>
+
+    <div class="section-label">Cost array</div>
+    <div style="overflow-x:auto">
+      <div id="v12-cost-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div>
+    </div>
+
+    <div class="section-label">DP array — dp[i] = min cost to step on stair i</div>
+    <div style="overflow-x:auto">
+      <div id="v12-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div>
+    </div>
+
+    <div class="info-box" id="v12-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v12-si">—</div></div>
+      <div class="stat"><div class="slabel">cost[i]</div><div class="sval" id="v12-scost">—</div></div>
+      <div class="stat"><div class="slabel">dp[i−2]</div><div class="sval" id="v12-sopt1">—</div></div>
+      <div class="stat"><div class="slabel">dp[i−1]</div><div class="sval" id="v12-sopt2">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v12-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v12Back()">← Prev</button>
+      <button onclick="v12Fwd()">Next →</button>
+      <button onclick="v12Skip()">Skip to end</button>
+      <span class="prog" id="v12-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>dp[i−2] source</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>dp[i−1] source</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>dp[i] being computed</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>filled</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer</div>
+    </div>
+  </div>
+
+
+<div id="tab12" class="viz-section">
+  <div class="page-header">
+    <div class="lc-num">#120</div>
+    <h1>Triangle</h1>
+    <a href="https://leetcode.com/problems/triangle/" target="_blank">View on LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">Given a triangle array, return the minimum path sum from top to bottom. At each step you may move to an adjacent number on the row below. Strategy: bottom-up DP — update each cell in-place by adding the smaller of its two children.</div>
+  <details class="code-block"><summary>Solution code</summary><pre>def minimumTotal(self, t):
+    n = len(t)
+    for i in range(n-2, -1, -1):
+        for j in range(0, len(t[i])):
+            t[i][j] += min(t[i+1][j], t[i+1][j+1])
+    return t[0][0]</pre></details>
+
+  <div class="row">
+    <div class="ig"><label>Rows (separated by /)</label><input type="text" id="v13-input" style="width:280px" value="2 / 3 4 / 6 5 7 / 4 1 8 3"></div>
+    <button onclick="v13Init()">Run</button>
+  </div>
+  <div id="v13-triangle" style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:1rem;"></div>
+  <div class="info-box" id="v13-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">row i</div><div class="sval" id="v13-srow">—</div></div>
+    <div class="stat"><div class="slabel">col j</div><div class="sval" id="v13-scol">—</div></div>
+    <div class="stat"><div class="slabel">t[i+1][j]</div><div class="sval" id="v13-sc1">—</div></div>
+    <div class="stat"><div class="slabel">t[i+1][j+1]</div><div class="sval" id="v13-sc2">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v13-sans">…</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v13Back()">← Prev</button>
+    <button onclick="v13Fwd()">Next →</button>
+    <button onclick="v13Skip()">Skip to end</button>
+    <span class="prog" id="v13-prog"></span>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>smaller child (chosen)</div>
+    <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>larger child</div>
+    <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>cell being updated</div>
+    <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>already updated</div>
+    <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer</div>
+  </div>
+</div>
+
+
+<div id="tab13" class="viz-section">
+  <div class="page-header">
+    <div class="lc-num">#1143</div>
+    <h1>Longest Common Subsequence</h1>
+    <a href="https://leetcode.com/problems/longest-common-subsequence/" target="_blank">View on LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">Given two strings <code>text1</code> and <code>text2</code>, return the length of their longest common subsequence. A subsequence is derived by deleting some characters without changing relative order. If there is no common subsequence, return 0.</div>
+  <details class="code-block"><summary>Solution code</summary><pre>def longestCommonSubsequence(self, text1, text2):
+    m, n = len(text1), len(text2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if text1[i-1] == text2[j-1]:
+                dp[i][j] = dp[i-1][j-1] + 1
+            else:
+                dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+    return dp[m][n]</pre></details>
+
+  <div class="row">
+    <div class="ig"><label>text1</label><input type="text" id="v14-t1" style="width:120px" value="abcde"></div>
+    <div class="ig"><label>text2</label><input type="text" id="v14-t2" style="width:120px" value="ace"></div>
+    <button onclick="v14Init()">Run</button>
+  </div>
+  <div class="section-label">DP table — dp[i][j] = LCS length for text1[0..i-1] and text2[0..j-1]</div>
+  <div style="overflow-x:auto;margin-bottom:1rem">
+    <div id="v14-table"></div>
+  </div>
+  <div class="info-box" id="v14-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">row i</div><div class="sval" id="v14-si">—</div></div>
+    <div class="stat"><div class="slabel">col j</div><div class="sval" id="v14-sj">—</div></div>
+    <div class="stat"><div class="slabel">text1[i-1]</div><div class="sval" id="v14-sc1">—</div></div>
+    <div class="stat"><div class="slabel">text2[j-1]</div><div class="sval" id="v14-sc2">—</div></div>
+    <div class="stat best"><div class="slabel">LCS length</div><div class="sval" id="v14-sans">…</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v14Back()">← Prev</button>
+    <button onclick="v14Fwd()">Next →</button>
+    <button onclick="v14Skip()">Skip to end</button>
+    <span class="prog" id="v14-prog"></span>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="lb cell-zero"></div>diagonal / chosen source</div>
+    <div class="leg"><div class="lb cell-amber"></div>other source (not taken)</div>
+    <div class="leg"><div class="lb cell-cur" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>cell being computed</div>
+    <div class="leg"><div class="lb cell-filled"></div>already filled</div>
+    <div class="leg"><div class="lb cell-best"></div>answer dp[m][n]</div>
+  </div>
+</div>
+
+
+<div id="tab14" class="viz-section">
+  <div class="page-header">
+    <div class="lc-num">#494</div>
+    <h1>Target Sum</h1>
+    <a href="https://leetcode.com/problems/target-sum/" target="_blank">View on LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">You are given an integer array <code>nums</code> and an integer <code>target</code>. Build an expression by placing <code>+</code> or <code>−</code> before each integer. Return the number of different expressions that evaluate to <code>target</code>. Strategy: DP hashmap — track reachable sums and their way-counts, expanding each number.</div>
+  <details class="code-block"><summary>Solution code</summary><pre>def findTargetSumWays(self, nums, target):
+    counter = {0: 1}
+    for n in nums:
+        temp = {}
+        for total, count in counter.items():
+            temp[total + n] = temp.get(total + n, 0) + count
+            temp[total - n] = temp.get(total - n, 0) + count
+        counter = temp
+    return counter.get(target, 0)</pre></details>
+
+  <div class="row">
+    <div class="ig"><label>nums</label><input type="text" id="v15-nums-in" style="width:160px" value="1,1,1,1,1"></div>
+    <div class="ig"><label>target</label><input type="text" id="v15-tgt-in" style="width:60px" value="3"></div>
+    <button onclick="v15Init()">Run</button>
+  </div>
+  <div class="section-label">Numbers</div>
+  <div id="v15-num-strip" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:0.8rem"></div>
+  <div class="section-label">Counter — sum → ways</div>
+  <div id="v15-counter" style="display:flex;flex-wrap:wrap;gap:8px;min-height:72px;align-items:flex-start;padding:4px 0 1rem"></div>
+  <div class="info-box" id="v15-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">num</div><div class="sval" id="v15-snum">—</div></div>
+    <div class="stat"><div class="slabel">idx</div><div class="sval" id="v15-sidx">—</div></div>
+    <div class="stat"><div class="slabel">unique sums</div><div class="sval" id="v15-ssums">—</div></div>
+    <div class="stat best"><div class="slabel">ways to target</div><div class="sval" id="v15-sways">—</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v15Back()">← Prev</button>
+    <button onclick="v15Fwd()">Next →</button>
+    <button onclick="v15Skip()">Skip to end</button>
+    <span class="prog" id="v15-prog"></span>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>reachable sum (current counter)</div>
+    <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>target sum</div>
+    <div class="leg"><div class="lb in-window" style="width:28px;height:20px;border-radius:4px"></div>number processed</div>
+    <div class="leg"><div class="lb is-l" style="width:28px;height:20px;border-radius:4px"></div>number just applied</div>
+  </div>
+</div>
+
+
+<div id="tab15" class="viz-section">
+  <div class="page-header">
+    <div class="lc-num">#2</div>
+    <h1>Edit Distance</h1>
+    <a href="https://leetcode.com/problems/edit-distance/" target="_blank">View on LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">Given two strings <code>word1</code> and <code>word2</code>, return the minimum number of operations to convert <code>word1</code> to <code>word2</code>. Allowed operations: insert, delete, or replace a character. Strategy: 2-D DP — dp[i][j] = min ops for word1[0..i-1] → word2[0..j-1].</div>
+  <details class="code-block"><summary>Solution code</summary><pre>def minDistance(self, word1, word2):
+    m, n = len(word1), len(word2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(1, m + 1):
+        dp[i][0] = i
+    for j in range(1, n + 1):
+        dp[0][j] = j
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if word1[i-1] == word2[j-1]:
+                dp[i][j] = dp[i-1][j-1]
+            else:
+                dp[i][j] = min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]) + 1
+    return dp[m][n]</pre></details>
+
+  <div class="row">
+    <div class="ig"><label>word1</label><input type="text" id="v16-w1" style="width:120px" value="horse"></div>
+    <div class="ig"><label>word2</label><input type="text" id="v16-w2" style="width:120px" value="ros"></div>
+    <button onclick="v16Init()">Run</button>
+  </div>
+  <div class="section-label">DP table — dp[i][j] = min ops to convert word1[0..i-1] → word2[0..j-1]</div>
+  <div style="overflow-x:auto;margin-bottom:1rem">
+    <div id="v16-table"></div>
+  </div>
+  <div class="info-box" id="v16-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">row i</div><div class="sval" id="v16-si">—</div></div>
+    <div class="stat"><div class="slabel">col j</div><div class="sval" id="v16-sj">—</div></div>
+    <div class="stat"><div class="slabel">word1[i-1]</div><div class="sval" id="v16-sc1">—</div></div>
+    <div class="stat"><div class="slabel">word2[j-1]</div><div class="sval" id="v16-sc2">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v16-sans">…</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v16Back()">← Prev</button>
+    <button onclick="v16Fwd()">Next →</button>
+    <button onclick="v16Skip()">Skip to end</button>
+    <span class="prog" id="v16-prog"></span>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="lb cell-zero"></div>min-cost source (diagonal=replace, top=delete, left=insert)</div>
+    <div class="leg"><div class="lb cell-amber"></div>non-minimum sources</div>
+    <div class="leg"><div class="lb cell-cur" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>cell being computed</div>
+    <div class="leg"><div class="lb cell-filled"></div>computed / base case</div>
+    <div class="leg"><div class="lb cell-best"></div>answer dp[m][n]</div>
+  </div>
+</div>
+
+
+<div id="tab16" class="viz-section">
+  <div class="page-header">
+    <div class="lc-num">#91</div>
+    <h1>Decode Ways</h1>
+    <a href="https://leetcode.com/problems/decode-ways/" target="_blank">View on LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">A message is encoded as a string of digits ("1"→A, "2"→B, …, "26"→Z). Given a string <code>s</code>, return the number of ways to decode it. Strategy: 1-D DP — at each position check if the last 1 digit or last 2 digits form a valid code.</div>
+  <details class="code-block"><summary>Solution code</summary><pre>def numDecodings(self, s):
+    n = len(s)
+    dp = [0] * (n + 1)
+    c = [str(i+1) for i in range(26)]
+    if s[0] == '0':
+        return 0
+    dp[0] = dp[1] = 1
+    for i in range(2, n + 1):
+        a = dp[i-1] if s[i-1] in c else 0
+        b = dp[i-2] if s[i-2:i] in c else 0
+        dp[i] = a + b
+    return dp[-1]</pre></details>
+
+  <div class="row">
+    <div class="ig"><label>s</label><input type="text" id="v17-sin" style="width:140px" value="226"></div>
+    <button onclick="v17Init()">Run</button>
+  </div>
+  <div class="section-label">String s — character strip</div>
+  <div style="overflow-x:auto;margin-bottom:0.4rem">
+    <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:6px">
+      <span style="font-size:11px;color:var(--text-sec);font-family:monospace;width:22px;flex-shrink:0;text-align:right">s</span>
+      <div id="v17-char-row" style="display:flex;gap:6px"></div>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:8px">
+      <span style="font-size:11px;color:var(--text-sec);font-family:monospace;width:22px;flex-shrink:0;text-align:right">dp</span>
+      <div id="v17-dp-row" style="display:flex;gap:6px"></div>
+    </div>
+  </div>
+  <div class="info-box" id="v17-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">i</div><div class="sval" id="v17-si">—</div></div>
+    <div class="stat"><div class="slabel">single s[i-1]</div><div class="sval" id="v17-schar">—</div></div>
+    <div class="stat"><div class="slabel">pair s[i-2:i]</div><div class="sval" id="v17-spair">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v17-sans">…</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v17Back()">← Prev</button>
+    <button onclick="v17Fwd()">Next →</button>
+    <button onclick="v17Skip()">Skip to end</button>
+    <span class="prog" id="v17-prog"></span>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="lb is-l" style="width:28px;height:20px;border-radius:4px"></div>single-digit char / dp[i-1] source</div>
+    <div class="leg"><div class="lb is-r" style="width:28px;height:20px;border-radius:4px"></div>two-digit pair chars / dp[i-2] source</div>
+    <div class="leg"><div class="lb dp-val is-cur" style="width:28px;height:20px;border-radius:4px"></div>dp[i] being computed</div>
+    <div class="leg"><div class="lb dp-val is-filled" style="width:28px;height:20px;border-radius:4px"></div>already computed</div>
+    <div class="leg"><div class="lb dp-val is-best" style="width:28px;height:20px;border-radius:4px"></div>answer dp[n]</div>
+  </div>
+</div>
+
+
+<div id="tab17" class="viz-section">
+  <div class="page-header">
+    <div class="lc-num">#718</div>
+    <h1>Maximum Length of Repeated Subarray</h1>
+    <a href="https://leetcode.com/problems/maximum-length-of-repeated-subarray/" target="_blank">View on LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">Given two integer arrays <code>nums1</code> and <code>nums2</code>, return the maximum length of a subarray that appears in both. Strategy: 2-D DP — dp[i][j] is the length of the longest common subarray ending at nums1[i-1] and nums2[j-1]; reset to 0 on mismatch, track global max.</div>
+  <details class="code-block"><summary>Solution code</summary><pre>def findLength(self, nums1, nums2):
+    m, n = len(nums1), len(nums2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    maxx = 0
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if nums1[i-1] == nums2[j-1]:
+                dp[i][j] = dp[i-1][j-1] + 1
+                maxx = max(dp[i][j], maxx)
+            else:
+                dp[i][j] = 0
+    return maxx</pre></details>
+
+  <div class="row">
+    <div class="ig"><label>nums1</label><input type="text" id="v18-a1" style="width:150px" value="1,2,3,2,1"></div>
+    <div class="ig"><label>nums2</label><input type="text" id="v18-a2" style="width:150px" value="3,2,1,4,7"></div>
+    <button onclick="v18Init()">Run</button>
+  </div>
+  <div class="section-label">DP table — dp[i][j] = common subarray length ending here (0 on mismatch)</div>
+  <div style="overflow-x:auto;margin-bottom:1rem">
+    <div id="v18-table"></div>
+  </div>
+  <div class="info-box" id="v18-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">row i</div><div class="sval" id="v18-si">—</div></div>
+    <div class="stat"><div class="slabel">col j</div><div class="sval" id="v18-sj">—</div></div>
+    <div class="stat"><div class="slabel">nums1[i-1]</div><div class="sval" id="v18-sv1">—</div></div>
+    <div class="stat"><div class="slabel">nums2[j-1]</div><div class="sval" id="v18-sv2">—</div></div>
+    <div class="stat best"><div class="slabel">max len</div><div class="sval" id="v18-smax">0</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v18Back()">← Prev</button>
+    <button onclick="v18Fwd()">Next →</button>
+    <button onclick="v18Skip()">Skip to end</button>
+    <span class="prog" id="v18-prog"></span>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="lb cell-zero"></div>diagonal source (match)</div>
+    <div class="leg"><div class="lb cell-cur" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current match cell</div>
+    <div class="leg"><div class="lb cell-best"></div>new max / final max cells</div>
+    <div class="leg"><div class="lb cell-amber"></div>mismatch → reset to 0</div>
+    <div class="leg"><div class="lb cell-filled"></div>already computed</div>
+  </div>
+</div>
+
+<div id="tab18" class="viz-section">
+  <div class="page-header">
+    <span class="lc-num">300</span>
+    <h1>Longest Increasing Subsequence</h1>
+    <a href="https://leetcode.com/problems/longest-increasing-subsequence/" target="_blank">LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">
+    <p>Given an integer array <code>nums</code>, return the length of the longest strictly increasing subsequence.</p>
+    <p><strong>Example:</strong> <code>nums=[10,9,2,5,3,7,101,18]</code> → <code>4</code> ([2,3,7,101])</p>
+  </div>
+  <details class="code-block"><summary>Solution code</summary><pre>def lengthOfLIS(self, nums):
+    n = len(nums)
+    dp = [1] * n
+    ans = 1
+    for i in range(1, n):
+        for j in range(0, i):
+            if nums[i] > nums[j]:
+                dp[i] = max(dp[i], dp[j] + 1)
+        ans = max(dp[i], ans)
+    return ans</pre></details>
+  <div class="row">
+    <div class="ig"><label>nums</label><input type="text" id="v19-nums" value="10,9,2,5,3,7,101,18" style="width:260px"></div>
+    <button onclick="v19Init()">Run</button>
+  </div>
+  <div class="info-box" id="v19-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">i</div><div class="sval" id="v19-si">—</div></div>
+    <div class="stat"><div class="slabel">j</div><div class="sval" id="v19-sj">—</div></div>
+    <div class="stat"><div class="slabel">nums[i]</div><div class="sval" id="v19-sni">—</div></div>
+    <div class="stat"><div class="slabel">nums[j]</div><div class="sval" id="v19-snj">—</div></div>
+    <div class="stat"><div class="slabel">dp[j]+1</div><div class="sval" id="v19-scand">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v19-sans">—</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v19Back()">← Prev</button><button onclick="v19Fwd()">Next →</button><button onclick="v19Skip()">Skip to end</button>
+    <span class="prog" id="v19-prog"></span>
+  </div>
+  <div class="section-label">nums array — i (blue), j (green)</div>
+  <div style="overflow-x:auto"><div id="v19-nums-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div></div>
+  <div class="section-label">dp array — dp[k] = LIS length ending at index k</div>
+  <div style="overflow-x:auto"><div id="v19-dp-row" style="display:flex;gap:6px;min-width:max-content;margin-bottom:1rem;padding-bottom:4px"></div></div>
+  <div class="legend">
+    <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current i</div>
+    <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>j being compared</div>
+    <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>dp already computed</div>
+    <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>answer dp[k]</div>
+  </div>
+</div>
+
+<div id="tab19" class="viz-section">
+  <div class="page-header">
+    <span class="lc-num">62</span>
+    <h1>Unique Paths</h1>
+    <a href="https://leetcode.com/problems/unique-paths/" target="_blank">LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">
+    <p>A robot at top-left of an <code>m×n</code> grid can only move right or down. Count unique paths to bottom-right.</p>
+    <p><strong>Example:</strong> m=3, n=7 → 28 &nbsp;|&nbsp; m=3, n=2 → 3</p>
+  </div>
+  <details class="code-block"><summary>Solution code</summary><pre>def uniquePaths(self, m, n):
+    dp = [[0] * n for _ in range(m)]
+    for i in range(0, m):
+        dp[i][0] = 1
+    for i in range(0, n):
+        dp[0][i] = 1
+    for i in range(1, m):
+        for j in range(1, n):
+            dp[i][j] = dp[i][j-1] + dp[i-1][j]
+    return dp[m-1][n-1]</pre></details>
+  <div class="row">
+    <div class="ig"><label>m (rows)</label><input type="number" id="v20-m" value="3" style="width:60px" min="1" max="8"></div>
+    <div class="ig"><label>n (cols)</label><input type="number" id="v20-n" value="7" style="width:60px" min="1" max="8"></div>
+    <button onclick="v20Init()">Run</button>
+  </div>
+  <div class="info-box" id="v20-info">Click <strong>Run</strong> to start.</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">i (row)</div><div class="sval" id="v20-si">—</div></div>
+    <div class="stat"><div class="slabel">j (col)</div><div class="sval" id="v20-sj">—</div></div>
+    <div class="stat"><div class="slabel">dp[i][j−1]</div><div class="sval" id="v20-sleft">—</div></div>
+    <div class="stat"><div class="slabel">dp[i−1][j]</div><div class="sval" id="v20-sabove">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v20-sans">—</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v20Back()">← Prev</button><button onclick="v20Fwd()">Next →</button><button onclick="v20Skip()">Skip to end</button>
+    <span class="prog" id="v20-prog"></span>
+  </div>
+  <div class="section-label">DP table — dp[i][j] = unique paths to reach (i, j)</div>
+  <div style="overflow-x:auto"><div id="v20-table-wrap"></div></div>
+  <div class="legend">
+    <div class="leg"><div class="lb cell-cur"></div>current dp[i][j]</div>
+    <div class="leg"><div class="lb" style="background:var(--amber-bg);color:var(--amber-text)"></div>dp[i][j−1] left</div>
+    <div class="leg"><div class="lb" style="background:#eeedfe;color:#3c3489"></div>dp[i−1][j] above</div>
+    <div class="leg"><div class="lb cell-zero"></div>base case (= 1)</div>
+    <div class="leg"><div class="lb cell-filled"></div>already computed</div>
+    <div class="leg"><div class="lb cell-best"></div>answer</div>
+  </div>
+</div>
+
+<div id="tab20" class="viz-section">
+  <div class="page-header">
+    <span class="lc-num">64</span>
+    <h1>Minimum Path Sum</h1>
+    <a href="https://leetcode.com/problems/minimum-path-sum/" target="_blank">LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">
+    <p>Find a path from top-left to bottom-right of an <code>m×n</code> grid (moving only right or down) that minimises the sum of all numbers along the path.</p>
+    <p><strong>Example:</strong> [[1,3,1],[1,5,1],[4,2,1]] → 7 &nbsp;(1→3→1→1→1)</p>
+  </div>
+  <details class="code-block"><summary>Solution code</summary><pre>def minPathSum(self, grid):
+    m, n = len(grid), len(grid[0])
+    dp = [[0] * n for _ in range(m)]
+    dp[0][0] = grid[0][0]
+    for i in range(1, n):
+        dp[0][i] = dp[0][i-1] + grid[0][i]
+    for i in range(1, m):
+        dp[i][0] = dp[i-1][0] + grid[i][0]
+    for i in range(1, m):
+        for j in range(1, n):
+            dp[i][j] = grid[i][j] + min(dp[i-1][j], dp[i][j-1])
+    return dp[m-1][n-1]</pre></details>
+  <div class="row">
+    <div class="ig"><label>grid (rows separated by ;)</label><input type="text" id="v21-grid" value="1,3,1;1,5,1;4,2,1" style="width:240px"></div>
+    <button onclick="v21Init()">Run</button>
+  </div>
+  <div class="info-box" id="v21-info">Click <strong>Run</strong> to start. Each cell shows <em>cost</em> (small) and <em>dp</em> (large).</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">i (row)</div><div class="sval" id="v21-si">—</div></div>
+    <div class="stat"><div class="slabel">j (col)</div><div class="sval" id="v21-sj">—</div></div>
+    <div class="stat"><div class="slabel">dp[i][j−1]</div><div class="sval" id="v21-sleft">—</div></div>
+    <div class="stat"><div class="slabel">dp[i−1][j]</div><div class="sval" id="v21-sabove">—</div></div>
+    <div class="stat"><div class="slabel">min from</div><div class="sval" id="v21-sdir">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v21-sans">—</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v21Back()">← Prev</button><button onclick="v21Fwd()">Next →</button><button onclick="v21Skip()">Skip to end</button>
+    <span class="prog" id="v21-prog"></span>
+  </div>
+  <div class="section-label">DP table — each cell: <em>grid cost</em> (small) / <em>min path dp</em> (large)</div>
+  <div style="overflow-x:auto"><div id="v21-table-wrap"></div></div>
+  <div class="legend">
+    <div class="leg"><div class="lb cell-cur"></div>current dp[i][j]</div>
+    <div class="leg"><div class="lb" style="background:var(--amber-bg);color:var(--amber-text)"></div>dp[i][j−1] left</div>
+    <div class="leg"><div class="lb" style="background:#eeedfe;color:#3c3489"></div>dp[i−1][j] above</div>
+    <div class="leg"><div class="lb cell-zero"></div>base case row/col</div>
+    <div class="leg"><div class="lb cell-filled"></div>already computed</div>
+    <div class="leg"><div class="lb cell-best"></div>answer</div>
+  </div>
+</div>
+
+<div id="tab21" class="viz-section">
+  <div class="page-header">
+    <span class="lc-num">63</span>
+    <h1>Unique Paths II</h1>
+    <a href="https://leetcode.com/problems/unique-paths-ii/" target="_blank">LeetCode ↗</a>
+  </div>
+  <div class="prob-desc">
+    <p>Robot at (0,0) must reach (m-1,n-1), moving only right or down. Cells with <code>1</code> are obstacles. Count unique paths.</p>
+    <p><strong>Example:</strong> [[0,0,0],[0,1,0],[0,0,0]] → 2</p>
+  </div>
+  <details class="code-block"><summary>Solution code</summary><pre>def uniquePathsWithObstacles(self, obstacleGrid):
+    m, n = len(obstacleGrid), len(obstacleGrid[0])
+    dp = [[0] * n for _ in range(m)]
+    if obstacleGrid[0][0] == 1:
+        return 0
+    dp[0][0] = 1
+    for i in range(m):
+        for j in range(n):
+            if obstacleGrid[i][j] == 1:
+                dp[i][j] = 0
+            else:
+                if i > 0: dp[i][j] += dp[i-1][j]
+                if j > 0: dp[i][j] += dp[i][j-1]
+    return dp[m-1][n-1]</pre></details>
+  <div class="row">
+    <div class="ig"><label>grid (1=obstacle, rows by ;)</label><input type="text" id="v22-grid" value="0,0,0;0,1,0;0,0,0" style="width:240px"></div>
+    <button onclick="v22Init()">Run</button>
+  </div>
+  <div class="info-box" id="v22-info">Click <strong>Run</strong> to start. <strong>✖</strong> = obstacle (dp forced to 0).</div>
+  <div class="stats">
+    <div class="stat"><div class="slabel">i</div><div class="sval" id="v22-si">—</div></div>
+    <div class="stat"><div class="slabel">j</div><div class="sval" id="v22-sj">—</div></div>
+    <div class="stat"><div class="slabel">from above</div><div class="sval" id="v22-sabove">—</div></div>
+    <div class="stat"><div class="slabel">from left</div><div class="sval" id="v22-sleft">—</div></div>
+    <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v22-sans">—</div></div>
+  </div>
+  <div class="controls">
+    <button onclick="v22Back()">← Prev</button><button onclick="v22Fwd()">Next →</button><button onclick="v22Skip()">Skip to end</button>
+    <span class="prog" id="v22-prog"></span>
+  </div>
+  <div class="section-label">DP table — ✖ obstacle · numbers = unique paths to reach cell</div>
+  <div style="overflow-x:auto"><div id="v22-table-wrap"></div></div>
+  <div class="legend">
+    <div class="leg"><div class="lb" style="background:var(--red-bg);border:1px solid var(--red-border);color:var(--red-border);font-weight:700;font-size:12px">✖</div>obstacle (dp=0)</div>
+    <div class="leg"><div class="lb cell-cur"></div>current cell</div>
+    <div class="leg"><div class="lb" style="background:var(--amber-bg);color:var(--amber-text)"></div>from left dp[i][j−1]</div>
+    <div class="leg"><div class="lb" style="background:#eeedfe;color:#3c3489"></div>from above dp[i−1][j]</div>
+    <div class="leg"><div class="lb cell-filled"></div>paths &gt; 0</div>
+    <div class="leg"><div class="lb cell-best"></div>answer</div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+/* ── Drawer ── */
+function toggleDrawer() {
+  document.getElementById('drawer').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+const problems = [
+  { idx: 0, num: '97', title: 'Interleaving String' },
+  { idx: 1, num: '3737', title: 'Count Subarrays With Majority Element I' },
+  { idx: 2, num: '3020', title: 'Find the Maximum Number of Elements in Subset' },
+  { idx: 3, num: '322', title: 'Coin Change' },
+  { idx: 4, num: '518', title: 'Coin Change II' },
+  { idx: 5, num: '792', title: 'Number of Matching Subsequences' },
+  { idx: 6, num: '70',  title: 'Climbing Stairs' },
+  { idx: 7, num: '198', title: 'House Robber' },
+  { idx: 8, num: '55',  title: 'Jump Game' },
+  { idx: 9,  num: '139', title: 'Word Break' },
+  { idx: 10, num: '45',  title: 'Jump Game II' },
+  { idx: 11, num: '746', title: 'Min Cost Climbing Stairs' },
+  { idx: 12, num: '120',  title: 'Triangle' },
+  { idx: 13, num: '1143', title: 'Longest Common Subsequence' },
+  { idx: 14, num: '494', title: 'Target Sum' },
+  { idx: 15, num: '2',  title: 'Edit Distance' },
+  { idx: 16, num: '91',  title: 'Decode Ways' },
+  { idx: 17, num: '718', title: 'Maximum Length of Repeated Subarray' },
+  { idx: 18, num: '300', title: 'Longest Increasing Subsequence' },
+  { idx: 19, num: '62',  title: 'Unique Paths' },
+  { idx: 20, num: '64',  title: 'Minimum Path Sum' },
+  { idx: 21, num: '63',  title: 'Unique Paths II' },
+];
+
+function filterProblems() {
+  const q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.problem-item').forEach(el => {
+    const num = el.querySelector('.p-num').textContent.toLowerCase();
+    const title = el.querySelector('.p-title').textContent.toLowerCase();
+    el.style.display = (num.includes(q) || title.includes(q)) ? '' : 'none';
+  });
+}
+
+let activeIdx = 0;
+function selectProblem(idx) {
+  activeIdx = idx;
+  document.querySelectorAll('.problem-item').forEach(el => el.classList.toggle('active', +el.dataset.idx === idx));
+  document.querySelectorAll('.viz-section').forEach((s, i) => s.classList.toggle('visible', i === idx));
+  closeDrawer();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const fns = [[v1Fwd,v1Back],[v2Fwd,v2Back],[v3Fwd,v3Back],[v4Fwd,v4Back],[v5Fwd,v5Back],[v6Fwd,v6Back],[v7Fwd,v7Back],[v8Fwd,v8Back],[v9Fwd,v9Back],[v10Fwd,v10Back],[v11Fwd,v11Back],[v12Fwd,v12Back],[v13Fwd,v13Back],[v14Fwd,v14Back],[v15Fwd,v15Back],[v16Fwd,v16Back],[v17Fwd,v17Back],[v18Fwd,v18Back],[v19Fwd,v19Back],[v20Fwd,v20Back],[v21Fwd,v21Back],[v22Fwd,v22Back]];
+  if (e.key === 'ArrowRight') fns[activeIdx][0]();
+  if (e.key === 'ArrowLeft')  fns[activeIdx][1]();
+});
+
+/* ════════════════════════════════════════
+   VIZ 1 — Interleaving String
+   ════════════════════════════════════════ */
+let v1Steps = [], v1Idx = 0, v1s1 = '', v1s2 = '', v1s3 = '';
+
+function v1Compute(a, b, c) {
+  if (a.length + b.length !== c.length) return null;
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, () => Array(n+1).fill(null));
+  const steps = [];
+  dp[0][0] = true;
+  steps.push({ i:0, j:0, val:true, msg:`Base case: <code>dp[0][0] = True</code> — empty prefixes of s1 and s2 trivially interleave into the empty prefix of s3.` });
+  const queue = [[0,0]], seen = new Set(['0,0']);
+  while (queue.length) {
+    const [i,j] = queue.shift();
+    if (!dp[i][j]) continue;
+    if (i < m && c[i+j] === a[i] && !seen.has(`${i+1},${j}`)) {
+      seen.add(`${i+1},${j}`); dp[i+1][j] = true; queue.push([i+1,j]);
+      steps.push({ i:i+1, j, val:true, msg:`<code>dp[${i}][${j}]</code> is True → <code>s1[${i}] = '${a[i]}'</code> matches <code>s3[${i+j}] = '${c[i+j]}'</code> ✓ → spread <strong>down</strong> → <code>dp[${i+1}][${j}] = True</code>` });
+    }
+    if (j < n && c[i+j] === b[j] && !seen.has(`${i},${j+1}`)) {
+      seen.add(`${i},${j+1}`); dp[i][j+1] = true; queue.push([i,j+1]);
+      steps.push({ i, j:j+1, val:true, msg:`<code>dp[${i}][${j}]</code> is True → <code>s2[${j}] = '${b[j]}'</code> matches <code>s3[${i+j}] = '${c[i+j]}'</code> ✓ → spread <strong>right</strong> → <code>dp[${i}][${j+1}] = True</code>` });
+    }
+  }
+  for (let i=0;i<=m;i++) for (let j=0;j<=n;j++) if (dp[i][j]===null) dp[i][j]=false;
+  return { steps, dp, m, n };
+}
+
+function v1BuildTable(m, n, curStep) {
+  const grid = Array.from({length:m+1},()=>Array(n+1).fill(null));
+  let cur = null;
+  for (let k=0; k<=curStep; k++) {
+    const s=v1Steps[k]; grid[s.i][s.j]=s.val;
+    if (k===curStep) cur=[s.i,s.j];
+  }
+  let h = '<table class="dp-table"><thead><tr><th></th>';
+  for (let j=0;j<=n;j++) h+=`<th>j=${j}&nbsp;&nbsp;<span style="font-weight:400;color:var(--text-muted)">${j>0?'s2['+( j-1)+']='+v1s2[j-1]:'ε'}</span></th>`;
+  h+='</tr></thead><tbody>';
+  for (let i=0;i<=m;i++) {
+    h+=`<tr><th>i=${i}&nbsp;&nbsp;<span style="font-weight:400;color:var(--text-muted)">${i>0?'s1['+(i-1)+']='+v1s1[i-1]:'ε'}</span></th>`;
+    for (let j=0;j<=n;j++) {
+      const v=grid[i][j], isCur=cur&&cur[0]===i&&cur[1]===j;
+      let cls=v===null?'cell-empty':(v?'cell-true':'cell-false');
+      if (isCur) cls+=' cell-current';
+      h+=`<td class="${cls}">${v===null?'':v?'T':'F'}<span class="cell-idx">${i},${j}</span></td>`;
+    }
+    h+='</tr>';
+  }
+  return h+'</tbody></table>';
+}
+
+function v1Render() {
+  if (!v1Steps.length) return;
+  const s = v1Steps[v1Idx];
+  document.getElementById('v1-table').innerHTML = v1BuildTable(v1s1.length, v1s2.length, v1Idx);
+  document.getElementById('v1-info').innerHTML = s.msg;
+  document.getElementById('v1-si').textContent = s.i;
+  document.getElementById('v1-sj').textContent = s.j;
+  const isEnd = v1Idx === v1Steps.length-1;
+  const lastS = v1Steps[v1Steps.length-1];
+  document.getElementById('v1-ans').textContent = isEnd ? (v1Steps.some(st=>st.i===v1s1.length&&st.j===v1s2.length&&st.val)?'True':'False') : '…';
+  document.getElementById('v1-prog').textContent = `Step ${v1Idx+1} / ${v1Steps.length}`;
+  let h='';
+  const pos=s.i+s.j;
+  [[v1s1,s.i,'s1'],[v1s2,s.j,'s2'],[v1s3,pos,'s3']].forEach(([str,used,lbl],gi)=>{
+    if(gi>0) h+=`<span style="margin:0 6px;color:var(--text-muted)">|</span>`;
+    h+=`<span class="sv-label">${lbl}:</span>`;
+    for(let k=0;k<str.length;k++) h+=`<span class="sv-char ${k<used?'used':k===used?'active':''}">${str[k]}</span>`;
+  });
+  document.getElementById('v1-strvis').innerHTML=h;
+}
+
+function v1Init() {
+  v1s1=document.getElementById('v1-s1').value.trim();
+  v1s2=document.getElementById('v1-s2').value.trim();
+  v1s3=document.getElementById('v1-s3').value.trim();
+  const res=v1Compute(v1s1,v1s2,v1s3);
+  if(!res){document.getElementById('v1-info').innerHTML=`<span style="color:var(--red-text)">len(s1)+len(s2) ≠ len(s3) — cannot interleave.</span>`;return;}
+  v1Steps=res.steps; v1Idx=0; v1Render();
+}
+function v1Fwd(){if(v1Idx<v1Steps.length-1){v1Idx++;v1Render();}}
+function v1Back(){if(v1Idx>0){v1Idx--;v1Render();}}
+function v1Skip(){v1Idx=v1Steps.length-1;v1Render();}
+
+/* ════════════════════════════════════════
+   VIZ 2 — Majority subarrays
+   ════════════════════════════════════════ */
+let v2Steps=[], v2Idx=0, v2Nums=[], v2Target=0;
+
+function v2Build(arr,t){
+  const n=arr.length, res=[];
+  let ans=0;
+  for(let l=0;l<n;l++){
+    let tc=0;
+    for(let r=l;r<n;r++){
+      if(arr[r]===t) tc++;
+      const len=r-l+1, half=Math.floor(len/2), ok=tc>half;
+      if(ok) ans++;
+      res.push({l,r,tc,len,half,ok,ans});
+    }
+  }
+  return res;
+}
+
+function v2Render(){
+  if(!v2Steps.length) return;
+  const s=v2Steps[v2Idx];
+  document.querySelectorAll('#v2-array .arr-cell').forEach((c,i)=>{
+    c.className='arr-cell';
+    if(i>s.l&&i<s.r) c.classList.add('in-window');
+    if(i===s.l) c.classList.add('is-l');
+    if(i===s.r) c.classList.add('is-r');
+    if(v2Nums[i]===v2Target) c.classList.add('is-target');
+  });
+  document.getElementById('v2-sl').textContent=s.l;
+  document.getElementById('v2-sr').textContent=s.r;
+  document.getElementById('v2-slen').textContent=s.len;
+  document.getElementById('v2-stc').textContent=s.tc;
+  document.getElementById('v2-shalf').textContent=s.half;
+  document.getElementById('v2-sans').textContent=s.ans;
+  const sub='['+v2Nums.slice(s.l,s.r+1).join(', ')+']';
+  const badge=`<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-weight:500;font-size:12px;margin-left:4px;background:${s.ok?'var(--green-bg)':'var(--red-bg)'};color:${s.ok?'var(--green-text)':'var(--red-text)'};border:0.5px solid ${s.ok?'var(--green-border)':'var(--red-border)'}">${s.ok?'count!':'skip'}</span>`;
+  document.getElementById('v2-info').innerHTML=
+    `Subarray <code>${sub}</code> — length <code>${s.len}</code>, target count <code>${s.tc}</code><br>`+
+    `Majority check: <code>${s.tc} > ${s.half}</code> → <code>${s.ok}</code>${badge}`;
+  const hist=document.getElementById('v2-hist'); hist.innerHTML='';
+  for(let k=0;k<=v2Idx;k++){
+    if(v2Steps[k].ok){
+      const chip=document.createElement('span'); chip.className='h-chip';
+      chip.textContent='['+v2Nums.slice(v2Steps[k].l,v2Steps[k].r+1).join(',')+']';
+      hist.appendChild(chip);
+    }
+  }
+  document.getElementById('v2-prog').textContent=`Step ${v2Idx+1} / ${v2Steps.length}`;
+}
+
+function v2Init(){
+  v2Nums=document.getElementById('v2-nums').value.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x));
+  v2Target=parseInt(document.getElementById('v2-target').value.trim());
+  v2Steps=v2Build(v2Nums,v2Target); v2Idx=0;
+  const arr=document.getElementById('v2-array'); arr.innerHTML='';
+  v2Nums.forEach((v,i)=>{const d=document.createElement('div');d.className='arr-cell';d.innerHTML=`${v}<span class="cidx">${i}</span>`;arr.appendChild(d);});
+  document.getElementById('v2-hist').innerHTML='';
+  v2Render();
+}
+function v2Fwd(){if(v2Idx<v2Steps.length-1){v2Idx++;v2Render();}}
+function v2Back(){if(v2Idx>0){v2Idx--;v2Render();}}
+function v2Skip(){v2Idx=v2Steps.length-1;v2Render();}
+
+/* ════════════════════════════════════════
+   VIZ 3 — Maximum length
+   ════════════════════════════════════════ */
+let v3Steps=[], v3Idx=0, v3Freq={}, v3FreqKeys=[];
+
+function v3Build(nums){
+  const f={};
+  for(const x of nums) f[x]=(f[x]||0)+1;
+  const res=[]; let ans=1;
+  res.push({phase:'init',ans,start:null,cur:null,length:null,chain:[],msg:`Frequency map built. Starting <code>ans = 1</code>.`});
+  if(f[1]!==undefined){
+    const cnt=f[1], contrib=cnt%2!==0?cnt:cnt-1;
+    ans=Math.max(ans,contrib);
+    res.push({phase:'ones',ans,start:1,cur:1,length:contrib,
+      chain:[{val:1,cnt,note:cnt%2!==0?`odd → use all ${cnt}`:`even → use ${cnt-1}`,type:'done'}],
+      msg:`Special case <code>1</code>: appears <code>${cnt}</code> times. ${cnt%2!==0?'Odd count':'Even count → subtract 1'} → contribution = <code>${contrib}</code>. ans → <code>${ans}</code>.`});
+  }
+  const starts=Object.keys(f).map(Number).filter(x=>x!==1).sort((a,b)=>a-b);
+  for(const start of starts){
+    let cur=start, length=0; const chain=[];
+    res.push({phase:'start',ans,start,cur,length,chain:[],msg:`New start: <code>${start}</code>. Initialise chain with <code>cur = ${start}</code>.`});
+    while(f[cur]!==undefined){
+      if(f[cur]>=2){
+        length+=2;
+        chain.push({val:cur,cnt:f[cur],note:`freq=${f[cur]} ≥ 2 → +2`,type:'done'});
+        const next=cur*cur;
+        res.push({phase:'extend',ans,start,cur,length,chain:[...chain],
+          msg:`<code>freq[${cur}] = ${f[cur]} ≥ 2</code> → add 2. length = <code>${length}</code>. Next: <code>cur = ${cur} × ${cur} = ${next}</code>.`});
+        cur=next;
+      } else {
+        length+=1;
+        chain.push({val:cur,cnt:f[cur],note:`freq=${f[cur]} = 1 → +1, stop`,type:'break'});
+        res.push({phase:'break',ans,start,cur,length,chain:[...chain],
+          msg:`<code>freq[${cur}] = ${f[cur]} < 2</code> → add 1 and stop. length = <code>${length}</code>.`});
+        break;
+      }
+    }
+    if(f[cur]===undefined&&chain.length>0)
+      res.push({phase:'missing',ans,start,cur,length,chain:[...chain],msg:`<code>${cur}</code> not in nums → chain ends. length = <code>${length}</code>.`});
+    const finalLen=length%2===0?length-1:length;
+    if(length%2===0)
+      res.push({phase:'trim',ans,start,cur,length:finalLen,chain:[...chain],msg:`Length <code>${length}</code> is even — subsequence must be odd length. Trim → <code>${finalLen}</code>.`});
+    ans=Math.max(ans,finalLen);
+    res.push({phase:'done',ans,start,cur,length:finalLen,chain:[...chain],msg:`Chain from <code>${start}</code> contributes <code>${finalLen}</code>. ans → <code>${ans}</code>.`});
+  }
+  res.push({phase:'final',ans,start:null,cur:null,length:null,chain:[],msg:`Done! Maximum subset length = <code>${ans}</code>.`});
+  return {steps:res,freq:f};
+}
+
+function v3Render(){
+  if(!v3Steps.length) return;
+  const s=v3Steps[v3Idx];
+  v3FreqKeys.forEach(k=>{
+    const el=document.getElementById('v3fc-'+k); if(!el) return;
+    el.className='freq-cell';
+    if(s.start===k) el.classList.add('fc-active');
+    else if(s.chain&&s.chain.some(c=>c.val===k&&c.type==='done')) el.classList.add('fc-chain');
+    else if(s.chain&&s.chain.some(c=>c.val===k&&c.type==='break')) el.classList.add('fc-break');
+  });
+  const cr=document.getElementById('v3-chain'); cr.innerHTML='';
+  if(s.chain&&s.chain.length>0){
+    s.chain.forEach((c,i)=>{
+      if(i>0){const a=document.createElement('span');a.className='chain-arrow';a.textContent='→';cr.appendChild(a);}
+      const nd=document.createElement('div');
+      nd.className='chain-node '+(c.type==='done'?'done-node':c.type==='break'?'break-node':'cur-node');
+      nd.innerHTML=`${c.val}<div class="cn-sub">${c.note}</div>`;cr.appendChild(nd);
+    });
+  } else if(s.phase==='start'||s.phase==='ones'){
+    const nd=document.createElement('div');nd.className='chain-node cur-node';
+    nd.innerHTML=`${s.start}<div class="cn-sub">starting</div>`;cr.appendChild(nd);
+  } else cr.innerHTML='<span style="font-size:13px;color:var(--text-muted)">—</span>';
+  document.getElementById('v3-sstart').textContent=s.start!==null?s.start:'—';
+  document.getElementById('v3-scur').textContent=s.cur!==null?s.cur:'—';
+  document.getElementById('v3-slen').textContent=s.length!==null?s.length:'—';
+  document.getElementById('v3-sans').textContent=s.ans;
+  document.getElementById('v3-info').innerHTML=s.msg;
+  document.getElementById('v3-prog').textContent=`Step ${v3Idx+1} / ${v3Steps.length}`;
+}
+
+function v3Init(){
+  const raw=document.getElementById('v3-nums').value.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x));
+  const res=v3Build(raw);
+  v3Steps=res.steps; v3Freq=res.freq;
+  v3FreqKeys=Object.keys(v3Freq).map(Number).sort((a,b)=>a-b);
+  v3Idx=0;
+  const row=document.getElementById('v3-freq'); row.innerHTML='';
+  v3FreqKeys.forEach(k=>{
+    const d=document.createElement('div');d.className='freq-cell';d.id='v3fc-'+k;
+    d.innerHTML=`<span class="fval">${k}</span><span class="fcnt">×${v3Freq[k]}</span>`;row.appendChild(d);
+  });
+  v3Render();
+}
+function v3Fwd(){if(v3Idx<v3Steps.length-1){v3Idx++;v3Render();}}
+function v3Back(){if(v3Idx>0){v3Idx--;v3Render();}}
+function v3Skip(){v3Idx=v3Steps.length-1;v3Render();}
+
+v1Init(); v2Init(); v3Init();
+
+/* ════════════════════════════════════════
+   VIZ 4 — Coin Change (#322)
+   ════════════════════════════════════════ */
+let v4Steps=[],v4Idx=0,v4Coins=[],v4Amount=0;
+
+function v4BuildSteps(cs,amt){
+  const dp=new Array(amt+1).fill(Infinity); dp[0]=0;
+  const res=[];
+  res.push({phase:'init',i:0,coin:null,coinIdx:-1,dp:[...dp],prev:null,cand:null,
+    msg:`Base case: <code>dp[0] = 0</code> — zero coins needed for amount 0. All others start at <code>∞</code>.`});
+  for(let i=1;i<=amt;i++){
+    for(let ci=0;ci<cs.length;ci++){
+      const coin=cs[ci];
+      if(i-coin>=0){
+        const prev=dp[i-coin],cand=prev===Infinity?Infinity:1+prev,improved=cand<dp[i];
+        if(improved) dp[i]=cand;
+        res.push({phase:improved?'update':'no-update',i,coin,coinIdx:ci,dp:[...dp],prev,cand,improved,
+          msg:prev===Infinity
+            ?`i=<code>${i}</code>, coin=<code>${coin}</code>: <code>dp[${i-coin}]=∞</code> — can't reach ${i-coin}, skip.`
+            :improved
+              ?`i=<code>${i}</code>, coin=<code>${coin}</code>: <code>1+dp[${i-coin}]=1+${prev}=${cand}</code> — better! <code>dp[${i}]=${cand}</code>`
+              :`i=<code>${i}</code>, coin=<code>${coin}</code>: <code>1+dp[${i-coin}]=1+${prev}=${cand}</code> — not better than <code>dp[${i}]=${dp[i]}</code>, skip.`});
+      } else {
+        res.push({phase:'skip',i,coin,coinIdx:ci,dp:[...dp],prev:null,cand:null,improved:false,
+          msg:`i=<code>${i}</code>, coin=<code>${coin}</code>: <code>${i}−${coin}<0</code> — coin too large, skip.`});
+      }
+    }
+  }
+  const ans=dp[amt]===Infinity?-1:dp[amt];
+  res.push({phase:'final',i:amt,coin:null,coinIdx:-1,dp:[...dp],prev:null,cand:null,improved:false,
+    msg:dp[amt]===Infinity?`Done! <code>dp[${amt}]=∞</code> — not possible. Return <code>-1</code>.`
+      :`Done! <code>dp[${amt}]=${dp[amt]}</code> — minimum <code>${dp[amt]}</code> coin${dp[amt]===1?'':'s'}.`});
+  return res;
+}
+
+function v4Render(){
+  if(!v4Steps.length) return;
+  const s=v4Steps[v4Idx];
+  document.querySelectorAll('#v4-coin-row .coin-pill').forEach((el,ci)=>{
+    el.className='coin-pill'; if(ci===s.coinIdx&&s.phase!=='init'&&s.phase!=='final') el.classList.add('active');
+  });
+  document.querySelectorAll('#v4-dp-row .dp-cell').forEach((cell,j)=>{
+    const valEl=cell.querySelector('.dp-val'); valEl.className='dp-val';
+    const v=s.dp[j];
+    const isCur=s.i===j&&s.phase!=='init'&&s.phase!=='final';
+    if(s.phase==='final'&&j===v4Amount&&v!==Infinity) valEl.classList.add('is-best');
+    else if(isCur) valEl.classList.add('is-cur');
+    else if(j===0||v!==Infinity) valEl.classList.add(j===0?'is-zero':'is-filled');
+    else valEl.classList.add('is-inf');
+    valEl.textContent=v===Infinity?'∞':v;
+  });
+  document.getElementById('v4-si').textContent=s.i;
+  document.getElementById('v4-scoin').textContent=s.coin||'—';
+  document.getElementById('v4-sprev').textContent=s.prev===null?'—':s.prev===Infinity?'∞':s.prev;
+  document.getElementById('v4-scand').textContent=s.cand===null?'—':s.cand===Infinity?'∞':s.cand;
+  const cv=s.dp[s.i]; document.getElementById('v4-scur').textContent=s.phase==='init'?'—':cv===Infinity?'∞':cv;
+  const fv=s.dp[v4Amount]; document.getElementById('v4-sans').textContent=s.phase==='final'?(fv===Infinity?-1:fv):'…';
+  document.getElementById('v4-info').innerHTML=s.msg;
+  document.getElementById('v4-prog').textContent=`Step ${v4Idx+1} / ${v4Steps.length}`;
+}
+
+function v4Init(){
+  v4Coins=document.getElementById('v4-coins').value.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x)&&x>0);
+  v4Amount=Math.min(50,Math.max(1,parseInt(document.getElementById('v4-amount').value)||6));
+  v4Steps=v4BuildSteps(v4Coins,v4Amount); v4Idx=0;
+  const cr=document.getElementById('v4-coin-row'); cr.innerHTML='';
+  v4Coins.forEach(c=>{const p=document.createElement('div');p.className='coin-pill';p.textContent=c;cr.appendChild(p);});
+  const dr=document.getElementById('v4-dp-row'); dr.innerHTML='';
+  for(let j=0;j<=v4Amount;j++){
+    const cell=document.createElement('div');cell.className='dp-cell';
+    cell.innerHTML=`<div class="dp-idx">${j}</div><div class="dp-val is-inf">∞</div>`;dr.appendChild(cell);
+  }
+  v4Render();
+}
+function v4Fwd(){if(v4Idx<v4Steps.length-1){v4Idx++;v4Render();}}
+function v4Back(){if(v4Idx>0){v4Idx--;v4Render();}}
+function v4Skip(){v4Idx=v4Steps.length-1;v4Render();}
+
+/* ════════════════════════════════════════
+   VIZ 5 — Coin Change II (#518)
+   ════════════════════════════════════════ */
+let v5Steps=[],v5Idx=0,v5Coins=[],v5Amount=0;
+
+function v5BuildSteps(cs,amt){
+  const dp=new Array(amt+1).fill(0); dp[0]=1;
+  const res=[];
+  res.push({phase:'init',coin:null,coinIdx:-1,i:-1,src:null,dp:[...dp],
+    msg:`Init: <code>dp[0]=1</code> (one way to make amount 0). All other dp[i]=0.`});
+  cs.forEach((c,ci)=>{
+    for(let i=c;i<=amt;i++){
+      const src=dp[i-c];
+      if(src>0){ dp[i]+=src; }
+      res.push({phase:'fill',coin:c,coinIdx:ci,i,src,dp:[...dp],updated:src>0,
+        msg:src>0
+          ?`coin=<code>${c}</code>, i=<code>${i}</code>: dp[${i-c}]=${src} → dp[${i}] += ${src} = <strong>${dp[i]}</strong>`
+          :`coin=<code>${c}</code>, i=<code>${i}</code>: dp[${i-c}]=0 — no contribution, dp[${i}] stays ${dp[i]}`});
+    }
+  });
+  res.push({phase:'final',coin:null,coinIdx:-1,i:-1,src:null,dp:[...dp],
+    msg:`Done! <code>dp[${amt}]=${dp[amt]}</code> — ${dp[amt]} distinct combination${dp[amt]===1?'':'s'}.`});
+  return res;
+}
+
+function v5Render(){
+  if(!v5Steps.length) return;
+  const s=v5Steps[v5Idx];
+  document.querySelectorAll('#v5-coin-badges .coin-badge').forEach((el,ci)=>{
+    el.className='coin-badge'; if(ci===s.coinIdx) el.classList.add('active');
+  });
+  for(let k=0;k<=v5Amount;k++){
+    const el=document.getElementById(`v5-dp${k}`); if(!el) continue;
+    el.className='dp-val'; el.textContent=s.dp[k];
+    const isSrc=s.phase==='fill'&&s.src>0&&k===s.i-s.coin;
+    const isCur=s.phase==='fill'&&k===s.i;
+    const isBest=s.phase==='final'&&k===v5Amount;
+    if(isBest)            el.classList.add('is-best');
+    else if(isSrc)        el.classList.add('is-zero');
+    else if(isCur)        el.classList.add('is-cur');
+    else if(k===0)        el.classList.add('is-zero');
+    else if(s.dp[k]>0)   el.classList.add('is-filled');
+  }
+  document.getElementById('v5-sc').textContent  =s.coin!==null?s.coin:'—';
+  document.getElementById('v5-si').textContent  =s.i>=0?s.i:'—';
+  document.getElementById('v5-ssrc').textContent=s.phase==='fill'?s.src:'—';
+  document.getElementById('v5-sans').textContent=s.phase==='final'?s.dp[v5Amount]:'…';
+  document.getElementById('v5-info').innerHTML  =s.msg;
+  document.getElementById('v5-prog').textContent=`Step ${v5Idx+1} / ${v5Steps.length}`;
+}
+
+function v5Init(){
+  v5Coins=document.getElementById('v5-coins').value.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x)&&x>0);
+  v5Amount=Math.min(30,Math.max(1,parseInt(document.getElementById('v5-amount').value)||5));
+  v5Steps=v5BuildSteps(v5Coins,v5Amount); v5Idx=0;
+  const cb=document.getElementById('v5-coin-badges'); cb.innerHTML='';
+  v5Coins.forEach(c=>{const b=document.createElement('div');b.className='coin-badge';b.textContent=c;cb.appendChild(b);});
+  const dr=document.getElementById('v5-dp-row'); dr.innerHTML='';
+  for(let k=0;k<=v5Amount;k++){
+    const w=document.createElement('div'); w.className='dp-cell';
+    w.innerHTML=`<div class="dp-idx">${k}</div><div class="dp-val" id="v5-dp${k}"></div>`;
+    dr.appendChild(w);
+  }
+  v5Render();
+}
+function v5Fwd(){if(v5Idx<v5Steps.length-1){v5Idx++;v5Render();}}
+function v5Back(){if(v5Idx>0){v5Idx--;v5Render();}}
+function v5Skip(){v5Idx=v5Steps.length-1;v5Render();}
+
+/* ════════════════════════════════════════
+   VIZ 6 — Matching Subsequences (#792)
+   ════════════════════════════════════════ */
+let v6Steps=[],v6Idx=0,v6S='',v6Words=[],v6LastWord=null;
+
+function v6BuildSteps(str,ws){
+  const res=[]; let count=0;
+  const wordStates=ws.map(()=>null);
+  res.push({phase:'init',word:null,wordIdx:-1,ch:null,chIdx:-1,searchFrom:-1,foundAt:null,matchedUpTo:[],wordStates:[...wordStates],count,
+    msg:`Starting. Will check each word as a subsequence of <code>s="${str}"</code>.`});
+  for(let wi=0;wi<ws.length;wi++){
+    const word=ws[wi]; let index=-1; const matchedUpTo=[]; let failed=false;
+    res.push({phase:'word-start',word,wordIdx:wi,ch:null,chIdx:-1,searchFrom:-1,foundAt:null,matchedUpTo:[],wordStates:[...wordStates],count,
+      msg:`Checking <code>"${word}"</code>. Scanning each character through s, advancing index each match.`});
+    for(let ci=0;ci<word.length;ci++){
+      const ch=word[ci],from=index+1,found=str.indexOf(ch,from);
+      if(found===-1){
+        res.push({phase:'char-fail',word,wordIdx:wi,ch,chIdx:ci,searchFrom:from,foundAt:-1,matchedUpTo:[...matchedUpTo],wordStates:[...wordStates],count,
+          msg:`Looking for <code>'${ch}'</code> from index <code>${from}</code> — not found. <code>"${word}"</code> is not a subsequence.`});
+        failed=true; break;
+      } else {
+        index=found; matchedUpTo.push(found);
+        res.push({phase:'char-match',word,wordIdx:wi,ch,chIdx:ci,searchFrom:from,foundAt:found,matchedUpTo:[...matchedUpTo],wordStates:[...wordStates],count,
+          msg:`Looking for <code>'${ch}'</code> from index <code>${from}</code> — found at <code>${found}</code> ✓. Next search starts at <code>${found+1}</code>.`});
+      }
+    }
+    if(!failed){
+      count++; wordStates[wi]=true;
+      res.push({phase:'word-match',word,wordIdx:wi,ch:null,chIdx:-1,searchFrom:-1,foundAt:null,matchedUpTo:[...matchedUpTo],wordStates:[...wordStates],count,
+        msg:`All characters found in order ✓ — <code>"${word}"</code> is a subsequence. count → <code>${count}</code>.`});
+    } else {
+      wordStates[wi]=false;
+      res.push({phase:'word-fail',word,wordIdx:wi,ch:null,chIdx:-1,searchFrom:-1,foundAt:null,matchedUpTo:[...matchedUpTo],wordStates:[...wordStates],count,
+        msg:`<code>"${word}"</code> failed — not a subsequence. count stays <code>${count}</code>.`});
+    }
+  }
+  res.push({phase:'final',word:null,wordIdx:-1,ch:null,chIdx:-1,searchFrom:-1,foundAt:null,matchedUpTo:[],wordStates:[...wordStates],count,
+    msg:`Done! <code>${count}</code> of <code>${ws.length}</code> words are subsequences of s.`});
+  return res;
+}
+
+function v6RebuildStrips(word){
+  const ss=document.getElementById('v6-s-strip'); ss.innerHTML='';
+  for(let i=0;i<v6S.length;i++){
+    const d=document.createElement('div');d.className='char-box';
+    d.innerHTML=`${v6S[i]}<span class="ci">${i}</span>`;ss.appendChild(d);
+  }
+  const ws=document.getElementById('v6-w-strip'); ws.innerHTML='';
+  if(word){for(let i=0;i<word.length;i++){
+    const d=document.createElement('div');d.className='char-box w-pending';
+    d.innerHTML=`${word[i]}<span class="ci">${i}</span>`;ws.appendChild(d);
+  }}
+}
+
+function v6Render(){
+  if(!v6Steps.length) return;
+  const s=v6Steps[v6Idx];
+  if(s.word!==v6LastWord){v6RebuildStrips(s.word);v6LastWord=s.word;}
+  document.querySelectorAll('#v6-word-list .word-chip').forEach((el,wi)=>{
+    el.className='word-chip';
+    const st=s.wordStates[wi];
+    if(wi===s.wordIdx&&s.phase!=='word-match'&&s.phase!=='word-fail') el.classList.add('active');
+    else if(st===true) el.classList.add('matched');
+    else if(st===false) el.classList.add('failed');
+  });
+  document.querySelectorAll('#v6-s-strip .char-box').forEach((el,i)=>{
+    el.className='char-box';
+    if(s.phase==='char-match'||s.phase==='char-fail'){
+      if(i===s.foundAt&&s.phase==='char-match') el.classList.add('s-match');
+      else if(i===s.foundAt&&s.phase==='char-fail') el.classList.add('s-fail');
+      else if(s.matchedUpTo.includes(i)) el.classList.add('s-match');
+      else if(i<(s.searchFrom||0)) el.classList.add('s-past');
+    } else if(s.phase==='word-match') { if(s.matchedUpTo.includes(i)) el.classList.add('s-match'); }
+  });
+  document.querySelectorAll('#v6-w-strip .char-box').forEach((el,ci)=>{
+    el.className='char-box';
+    if(s.chIdx!==-1){ if(ci<s.chIdx) el.classList.add('w-done'); else if(ci===s.chIdx) el.classList.add('w-cur'); else el.classList.add('w-pending'); }
+    else if(s.phase==='word-match') el.classList.add('w-done');
+    else el.classList.add('w-pending');
+  });
+  document.getElementById('v6-sword').textContent=s.word||'—';
+  document.getElementById('v6-sch').textContent=s.ch||'—';
+  document.getElementById('v6-sfrom').textContent=s.searchFrom>=0?s.searchFrom:'—';
+  document.getElementById('v6-sfound').textContent=s.foundAt===null?'—':s.foundAt===-1?'−1':s.foundAt;
+  document.getElementById('v6-scount').textContent=s.count;
+  document.getElementById('v6-info').innerHTML=s.msg;
+  document.getElementById('v6-prog').textContent=`Step ${v6Idx+1} / ${v6Steps.length}`;
+}
+
+function v6Init(){
+  v6S=document.getElementById('v6-s').value.trim();
+  v6Words=document.getElementById('v6-words').value.split(',').map(w=>w.trim()).filter(Boolean);
+  v6Steps=v6BuildSteps(v6S,v6Words); v6Idx=0; v6LastWord=null;
+  const wl=document.getElementById('v6-word-list'); wl.innerHTML='';
+  v6Words.forEach(w=>{const c=document.createElement('div');c.className='word-chip';c.textContent=w;wl.appendChild(c);});
+  v6RebuildStrips(null);
+  v6Render();
+}
+function v6Fwd(){if(v6Idx<v6Steps.length-1){v6Idx++;v6Render();}}
+function v6Back(){if(v6Idx>0){v6Idx--;v6Render();}}
+function v6Skip(){v6Idx=v6Steps.length-1;v6Render();}
+
+v4Init(); v5Init(); v6Init();
+
+/* ════════════════════════════════════════
+   VIZ 7 — Climbing Stairs (#70)
+   ════════════════════════════════════════ */
+let v7Steps=[], v7Idx=0, v7N=0;
+
+function v7BuildSteps(n) {
+  const res = [];
+  const dp = new Array(n + 1).fill(0);
+  dp[1] = 1;
+  if (n >= 2) dp[2] = 2;
+
+  if (n <= 2) {
+    const b = dp[n];
+    res.push({phase:'final', i:n, dp:[...dp], a:dp[1], b, curr:null, aIdx:1, bIdx:n,
+      msg:`n ≤ 2 → return <code>${b}</code> directly.`});
+    return res;
+  }
+
+  let a = 1, b = 2;
+  res.push({phase:'init', i:2, dp:[...dp], a, b, curr:null, aIdx:1, bIdx:2,
+    msg:`Base cases: <code>dp[1] = 1</code> (one way to climb 1 stair), <code>dp[2] = 2</code> (two ways). Set <code>a = 1</code>, <code>b = 2</code>.`});
+
+  for (let i = 3; i <= n; i++) {
+    const curr = a + b;
+    res.push({phase:'compute', i, dp:[...dp], a, b, curr, aIdx:i-2, bIdx:i-1,
+      msg:`i = <code>${i}</code>: <code>curr = a + b = ${a} + ${b} = ${curr}</code> — sum ways from one and two steps back.`});
+    dp[i] = curr;
+    a = b; b = curr;
+    res.push({phase:'update', i, dp:[...dp], a, b, curr, aIdx:i-1, bIdx:i,
+      msg:`Stored <code>dp[${i}] = ${curr}</code>. Slide window: <code>a = ${a}</code>, <code>b = ${curr}</code>.`});
+  }
+
+  res.push({phase:'final', i:n, dp:[...dp], a, b, curr:null, aIdx:n-1, bIdx:n,
+    msg:`Done! <code>dp[${n}] = ${b}</code> — <strong>${b}</strong> distinct way${b===1?'':'s'} to climb ${n} stairs.`});
+  return res;
+}
+
+function v7Render() {
+  if (!v7Steps.length) return;
+  const s = v7Steps[v7Idx];
+
+  document.querySelectorAll('#v7-dp-row .dp-cell').forEach((cell, j) => {
+    const valEl = cell.querySelector('.dp-val');
+    valEl.className = 'dp-val';
+    const idx = j + 1;
+    const v = s.dp[idx] || 0;
+    const isFinal = s.phase === 'final' && idx === v7N;
+    const isCurr  = s.phase === 'compute' && idx === s.i;
+    const isA = idx === s.aIdx && s.phase !== 'final';
+    const isB = idx === s.bIdx && s.phase !== 'final';
+
+    if (isFinal)      valEl.classList.add('is-best');
+    else if (isCurr)  valEl.classList.add('is-cur');
+    else if (isA)     valEl.classList.add('is-zero');
+    else if (isB)     valEl.classList.add('is-amber');
+    else if (v > 0)   valEl.classList.add('is-filled');
+    valEl.textContent = v > 0 ? v : '';
+  });
+
+  document.querySelectorAll('#v7-ptr-row .v7-ptr').forEach((el, j) => {
+    const idx = j + 1;
+    const isA    = idx === s.aIdx && s.phase !== 'final';
+    const isB    = idx === s.bIdx && s.phase !== 'final';
+    const isCurr = s.phase === 'compute' && idx === s.i;
+    let label = '', color = '';
+    if (isA && isB) { label = 'a/b'; color = 'var(--accent-text)'; }
+    else if (isA)   { label = 'a';   color = 'var(--green-text)'; }
+    else if (isB)   { label = 'b';   color = 'var(--amber-text)'; }
+    if (isCurr) { label = label ? label + '/curr' : 'curr'; color = 'var(--accent-text)'; }
+    el.textContent = label; el.style.color = color;
+  });
+
+  document.getElementById('v7-si').textContent    = s.i;
+  document.getElementById('v7-sa').textContent    = s.a;
+  document.getElementById('v7-sb').textContent    = s.b;
+  document.getElementById('v7-scurr').textContent = s.curr !== null ? s.curr : '—';
+  document.getElementById('v7-sans').textContent  = s.phase === 'final' ? s.b : '…';
+  document.getElementById('v7-info').innerHTML    = s.msg;
+  document.getElementById('v7-prog').textContent  = `Step ${v7Idx + 1} / ${v7Steps.length}`;
+}
+
+function v7Init() {
+  v7N = Math.min(30, Math.max(1, parseInt(document.getElementById('v7-n').value) || 6));
+  v7Steps = v7BuildSteps(v7N); v7Idx = 0;
+  const dr = document.getElementById('v7-dp-row'); dr.innerHTML = '';
+  for (let j = 1; j <= v7N; j++) {
+    const cell = document.createElement('div'); cell.className = 'dp-cell';
+    cell.innerHTML = `<div class="dp-idx">${j}</div><div class="dp-val"></div>`;
+    dr.appendChild(cell);
+  }
+  const pr = document.getElementById('v7-ptr-row'); pr.innerHTML = '';
+  for (let j = 1; j <= v7N; j++) {
+    const el = document.createElement('div'); el.className = 'v7-ptr';
+    el.style.cssText = 'width:52px;height:18px;text-align:center;font-size:11px;font-weight:600;font-family:monospace;';
+    pr.appendChild(el);
+  }
+  v7Render();
+}
+function v7Fwd()  { if (v7Idx < v7Steps.length - 1) { v7Idx++; v7Render(); } }
+function v7Back() { if (v7Idx > 0) { v7Idx--; v7Render(); } }
+function v7Skip() { v7Idx = v7Steps.length - 1; v7Render(); }
+
+v7Init();
+
+/* ════════════════════════════════════════
+   VIZ 8 — House Robber (#198)
+   ════════════════════════════════════════ */
+let v8Steps=[], v8Idx=0, v8Nums=[];
+
+function v8BuildSteps(nums) {
+  const n = nums.length;
+  const dp = new Array(n).fill(0);
+  const res = [];
+
+  if (n === 1) {
+    dp[0] = nums[0];
+    res.push({phase:'final', i:0, dp:[...dp], opt1:null, opt2:null, chosen:dp[0],
+      msg:`Only one house — rob it for <code>${nums[0]}</code>.`});
+    return res;
+  }
+
+  dp[0] = nums[0];
+  res.push({phase:'base0', i:0, dp:[...dp], opt1:null, opt2:null, chosen:dp[0],
+    msg:`Base: <code>dp[0] = nums[0] = ${nums[0]}</code> — only one house so far, rob it.`});
+
+  dp[1] = Math.max(nums[0], nums[1]);
+  res.push({phase:'base1', i:1, dp:[...dp], opt1:nums[0], opt2:nums[1], chosen:dp[1],
+    msg:`Base: <code>dp[1] = max(nums[0], nums[1]) = max(${nums[0]}, ${nums[1]}) = ${dp[1]}</code> — take the richer of the first two houses.`});
+
+  for (let i = 2; i < n; i++) {
+    const opt1 = dp[i-2] + nums[i];
+    const opt2 = dp[i-1];
+    const chosen = Math.max(opt1, opt2);
+    dp[i] = chosen;
+    const robCurrent = opt1 >= opt2;
+    res.push({phase:'compute', i, dp:[...dp], opt1, opt2, chosen, robCurrent,
+      msg:`i=<code>${i}</code>, house=<code>$${nums[i]}</code>: `+
+        `rob = <code>dp[${i-2}]+${nums[i]}=${dp[i-2]}+${nums[i]}=${opt1}</code>, `+
+        `skip = <code>dp[${i-1}]=${opt2}</code> → `+
+        `<code>dp[${i}] = ${chosen}</code> `+
+        `<span style="font-size:12px;padding:2px 8px;border-radius:20px;font-weight:500;`+
+        `background:${robCurrent?'var(--green-bg)':'var(--amber-bg)'};`+
+        `color:${robCurrent?'var(--green-text)':'var(--amber-text)'};`+
+        `border:0.5px solid ${robCurrent?'var(--green-border)':'var(--amber-border)'}">`+
+        `${robCurrent?'rob house '+i:'skip house '+i}</span>`});
+  }
+
+  res.push({phase:'final', i:n-1, dp:[...dp], opt1:null, opt2:null, chosen:dp[n-1],
+    msg:`Done! Maximum loot = <code>${dp[n-1]}</code>.`});
+  return res;
+}
+
+function v8Render() {
+  if (!v8Steps.length) return;
+  const s = v8Steps[v8Idx];
+  const n = v8Nums.length;
+
+  // House row — always show all houses; highlight sources
+  document.querySelectorAll('#v8-house-row .dp-cell').forEach((cell, i) => {
+    const valEl = cell.querySelector('.dp-val');
+    valEl.className = 'dp-val is-filled';
+    if (s.phase === 'base0' && i === 0) {
+      valEl.className = 'dp-val is-cur';
+    } else if (s.phase === 'base1') {
+      if (i === 0) valEl.className = 'dp-val is-zero';
+      else if (i === 1) valEl.className = 'dp-val is-cur';
+    } else if (s.phase === 'compute') {
+      if (i === s.i)   valEl.className = 'dp-val is-cur';
+      else if (i === s.i - 2) valEl.className = 'dp-val is-zero';
+    }
+  });
+
+  // DP row
+  document.querySelectorAll('#v8-dp-row .dp-cell').forEach((cell, j) => {
+    const valEl = cell.querySelector('.dp-val');
+    valEl.className = 'dp-val';
+    const computed = j <= s.i;
+    const isFinal = s.phase === 'final' && j === n - 1;
+    const isCur   = (s.phase === 'base0' || s.phase === 'base1' || s.phase === 'compute') && j === s.i;
+    const isSrc1  = (s.phase === 'compute' && j === s.i - 2) || (s.phase === 'base1' && j === 0);
+    const isSrc2  = s.phase === 'compute' && j === s.i - 1;
+
+    if (isFinal)     valEl.classList.add('is-best');
+    else if (isCur)  valEl.classList.add('is-cur');
+    else if (isSrc1) valEl.classList.add('is-zero');
+    else if (isSrc2) valEl.classList.add('is-amber');
+    else if (computed) valEl.classList.add('is-filled');
+    valEl.textContent = computed ? s.dp[j] : '';
+  });
+
+  document.getElementById('v8-si').textContent    = s.i;
+  document.getElementById('v8-snums').textContent = v8Nums[s.i] !== undefined ? v8Nums[s.i] : '—';
+  document.getElementById('v8-sopt1').textContent = s.opt1 !== null ? s.opt1 : '—';
+  document.getElementById('v8-sopt2').textContent = s.opt2 !== null ? s.opt2 : '—';
+  document.getElementById('v8-sans').textContent  = s.phase === 'final' ? s.chosen : '…';
+  document.getElementById('v8-info').innerHTML    = s.msg;
+  document.getElementById('v8-prog').textContent  = `Step ${v8Idx + 1} / ${v8Steps.length}`;
+}
+
+function v8Init() {
+  v8Nums = document.getElementById('v8-nums').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x) && x >= 0);
+  if (!v8Nums.length) return;
+  v8Steps = v8BuildSteps(v8Nums); v8Idx = 0;
+
+  const hr = document.getElementById('v8-house-row'); hr.innerHTML = '';
+  v8Nums.forEach((v, i) => {
+    const cell = document.createElement('div'); cell.className = 'dp-cell';
+    cell.innerHTML = `<div class="dp-idx">${i}</div><div class="dp-val is-filled">$${v}</div>`;
+    hr.appendChild(cell);
+  });
+
+  const dr = document.getElementById('v8-dp-row'); dr.innerHTML = '';
+  for (let j = 0; j < v8Nums.length; j++) {
+    const cell = document.createElement('div'); cell.className = 'dp-cell';
+    cell.innerHTML = `<div class="dp-idx">${j}</div><div class="dp-val"></div>`;
+    dr.appendChild(cell);
+  }
+  v8Render();
+}
+function v8Fwd()  { if (v8Idx < v8Steps.length - 1) { v8Idx++; v8Render(); } }
+function v8Back() { if (v8Idx > 0) { v8Idx--; v8Render(); } }
+function v8Skip() { v8Idx = v8Steps.length - 1; v8Render(); }
+
+v8Init();
+
+/* ════════════════════════════════════════
+   VIZ 9 — Jump Game (#55)
+   ════════════════════════════════════════ */
+let v9Steps=[], v9Idx=0, v9Nums=[];
+
+function v9BuildSteps(nums) {
+  const n = nums.length;
+  const res = [];
+
+  if (n === 1) {
+    res.push({phase:'final', i:-1, pos:0, reach:0, result:true,
+      msg:`Single element — already at the last index. Return <code>true</code>.`});
+    return res;
+  }
+
+  if (nums[0] === 0) {
+    res.push({phase:'final', i:0, pos:0, reach:0, result:false,
+      msg:`<code>nums[0] = 0</code> — cannot move from start. Return <code>false</code>.`});
+    return res;
+  }
+
+  let pos = n - 1;
+  res.push({phase:'init', i:-1, pos, reach:0, result:null,
+    msg:`Set <code>pos = ${n-1}</code> (last index — the goal). Scan <strong>backwards</strong>: if index <code>i</code> can reach <code>pos</code>, move the goal to <code>i</code>. Goal is to walk <code>pos</code> back to 0.`});
+
+  for (let i = n - 2; i >= 0; i--) {
+    const reach = nums[i];
+    const maxIdx = i + reach;
+    const canReach = maxIdx >= pos;
+    const oldPos = pos;
+    if (canReach) pos = i;
+    res.push({phase:'scan', i, pos, reach, maxIdx, canReach, oldPos, result:null,
+      msg: canReach
+        ? `i=<code>${i}</code>, nums[i]=<code>${reach}</code>: max reach <code>${i}+${reach}=${maxIdx} ≥ pos(${oldPos})</code> ✓ → goal moves: <code>pos = ${i}</code>`
+        : `i=<code>${i}</code>, nums[i]=<code>${reach}</code>: max reach <code>${i}+${reach}=${maxIdx} < pos(${pos})</code> ✗ — can't reach goal`
+    });
+  }
+
+  const result = pos < 2;
+  res.push({phase:'final', i:-1, pos, reach:0, result,
+    msg: result
+      ? `Done! <code>pos = ${pos}</code> — goal reached back to start. Return <code>true</code>.`
+      : `Done! <code>pos = ${pos}</code> ≥ 2 — gap exists before index 0. Return <code>false</code>.`
+  });
+  return res;
+}
+
+function v9Render() {
+  if (!v9Steps.length) return;
+  const s = v9Steps[v9Idx];
+  const n = v9Nums.length;
+
+  document.querySelectorAll('#v9-arr .arr-cell').forEach((el, j) => {
+    el.className = 'arr-cell';
+    if (s.phase === 'init') {
+      if (j === s.pos) el.classList.add('is-l');
+    } else if (s.phase === 'scan') {
+      if (j === s.pos)       el.classList.add('is-l');
+      else if (j === s.i)    el.classList.add('is-r');
+      else if (j > s.i && j <= Math.min(s.maxIdx, n - 1)) el.classList.add('in-window');
+    } else if (s.phase === 'final') {
+      if (s.result) {
+        if (j === 0) el.classList.add('is-l');
+      } else {
+        if (j === s.pos) { el.classList.add('is-r'); el.classList.add('is-target'); }
+      }
+    }
+  });
+
+  document.getElementById('v9-si').textContent     = s.i >= 0 ? s.i : '—';
+  document.getElementById('v9-snums').textContent  = s.i >= 0 ? v9Nums[s.i] : '—';
+  document.getElementById('v9-sreach').textContent = s.i >= 0 ? s.maxIdx : '—';
+  document.getElementById('v9-spos').textContent   = s.pos;
+  document.getElementById('v9-sresult').textContent = s.phase === 'final' ? (s.result ? 'true' : 'false') : '…';
+  document.getElementById('v9-info').innerHTML     = s.msg;
+  document.getElementById('v9-prog').textContent   = `Step ${v9Idx + 1} / ${v9Steps.length}`;
+}
+
+function v9Init() {
+  v9Nums = document.getElementById('v9-nums').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x) && x >= 0);
+  if (!v9Nums.length) return;
+  v9Steps = v9BuildSteps(v9Nums); v9Idx = 0;
+  const arr = document.getElementById('v9-arr'); arr.innerHTML = '';
+  v9Nums.forEach((v, i) => {
+    const d = document.createElement('div'); d.className = 'arr-cell';
+    d.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    arr.appendChild(d);
+  });
+  v9Render();
+}
+function v9Fwd()  { if (v9Idx < v9Steps.length - 1) { v9Idx++; v9Render(); } }
+function v9Back() { if (v9Idx > 0) { v9Idx--; v9Render(); } }
+function v9Skip() { v9Idx = v9Steps.length - 1; v9Render(); }
+
+v9Init();
+
+/* ════════════════════════════════════════
+   VIZ 10 — Word Break (#139)
+   ════════════════════════════════════════ */
+let v10Steps=[], v10Idx=0, v10S='', v10Words=[];
+
+function v10BuildSteps(str, wordArr) {
+  const n = str.length;
+  const wordSet = new Set(wordArr);
+  const dp = new Array(n + 1).fill(false);
+  dp[0] = true;
+  const res = [];
+
+  res.push({phase:'init', i:0, j:-1, sub:'', dpj:true, inDict:false, dp:[...dp],
+    msg:`Base: <code>dp[0] = true</code> — empty prefix is always valid.`});
+
+  for (let i = 1; i <= n; i++) {
+    let found = false;
+    for (let j = 0; j < i && !found; j++) {
+      const sub = str.slice(j, i);
+      const dpj = dp[j];
+      const inDict = wordSet.has(sub);
+      const matched = dpj && inDict;
+      if (matched) { dp[i] = true; found = true; }
+      res.push({
+        phase: matched ? 'matched' : 'check',
+        i, j, sub, dpj, inDict, dp:[...dp],
+        msg: matched
+          ? `i=<code>${i}</code>, j=<code>${j}</code>: <code>dp[${j}]=true</code> ✓ and <code>"${sub}"</code> ∈ dict ✓ → <code>dp[${i}] = true</code>`
+          : !dpj
+            ? `i=<code>${i}</code>, j=<code>${j}</code>: <code>dp[${j}]=false</code> — skip`
+            : `i=<code>${i}</code>, j=<code>${j}</code>: <code>dp[${j}]=true</code> ✓ but <code>"${sub}"</code> ∉ dict ✗`
+      });
+    }
+  }
+
+  res.push({phase:'final', i:n, j:-1, sub:'', dpj:dp[n], inDict:false, dp:[...dp],
+    msg:`Done! <code>dp[${n}] = ${dp[n]}</code> → return <code>${dp[n]}</code>.`});
+  return res;
+}
+
+function v10Render() {
+  if (!v10Steps.length) return;
+  const s = v10Steps[v10Idx];
+  const n = v10S.length;
+
+  // String chars
+  document.querySelectorAll('#v10-s-strip .char-box').forEach((el, k) => {
+    el.className = 'char-box';
+    const inWin = s.j >= 0 && k >= s.j && k < s.i;
+    if (s.phase !== 'init' && s.phase !== 'final' && inWin) {
+      if (s.phase === 'matched') el.classList.add('s-match');
+      else if (s.dpj)            el.classList.add('w-cur');
+      else                        el.classList.add('s-past');
+    }
+  });
+
+  // Dict chips
+  document.querySelectorAll('#v10-dict-chips .word-chip').forEach(el => {
+    el.className = 'word-chip';
+    if (s.sub && el.textContent === s.sub)
+      el.classList.add(s.phase === 'matched' ? 'matched' : s.inDict ? 'active' : '');
+  });
+
+  // DP array
+  document.querySelectorAll('#v10-dp-row .dp-cell').forEach((cell, k) => {
+    const valEl = cell.querySelector('.dp-val');
+    valEl.className = 'dp-val';
+    const val     = s.dp[k];
+    const isCur   = (s.phase === 'check' || s.phase === 'matched') && k === s.i;
+    const isSrc   = (s.phase === 'check' || s.phase === 'matched') && k === s.j;
+    const isFin   = s.phase === 'final' && k === n;
+    const done    = s.phase === 'final' || k < s.i || (k === s.i && s.phase === 'matched');
+
+    if (isFin)       valEl.classList.add(val ? 'is-best' : 'is-amber');
+    else if (isCur)  valEl.classList.add('is-cur');
+    else if (isSrc)  valEl.classList.add(val ? 'is-zero' : 'is-inf');
+    else if (done)   valEl.classList.add(val ? (k === 0 ? 'is-zero' : 'is-filled') : 'is-inf');
+    valEl.textContent = (done || isCur) ? (val ? 'T' : 'F') : '';
+  });
+
+  document.getElementById('v10-si').textContent      = s.i > 0 ? s.i : (s.phase !== 'init' ? s.i : '—');
+  document.getElementById('v10-sj').textContent      = s.j >= 0 ? s.j : '—';
+  document.getElementById('v10-ssub').textContent    = s.sub || '—';
+  document.getElementById('v10-sdpj').textContent    = s.j >= 0 ? String(s.dpj) : '—';
+  document.getElementById('v10-sindict').textContent = s.sub ? String(s.inDict) : '—';
+  document.getElementById('v10-sresult').textContent = s.phase === 'final' ? String(s.dp[n]) : '…';
+  document.getElementById('v10-info').innerHTML      = s.msg;
+  document.getElementById('v10-prog').textContent    = `Step ${v10Idx + 1} / ${v10Steps.length}`;
+}
+
+function v10Init() {
+  v10S     = document.getElementById('v10-s').value.trim();
+  v10Words = document.getElementById('v10-words').value.split(',').map(w => w.trim()).filter(Boolean);
+  if (!v10S || !v10Words.length) return;
+  v10Steps = v10BuildSteps(v10S, v10Words); v10Idx = 0;
+
+  const ss = document.getElementById('v10-s-strip'); ss.innerHTML = '';
+  for (let k = 0; k < v10S.length; k++) {
+    const d = document.createElement('div'); d.className = 'char-box';
+    d.innerHTML = `${v10S[k]}<span class="ci">${k}</span>`; ss.appendChild(d);
+  }
+
+  const dc = document.getElementById('v10-dict-chips'); dc.innerHTML = '';
+  v10Words.forEach(w => {
+    const c = document.createElement('div'); c.className = 'word-chip';
+    c.textContent = w; dc.appendChild(c);
+  });
+
+  const dr = document.getElementById('v10-dp-row'); dr.innerHTML = '';
+  for (let k = 0; k <= v10S.length; k++) {
+    const cell = document.createElement('div'); cell.className = 'dp-cell';
+    cell.innerHTML = `<div class="dp-idx">${k}</div><div class="dp-val"></div>`;
+    dr.appendChild(cell);
+  }
+  v10Render();
+}
+function v10Fwd()  { if (v10Idx < v10Steps.length - 1) { v10Idx++; v10Render(); } }
+function v10Back() { if (v10Idx > 0) { v10Idx--; v10Render(); } }
+function v10Skip() { v10Idx = v10Steps.length - 1; v10Render(); }
+
+v10Init();
+
+/* ════════════════════════════════════════
+   VIZ 11 — Jump Game II (#45)
+   ════════════════════════════════════════ */
+let v11Steps=[], v11Idx=0, v11Nums=[];
+
+function v11BuildSteps(nums) {
+  const n = nums.length;
+  if (n <= 1) {
+    return [{phase:'final', i:0, jumps:0, curr_end:0, max_reach:0,
+      msg:`Single element — already at last index. <code>0</code> jumps needed.`}];
+  }
+
+  let jumps = 0, curr_end = 0, max_reach = 0;
+  const res = [];
+
+  res.push({phase:'init', i:-1, jumps, curr_end, max_reach,
+    msg:`Init: <code>jumps=0</code>, <code>curr_end=0</code> (window boundary), <code>max_reach=0</code>. Scan left-to-right; jump whenever <code>i === curr_end</code>.`});
+
+  for (let i = 0; i < n - 1; i++) {
+    const cell_reach = i + nums[i];
+    max_reach = Math.max(max_reach, cell_reach);
+    const at_boundary = (i === curr_end);
+
+    if (at_boundary) {
+      jumps++;
+      curr_end = max_reach;
+    }
+
+    res.push({
+      phase: 'scan',
+      i, jumps, curr_end, max_reach,
+      jumped: at_boundary, cell_reach,
+      msg: at_boundary
+        ? `i=<code>${i}</code>: hit boundary! <code>nums[i]=${nums[i]}</code>, max_reach=<code>${max_reach}</code>. Jump #${jumps}! <code>curr_end → ${curr_end}</code>.`
+        : `i=<code>${i}</code>: <code>nums[i]=${nums[i]}</code>, reach=<code>${cell_reach}</code>. max_reach=<code>${max_reach}</code>.`
+    });
+
+    if (curr_end >= n - 1) break;
+  }
+
+  res.push({phase:'final', i:n-1, jumps, curr_end, max_reach,
+    msg:`Done! Minimum jumps = <code>${jumps}</code>.`});
+  return res;
+}
+
+function v11Render() {
+  if (!v11Steps.length) return;
+  const s = v11Steps[v11Idx];
+  const n = v11Nums.length;
+
+  document.querySelectorAll('#v11-arr .arr-cell').forEach((el, j) => {
+    el.className = 'arr-cell';
+    if (s.phase === 'final') {
+      if (j === 0 || j === n - 1) el.classList.add('is-l');
+      return;
+    }
+    if (s.phase === 'init') {
+      if (j === 0) el.classList.add('is-l');
+      return;
+    }
+    if (j === s.i && j === s.curr_end)       el.classList.add('is-l');
+    else if (j === s.i)                       el.classList.add('is-r');
+    else if (j === s.curr_end)                el.classList.add('is-l');
+    else if (j > s.curr_end && j <= Math.min(s.max_reach, n - 1)) el.classList.add('in-window');
+  });
+
+  document.querySelectorAll('#v11-ptr-row .v11-ptr').forEach((el, j) => {
+    el.textContent = ''; el.style.color = '';
+    if (s.phase === 'final' || s.phase === 'init') {
+      if (j === s.curr_end) { el.textContent = 'end'; el.style.color = 'var(--green-text)'; }
+      return;
+    }
+    const tags = [];
+    if (j === s.i)        tags.push({t:'i',    c:'var(--amber-text)'});
+    if (j === s.curr_end) tags.push({t:'end',  c:'var(--green-text)'});
+    if (j === s.max_reach && j > s.curr_end) tags.push({t:'reach', c:'var(--accent-text)'});
+    if (tags.length) { el.textContent = tags.map(t=>t.t).join('/'); el.style.color = tags[0].c; }
+  });
+
+  document.getElementById('v11-si').textContent     = s.i >= 0 ? s.i : '—';
+  document.getElementById('v11-snums').textContent  = s.i >= 0 ? v11Nums[s.i] : '—';
+  document.getElementById('v11-sreach').textContent = s.max_reach;
+  document.getElementById('v11-scend').textContent  = s.curr_end;
+  document.getElementById('v11-sjumps').textContent = s.phase === 'final' ? s.jumps : s.jumps;
+  document.getElementById('v11-info').innerHTML     = s.msg;
+  document.getElementById('v11-prog').textContent   = `Step ${v11Idx + 1} / ${v11Steps.length}`;
+}
+
+function v11Init() {
+  v11Nums = document.getElementById('v11-nums').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x) && x >= 0);
+  if (!v11Nums.length) return;
+  v11Steps = v11BuildSteps(v11Nums); v11Idx = 0;
+
+  const arr = document.getElementById('v11-arr'); arr.innerHTML = '';
+  v11Nums.forEach((v, i) => {
+    const d = document.createElement('div'); d.className = 'arr-cell';
+    d.innerHTML = `${v}<span class="cidx">${i}</span>`; arr.appendChild(d);
+  });
+
+  const pr = document.getElementById('v11-ptr-row'); pr.innerHTML = '';
+  for (let j = 0; j < v11Nums.length; j++) {
+    const el = document.createElement('div'); el.className = 'v11-ptr';
+    el.style.cssText = 'width:48px;height:18px;text-align:center;font-size:11px;font-weight:600;font-family:monospace;';
+    pr.appendChild(el);
+  }
+  v11Render();
+}
+function v11Fwd()  { if (v11Idx < v11Steps.length - 1) { v11Idx++; v11Render(); } }
+function v11Back() { if (v11Idx > 0) { v11Idx--; v11Render(); } }
+function v11Skip() { v11Idx = v11Steps.length - 1; v11Render(); }
+
+v11Init();
+
+/* ════════════════════════════════════════
+   VIZ 12 — Min Cost Climbing Stairs (#746)
+   ════════════════════════════════════════ */
+let v12Steps=[], v12Idx=0, v12Nums=[];
+
+function v12BuildSteps(cost) {
+  const n = cost.length;
+  const dp = new Array(n).fill(0);
+  const res = [];
+
+  dp[0] = cost[0];
+  res.push({phase:'base0', i:0, dp:[...dp], opt1:null, opt2:null, chosen:dp[0],
+    msg:`Base: <code>dp[0] = cost[0] = ${cost[0]}</code>.`});
+
+  if (n === 1) {
+    res.push({phase:'final', i:0, dp:[...dp], opt1:dp[0], opt2:null, chosen:dp[0],
+      msg:`Only one stair — answer is <code>${dp[0]}</code>.`});
+    return res;
+  }
+
+  dp[1] = cost[1];
+  res.push({phase:'base1', i:1, dp:[...dp], opt1:null, opt2:null, chosen:dp[1],
+    msg:`Base: <code>dp[1] = cost[1] = ${cost[1]}</code>.`});
+
+  for (let i = 2; i < n; i++) {
+    const opt1 = dp[i-2];
+    const opt2 = dp[i-1];
+    dp[i] = cost[i] + Math.min(opt1, opt2);
+    res.push({phase:'compute', i, dp:[...dp], opt1, opt2, chosen:dp[i],
+      msg:`i=<code>${i}</code>, cost[i]=<code>${cost[i]}</code>: `+
+        `<code>dp[${i}] = ${cost[i]} + min(dp[${i-2}], dp[${i-1}]) = ${cost[i]} + min(${opt1}, ${opt2}) = ${dp[i]}</code>`
+    });
+  }
+
+  const ans = Math.min(dp[n-2], dp[n-1]);
+  res.push({phase:'final', i:n-1, dp:[...dp], opt1:dp[n-2], opt2:dp[n-1], chosen:ans,
+    msg:`Done! <code>min(dp[${n-2}], dp[${n-1}]) = min(${dp[n-2]}, ${dp[n-1]}) = ${ans}</code>. Answer: <code>${ans}</code>.`});
+  return res;
+}
+
+function v12Render() {
+  if (!v12Steps.length) return;
+  const s = v12Steps[v12Idx];
+  const n = v12Nums.length;
+
+  // Cost row
+  document.querySelectorAll('#v12-cost-row .dp-cell').forEach((cell, i) => {
+    const valEl = cell.querySelector('.dp-val');
+    valEl.className = 'dp-val is-filled';
+    if (s.phase === 'base0' && i === 0)      valEl.className = 'dp-val is-cur';
+    else if (s.phase === 'base1' && i === 1)  valEl.className = 'dp-val is-cur';
+    else if (s.phase === 'compute') {
+      if (i === s.i)       valEl.className = 'dp-val is-cur';
+      else if (i === s.i-2) valEl.className = 'dp-val is-zero';
+      else if (i === s.i-1) valEl.className = 'dp-val is-amber';
+    }
+  });
+
+  // DP row
+  document.querySelectorAll('#v12-dp-row .dp-cell').forEach((cell, j) => {
+    const valEl = cell.querySelector('.dp-val');
+    valEl.className = 'dp-val';
+    const v      = s.dp[j];
+    const done   = j <= s.i || s.phase === 'final';
+    const isCur  = (s.phase === 'base0' || s.phase === 'base1' || s.phase === 'compute') && j === s.i;
+    const isSrc1 = s.phase === 'compute' && j === s.i - 2;
+    const isSrc2 = s.phase === 'compute' && j === s.i - 1;
+
+    if (s.phase === 'final' && (j === n-1 || j === n-2)) {
+      valEl.classList.add(v === s.chosen ? 'is-best' : 'is-amber');
+    } else if (isCur)  valEl.classList.add('is-cur');
+    else if (isSrc1)   valEl.classList.add('is-zero');
+    else if (isSrc2)   valEl.classList.add('is-amber');
+    else if (done)     valEl.classList.add(j === 0 ? 'is-zero' : 'is-filled');
+    valEl.textContent = done ? v : '';
+  });
+
+  document.getElementById('v12-si').textContent    = s.i;
+  document.getElementById('v12-scost').textContent = v12Nums[s.i] !== undefined ? v12Nums[s.i] : '—';
+  document.getElementById('v12-sopt1').textContent = s.opt1 !== null ? s.opt1 : '—';
+  document.getElementById('v12-sopt2').textContent = s.opt2 !== null ? s.opt2 : '—';
+  document.getElementById('v12-sans').textContent  = s.phase === 'final' ? s.chosen : '…';
+  document.getElementById('v12-info').innerHTML    = s.msg;
+  document.getElementById('v12-prog').textContent  = `Step ${v12Idx + 1} / ${v12Steps.length}`;
+}
+
+function v12Init() {
+  v12Nums = document.getElementById('v12-cost').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x) && x >= 0);
+  if (!v12Nums.length) return;
+  v12Steps = v12BuildSteps(v12Nums); v12Idx = 0;
+
+  const cr = document.getElementById('v12-cost-row'); cr.innerHTML = '';
+  v12Nums.forEach((v, i) => {
+    const cell = document.createElement('div'); cell.className = 'dp-cell';
+    cell.innerHTML = `<div class="dp-idx">${i}</div><div class="dp-val is-filled">${v}</div>`;
+    cr.appendChild(cell);
+  });
+
+  const dr = document.getElementById('v12-dp-row'); dr.innerHTML = '';
+  for (let j = 0; j < v12Nums.length; j++) {
+    const cell = document.createElement('div'); cell.className = 'dp-cell';
+    cell.innerHTML = `<div class="dp-idx">${j}</div><div class="dp-val"></div>`;
+    dr.appendChild(cell);
+  }
+  v12Render();
+}
+function v12Fwd()  { if (v12Idx < v12Steps.length - 1) { v12Idx++; v12Render(); } }
+function v12Back() { if (v12Idx > 0) { v12Idx--; v12Render(); } }
+function v12Skip() { v12Idx = v12Steps.length - 1; v12Render(); }
+
+v12Init();
+
+/* ── #120 Triangle ── */
+let v13Steps = [], v13Idx = 0, v13Tri = [];
+
+function v13BuildSteps(tri) {
+  const t = tri.map(r => [...r]);
+  const n = t.length;
+  const res = [];
+  res.push({ phase:'init', row:-1, col:-1, t:t.map(r=>[...r]), c1:null, c2:null, orig:null,
+    msg:`Triangle loaded (${n} rows). Processing bottom-up: each cell absorbs the smaller of its two children.` });
+  for (let i = n - 2; i >= 0; i--) {
+    for (let j = 0; j < t[i].length; j++) {
+      const c1 = t[i+1][j], c2 = t[i+1][j+1];
+      const chosen = Math.min(c1, c2);
+      const orig = t[i][j];
+      t[i][j] += chosen;
+      res.push({ phase:'compute', row:i, col:j, t:t.map(r=>[...r]), c1, c2, orig,
+        msg:`t[${i}][${j}]: <code>${orig} + min(${c1}, ${c2}) = ${orig} + ${chosen} = ${t[i][j]}</code>` });
+    }
+  }
+  res.push({ phase:'final', row:0, col:0, t:t.map(r=>[...r]), c1:null, c2:null, orig:null,
+    msg:`Done! Minimum path sum = <code>${t[0][0]}</code>.` });
+  return res;
+}
+
+function v13Render() {
+  if (!v13Steps.length) return;
+  const s = v13Steps[v13Idx];
+  const n = s.t.length;
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < s.t[i].length; j++) {
+      const el = document.getElementById(`v13-cell-${i}-${j}`);
+      if (!el) continue;
+      el.className = 'tri-cell';
+      el.textContent = s.t[i][j];
+      const isFin = s.phase === 'final' && i === 0 && j === 0;
+      const isCur = s.phase === 'compute' && i === s.row && j === s.col;
+      const isC1  = s.phase === 'compute' && i === s.row + 1 && j === s.col;
+      const isC2  = s.phase === 'compute' && i === s.row + 1 && j === s.col + 1;
+      const isDone = (s.phase === 'compute' && ((i > s.row && i < n - 1) || (i === s.row && j < s.col))) ||
+                     (s.phase === 'final' && i < n - 1);
+      if (isFin)       el.classList.add('is-best');
+      else if (isCur)  el.classList.add('is-cur');
+      else if (isC1)   el.classList.add(s.c1 <= s.c2 ? 'is-zero' : 'is-amber');
+      else if (isC2)   el.classList.add(s.c2 < s.c1  ? 'is-zero' : 'is-amber');
+      else if (isDone) el.classList.add('is-filled');
+    }
+  }
+  document.getElementById('v13-srow').textContent = s.row >= 0 ? s.row : '—';
+  document.getElementById('v13-scol').textContent = s.col >= 0 ? s.col : '—';
+  document.getElementById('v13-sc1').textContent  = s.c1 !== null ? s.c1 : '—';
+  document.getElementById('v13-sc2').textContent  = s.c2 !== null ? s.c2 : '—';
+  document.getElementById('v13-sans').textContent = s.phase === 'final' ? s.t[0][0] : '…';
+  document.getElementById('v13-info').innerHTML   = s.msg;
+  document.getElementById('v13-prog').textContent = `Step ${v13Idx + 1} / ${v13Steps.length}`;
+}
+
+function v13Init() {
+  const raw = document.getElementById('v13-input').value;
+  v13Tri = raw.split('/').map(r => r.trim().split(/[\s,]+/).map(Number).filter(n => !isNaN(n))).filter(r => r.length > 0);
+  if (!v13Tri.length) return;
+  v13Steps = v13BuildSteps(v13Tri);
+  v13Idx = 0;
+  const cont = document.getElementById('v13-triangle');
+  cont.innerHTML = '';
+  v13Tri.forEach((row, i) => {
+    const rd = document.createElement('div');
+    rd.style.cssText = 'display:flex;gap:6px;';
+    row.forEach((val, j) => {
+      const cell = document.createElement('div');
+      cell.className = 'tri-cell';
+      cell.id = `v13-cell-${i}-${j}`;
+      cell.textContent = val;
+      rd.appendChild(cell);
+    });
+    cont.appendChild(rd);
+  });
+  v13Render();
+}
+function v13Fwd()  { if (v13Idx < v13Steps.length - 1) { v13Idx++; v13Render(); } }
+function v13Back() { if (v13Idx > 0) { v13Idx--; v13Render(); } }
+function v13Skip() { v13Idx = v13Steps.length - 1; v13Render(); }
+
+v13Init();
+
+/* ── #1143 Longest Common Subsequence ── */
+let v14Steps = [], v14Idx = 0, v14T1 = '', v14T2 = '';
+
+function v14BuildSteps(t1, t2) {
+  const m = t1.length, n = t2.length;
+  const dp = Array.from({length: m + 1}, () => Array(n + 1).fill(0));
+  const res = [];
+  res.push({ phase:'init', i:0, j:0, dp:dp.map(r=>[...r]), src:'',
+    msg:`text1="${t1}" (len ${m}), text2="${t2}" (len ${n}). Building ${(m+1)}×${(n+1)} DP table — base row/col = 0.` });
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const match = t1[i-1] === t2[j-1];
+      let src;
+      if (match) {
+        dp[i][j] = dp[i-1][j-1] + 1;
+        src = 'diag';
+      } else {
+        const a = dp[i-1][j], b = dp[i][j-1];
+        dp[i][j] = Math.max(a, b);
+        src = a === b ? 'tie' : (a > b ? 'top' : 'left');
+      }
+      res.push({ phase:'fill', i, j, dp:dp.map(r=>[...r]), src,
+        msg: match
+          ? `t1[${i-1}]='${t1[i-1]}' = t2[${j-1}]='${t2[j-1]}' ✓ match → dp[${i}][${j}] = dp[${i-1}][${j-1}]+1 = <code>${dp[i][j]}</code>`
+          : `t1[${i-1}]='${t1[i-1]}' ≠ t2[${j-1}]='${t2[j-1]}' → dp[${i}][${j}] = max(dp[${i-1}][${j}]=${dp[i-1][j]}, dp[${i}][${j-1}]=${dp[i][j-1]}) = <code>${dp[i][j]}</code>` });
+    }
+  }
+  res.push({ phase:'final', i:m, j:n, dp:dp.map(r=>[...r]), src:'',
+    msg:`Done! LCS length = <code>${dp[m][n]}</code>` });
+  return res;
+}
+
+function v14CellClass(s, m, n, ci, cj) {
+  if (s.phase === 'final' && ci === m && cj === n) return 'cell-best';
+  if (s.phase !== 'fill') {
+    if (s.phase === 'final' && ci > 0 && cj > 0) return 'cell-filled';
+    return '';
+  }
+  if (ci === s.i && cj === s.j) return 'cell-cur';
+  if (s.src === 'diag' && ci === s.i-1 && cj === s.j-1) return 'cell-zero';
+  if ((s.src === 'top'  || s.src === 'tie') && ci === s.i-1 && cj === s.j) return 'cell-zero';
+  if ((s.src === 'left' || s.src === 'tie') && ci === s.i   && cj === s.j-1) return 'cell-zero';
+  if (s.src === 'top'  && ci === s.i && cj === s.j-1)   return 'cell-amber';
+  if (s.src === 'left' && ci === s.i-1 && cj === s.j)   return 'cell-amber';
+  const done = ci > 0 && cj > 0 && (ci < s.i || (ci === s.i && cj < s.j));
+  return done ? 'cell-filled' : '';
+}
+
+function v14Render() {
+  if (!v14Steps.length) return;
+  const s = v14Steps[v14Idx];
+  const m = v14T1.length, n = v14T2.length;
+  for (let i = 0; i <= m; i++) {
+    for (let j = 0; j <= n; j++) {
+      const el = document.getElementById(`v14-${i}-${j}`);
+      if (!el) continue;
+      el.className = v14CellClass(s, m, n, i, j);
+      el.textContent = s.dp[i][j];
+    }
+  }
+  document.getElementById('v14-si').textContent  = s.phase === 'fill' ? s.i : '—';
+  document.getElementById('v14-sj').textContent  = s.phase === 'fill' ? s.j : '—';
+  document.getElementById('v14-sc1').textContent = s.phase === 'fill' ? v14T1[s.i-1] : '—';
+  document.getElementById('v14-sc2').textContent = s.phase === 'fill' ? v14T2[s.j-1] : '—';
+  document.getElementById('v14-sans').textContent = s.phase === 'final' ? s.dp[m][n] : '…';
+  document.getElementById('v14-info').innerHTML  = s.msg;
+  document.getElementById('v14-prog').textContent = `Step ${v14Idx + 1} / ${v14Steps.length}`;
+}
+
+function v14Init() {
+  v14T1 = document.getElementById('v14-t1').value.trim().slice(0, 10);
+  v14T2 = document.getElementById('v14-t2').value.trim().slice(0, 10);
+  if (!v14T1 || !v14T2) return;
+  const m = v14T1.length, n = v14T2.length;
+  v14Steps = v14BuildSteps(v14T1, v14T2);
+  v14Idx = 0;
+  let html = '<table class="dp-table"><thead><tr><th></th><th></th>';
+  for (let j = 0; j < n; j++) html += `<th>${v14T2[j]}</th>`;
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i <= m; i++) {
+    html += `<tr><th class="row-header">${i > 0 ? v14T1[i-1] : ''}</th>`;
+    for (let j = 0; j <= n; j++) html += `<td id="v14-${i}-${j}">0</td>`;
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('v14-table').innerHTML = html;
+  v14Render();
+}
+function v14Fwd()  { if (v14Idx < v14Steps.length - 1) { v14Idx++; v14Render(); } }
+function v14Back() { if (v14Idx > 0) { v14Idx--; v14Render(); } }
+function v14Skip() { v14Idx = v14Steps.length - 1; v14Render(); }
+
+v14Init();
+
+/* ── #494 Target Sum ── */
+let v15Steps = [], v15Idx = 0, v15Nums = [], v15Tgt = 0;
+
+function v15BuildSteps(nums, target) {
+  const res = [];
+  let counter = {0: 1};
+  res.push({ phase:'init', numIdx:-1, counter:{...counter},
+    msg:`Start: counter = {0: 1}. Each number branches every reachable sum into +num and −num.` });
+  for (let i = 0; i < nums.length; i++) {
+    const n = nums[i];
+    const prev = {...counter};
+    const temp = {};
+    for (const k of Object.keys(prev)) {
+      const t = parseInt(k);
+      temp[t + n] = (temp[t + n] || 0) + prev[k];
+      temp[t - n] = (temp[t - n] || 0) + prev[k];
+    }
+    counter = temp;
+    const prevSize = Object.keys(prev).length;
+    const newSize  = Object.keys(counter).length;
+    res.push({ phase:'process', numIdx:i, counter:{...counter},
+      msg:`Applied nums[${i}]=${n}: ${prevSize} sum${prevSize>1?'s':''} → ${newSize} sum${newSize>1?'s':''}. Ways to reach ${target}: <code>${counter[target] || 0}</code>` });
+  }
+  res.push({ phase:'final', numIdx:nums.length, counter:{...counter},
+    msg:`Done! counter[${target}] = <code>${counter[target] || 0}</code>` });
+  return res;
+}
+
+function v15Render() {
+  if (!v15Steps.length) return;
+  const s = v15Steps[v15Idx];
+
+  // Number strip
+  v15Nums.forEach((_, i) => {
+    const el = document.getElementById(`v15-n${i}`);
+    if (!el) return;
+    el.className = 'arr-cell';
+    if (s.phase === 'final' || i < s.numIdx) el.classList.add('in-window');
+    else if (s.phase === 'process' && i === s.numIdx) el.classList.add('is-l');
+  });
+
+  // Counter cards
+  const cont = document.getElementById('v15-counter');
+  cont.innerHTML = '';
+  const sorted = Object.entries(s.counter).map(([k,v]) => [parseInt(k), v]).sort((a,b) => a[0]-b[0]);
+  sorted.forEach(([sum, count]) => {
+    const isTgt = s.phase === 'final' && sum === v15Tgt;
+    const card = document.createElement('div');
+    card.className = 'sum-card' + (isTgt ? ' sc-best' : (s.phase !== 'init' ? ' sc-filled' : ''));
+    card.innerHTML = `<div class="sc-sum">${sum >= 0 ? '+'+sum : sum}</div><div class="sc-cnt">${count} way${count > 1 ? 's' : ''}</div>`;
+    cont.appendChild(card);
+  });
+
+  document.getElementById('v15-snum').textContent  = s.phase === 'process' ? v15Nums[s.numIdx] : '—';
+  document.getElementById('v15-sidx').textContent  = s.phase === 'process' ? s.numIdx : '—';
+  document.getElementById('v15-ssums').textContent = sorted.length;
+  document.getElementById('v15-sways').textContent = s.counter[v15Tgt] !== undefined ? s.counter[v15Tgt] : 0;
+  document.getElementById('v15-info').innerHTML    = s.msg;
+  document.getElementById('v15-prog').textContent  = `Step ${v15Idx + 1} / ${v15Steps.length}`;
+}
+
+function v15Init() {
+  v15Nums = document.getElementById('v15-nums-in').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x)).slice(0, 20);
+  v15Tgt  = parseInt(document.getElementById('v15-tgt-in').value.trim());
+  if (!v15Nums.length || isNaN(v15Tgt)) return;
+  v15Steps = v15BuildSteps(v15Nums, v15Tgt);
+  v15Idx = 0;
+
+  const strip = document.getElementById('v15-num-strip');
+  strip.innerHTML = '';
+  v15Nums.forEach((v, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px';
+    const idx = document.createElement('div'); idx.className = 'dp-idx'; idx.textContent = i;
+    const cell = document.createElement('div'); cell.className = 'arr-cell'; cell.id = `v15-n${i}`; cell.textContent = v;
+    wrap.appendChild(idx); wrap.appendChild(cell);
+    strip.appendChild(wrap);
+  });
+  v15Render();
+}
+function v15Fwd()  { if (v15Idx < v15Steps.length - 1) { v15Idx++; v15Render(); } }
+function v15Back() { if (v15Idx > 0) { v15Idx--; v15Render(); } }
+function v15Skip() { v15Idx = v15Steps.length - 1; v15Render(); }
+
+v15Init();
+
+/* ── #2 Edit Distance ── */
+let v16Steps = [], v16Idx = 0, v16W1 = '', v16W2 = '';
+
+function v16BuildSteps(w1, w2) {
+  const m = w1.length, n = w2.length;
+  const dp = Array.from({length: m+1}, () => Array(n+1).fill(0));
+  for (let i = 1; i <= m; i++) dp[i][0] = i;
+  for (let j = 1; j <= n; j++) dp[0][j] = j;
+  const res = [];
+  res.push({ phase:'init', i:-1, j:-1, dp:dp.map(r=>[...r]), match:false, minSrc:[],
+    msg:`word1="${w1}" (len ${m}), word2="${w2}" (len ${n}). Base cases: dp[i][0]=i (delete), dp[0][j]=j (insert).` });
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const c1 = w1[i-1], c2 = w2[j-1];
+      const match = c1 === c2;
+      let minSrc, msg;
+      if (match) {
+        dp[i][j] = dp[i-1][j-1];
+        minSrc = ['diag'];
+        msg = `w1[${i-1}]='${c1}' = w2[${j-1}]='${c2}' ✓ no op → dp[${i}][${j}] = dp[${i-1}][${j-1}] = <code>${dp[i][j]}</code>`;
+      } else {
+        const dv = dp[i-1][j-1], tv = dp[i-1][j], lv = dp[i][j-1];
+        const minVal = Math.min(dv, tv, lv);
+        dp[i][j] = minVal + 1;
+        minSrc = [];
+        if (dv === minVal) minSrc.push('diag');
+        if (tv === minVal) minSrc.push('top');
+        if (lv === minVal) minSrc.push('left');
+        msg = `w1[${i-1}]='${c1}' ≠ w2[${j-1}]='${c2}' → min(rep=${dv}, del=${tv}, ins=${lv})+1 = <code>${dp[i][j]}</code>`;
+      }
+      res.push({ phase:'fill', i, j, dp:dp.map(r=>[...r]), match, minSrc, msg });
+    }
+  }
+  res.push({ phase:'final', i:m, j:n, dp:dp.map(r=>[...r]), match:false, minSrc:[],
+    msg:`Done! Min edit distance = <code>${dp[m][n]}</code>` });
+  return res;
+}
+
+function v16CellClass(s, m, n, ci, cj) {
+  const isAnswer = ci === m && cj === n;
+  if (s.phase === 'final') return isAnswer ? 'cell-best' : 'cell-filled';
+  const isBase = ci === 0 || cj === 0;
+  if (s.phase === 'init') return isBase ? 'cell-filled' : '';
+  // fill phase
+  if (ci === s.i && cj === s.j) return 'cell-cur';
+  if (isBase) return 'cell-filled';
+  const isDiag = ci === s.i-1 && cj === s.j-1;
+  const isTop  = ci === s.i-1 && cj === s.j;
+  const isLeft = ci === s.i   && cj === s.j-1;
+  if (s.match) {
+    if (isDiag) return 'cell-zero';
+  } else if (isDiag || isTop || isLeft) {
+    const nm = isDiag ? 'diag' : isTop ? 'top' : 'left';
+    return s.minSrc.includes(nm) ? 'cell-zero' : 'cell-amber';
+  }
+  const done = ci < s.i || (ci === s.i && cj < s.j);
+  return done ? 'cell-filled' : '';
+}
+
+function v16Render() {
+  if (!v16Steps.length) return;
+  const s = v16Steps[v16Idx];
+  const m = v16W1.length, n = v16W2.length;
+  for (let i = 0; i <= m; i++) {
+    for (let j = 0; j <= n; j++) {
+      const el = document.getElementById(`v16-${i}-${j}`);
+      if (!el) continue;
+      el.className = v16CellClass(s, m, n, i, j);
+      const isBase = i === 0 || j === 0;
+      const isComp = s.phase === 'final' ||
+        (s.phase === 'fill' && (i < s.i || (i === s.i && j <= s.j)));
+      el.textContent = (isBase || isComp) ? s.dp[i][j] : '';
+    }
+  }
+  document.getElementById('v16-si').textContent  = s.phase === 'fill' ? s.i : '—';
+  document.getElementById('v16-sj').textContent  = s.phase === 'fill' ? s.j : '—';
+  document.getElementById('v16-sc1').textContent = s.phase === 'fill' ? v16W1[s.i-1] : '—';
+  document.getElementById('v16-sc2').textContent = s.phase === 'fill' ? v16W2[s.j-1] : '—';
+  document.getElementById('v16-sans').textContent = s.phase === 'final' ? s.dp[m][n] : '…';
+  document.getElementById('v16-info').innerHTML  = s.msg;
+  document.getElementById('v16-prog').textContent = `Step ${v16Idx + 1} / ${v16Steps.length}`;
+}
+
+function v16Init() {
+  v16W1 = document.getElementById('v16-w1').value.trim().slice(0, 10);
+  v16W2 = document.getElementById('v16-w2').value.trim().slice(0, 10);
+  if (!v16W1 && !v16W2) return;
+  const m = v16W1.length, n = v16W2.length;
+  v16Steps = v16BuildSteps(v16W1, v16W2);
+  v16Idx = 0;
+  let html = '<table class="dp-table"><thead><tr><th></th><th></th>';
+  for (let j = 0; j < n; j++) html += `<th>${v16W2[j]}</th>`;
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i <= m; i++) {
+    html += `<tr><th class="row-header">${i > 0 ? v16W1[i-1] : ''}</th>`;
+    for (let j = 0; j <= n; j++) html += `<td id="v16-${i}-${j}"></td>`;
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('v16-table').innerHTML = html;
+  v16Render();
+}
+function v16Fwd()  { if (v16Idx < v16Steps.length - 1) { v16Idx++; v16Render(); } }
+function v16Back() { if (v16Idx > 0) { v16Idx--; v16Render(); } }
+function v16Skip() { v16Idx = v16Steps.length - 1; v16Render(); }
+
+v16Init();
+
+/* ── #91 Decode Ways ── */
+let v17Steps = [], v17Idx = 0, v17S = '';
+
+function v17BuildSteps(str) {
+  const n = str.length;
+  const dp = Array(n + 1).fill(0);
+  const codes = new Set(Array.from({length: 26}, (_, i) => String(i + 1)));
+  dp[0] = 1;
+  dp[1] = str[0] !== '0' ? 1 : 0;
+  const res = [];
+  res.push({ phase:'init', idx:1, dp:[...dp], singleValid:false, doubleValid:false,
+    msg:`dp[0]=1 (empty prefix). dp[1]=${dp[1]} — '${str[0]}' is ${str[0]!=='0'?'a valid single digit':'0, invalid'}. Loop starts at i=2.` });
+  for (let i = 2; i <= n; i++) {
+    const single = str[i-1], pair = str.slice(i-2, i);
+    const sv = codes.has(single), dv = codes.has(pair);
+    dp[i] = (sv ? dp[i-1] : 0) + (dv ? dp[i-2] : 0);
+    const sp = sv ? `'${single}' ✓ → +dp[${i-1}]=${dp[i-1]}` : `'${single}' ✗`;
+    const dp2 = dv ? `'${pair}' ✓ → +dp[${i-2}]=${dp[i-2]}` : `'${pair}' ✗`;
+    res.push({ phase:'fill', idx:i, dp:[...dp], singleValid:sv, doubleValid:dv,
+      msg:`i=${i}: single ${sp} | two-digit ${dp2} → dp[${i}] = <code>${dp[i]}</code>` });
+  }
+  res.push({ phase:'final', idx:n, dp:[...dp], singleValid:false, doubleValid:false,
+    msg:`Done! Total decode ways = <code>${dp[n]}</code>` });
+  return res;
+}
+
+function v17Render() {
+  if (!v17Steps.length) return;
+  const s = v17Steps[v17Idx];
+  const n = v17S.length;
+
+  // DP cells
+  for (let k = 0; k <= n; k++) {
+    const el = document.getElementById(`v17-d${k}`);
+    if (!el) continue;
+    el.className = 'dp-val';
+    if (s.phase === 'final') {
+      el.classList.add(k === n ? 'is-best' : 'is-filled');
+    } else if (s.phase === 'init') {
+      if (k <= 1) el.classList.add('is-filled');
+    } else {
+      if      (k === s.idx)              el.classList.add('is-cur');
+      else if (k === s.idx-1 && s.singleValid) el.classList.add('is-zero');
+      else if (k === s.idx-2 && s.doubleValid) el.classList.add('is-amber');
+      else if (k < s.idx)               el.classList.add('is-filled');
+    }
+    el.textContent = k <= s.idx ? s.dp[k] : '';
+  }
+
+  // Char cells
+  for (let k = 0; k < n; k++) {
+    const el = document.getElementById(`v17-c${k}`);
+    if (!el) continue;
+    el.className = 'arr-cell';
+    if (s.phase === 'fill') {
+      if (k === s.idx - 1) {
+        el.classList.add(s.singleValid ? 'is-l' : (s.doubleValid ? 'is-r' : ''));
+      } else if (k === s.idx - 2 && s.doubleValid) {
+        el.classList.add('is-r');
+      }
+    }
+  }
+
+  document.getElementById('v17-si').textContent    = s.phase === 'fill' ? s.idx : '—';
+  document.getElementById('v17-schar').textContent = s.phase === 'fill' ? v17S[s.idx-1] : '—';
+  document.getElementById('v17-spair').textContent = (s.phase === 'fill' && s.idx >= 2) ? v17S.slice(s.idx-2, s.idx) : '—';
+  document.getElementById('v17-sans').textContent  = s.phase === 'final' ? s.dp[n] : '…';
+  document.getElementById('v17-info').innerHTML    = s.msg;
+  document.getElementById('v17-prog').textContent  = `Step ${v17Idx + 1} / ${v17Steps.length}`;
+}
+
+function v17Init() {
+  v17S = document.getElementById('v17-sin').value.trim().replace(/[^0-9]/g,'').slice(0, 14);
+  if (!v17S) return;
+  const n = v17S.length;
+  v17Steps = v17BuildSteps(v17S);
+  v17Idx = 0;
+
+  const cr = document.getElementById('v17-char-row');
+  cr.innerHTML = '';
+  // Placeholder cell aligned with dp[0]
+  const ph = document.createElement('div'); ph.className = 'dp-cell';
+  ph.innerHTML = `<div class="dp-idx"></div><div class="arr-cell" style="opacity:.3;font-size:12px">&#949;</div>`;
+  cr.appendChild(ph);
+  for (let k = 0; k < n; k++) {
+    const wrap = document.createElement('div'); wrap.className = 'dp-cell';
+    wrap.innerHTML = `<div class="dp-idx">${k}</div><div class="arr-cell" id="v17-c${k}">${v17S[k]}</div>`;
+    cr.appendChild(wrap);
+  }
+
+  const dr = document.getElementById('v17-dp-row');
+  dr.innerHTML = '';
+  for (let k = 0; k <= n; k++) {
+    const wrap = document.createElement('div'); wrap.className = 'dp-cell';
+    wrap.innerHTML = `<div class="dp-idx">${k}</div><div class="dp-val" id="v17-d${k}"></div>`;
+    dr.appendChild(wrap);
+  }
+  v17Render();
+}
+function v17Fwd()  { if (v17Idx < v17Steps.length - 1) { v17Idx++; v17Render(); } }
+function v17Back() { if (v17Idx > 0) { v17Idx--; v17Render(); } }
+function v17Skip() { v17Idx = v17Steps.length - 1; v17Render(); }
+
+v17Init();
+
+/* ── #718 Maximum Length of Repeated Subarray ── */
+let v18Steps = [], v18Idx = 0, v18A1 = [], v18A2 = [];
+
+function v18BuildSteps(a1, a2) {
+  const m = a1.length, n = a2.length;
+  const dp = Array.from({length: m+1}, () => Array(n+1).fill(0));
+  const res = [];
+  let maxVal = 0;
+  res.push({ phase:'init', i:0, j:0, dp:dp.map(r=>[...r]), match:false, isNewMax:false, maxVal:0,
+    msg:`nums1=[${a1}], nums2=[${a2}]. dp[i][j] = dp[i-1][j-1]+1 on match, 0 on mismatch. Track max.` });
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const match = a1[i-1] === a2[j-1];
+      if (match) {
+        dp[i][j] = dp[i-1][j-1] + 1;
+        const isNewMax = dp[i][j] > maxVal;
+        if (isNewMax) maxVal = dp[i][j];
+        res.push({ phase:'fill', i, j, dp:dp.map(r=>[...r]), match:true, isNewMax, maxVal,
+          msg: isNewMax
+            ? `nums1[${i-1}]=${a1[i-1]} = nums2[${j-1}]=${a2[j-1]} ✓ → dp[${i}][${j}] = dp[${i-1}][${j-1}]+1 = <code>${dp[i][j]}</code> ★ new max!`
+            : `nums1[${i-1}]=${a1[i-1]} = nums2[${j-1}]=${a2[j-1]} ✓ → dp[${i}][${j}] = dp[${i-1}][${j-1}]+1 = <code>${dp[i][j]}</code>` });
+      } else {
+        dp[i][j] = 0;
+        res.push({ phase:'fill', i, j, dp:dp.map(r=>[...r]), match:false, isNewMax:false, maxVal,
+          msg:`nums1[${i-1}]=${a1[i-1]} ≠ nums2[${j-1}]=${a2[j-1]} → dp[${i}][${j}] = <code>0</code> (streak broken)` });
+      }
+    }
+  }
+  res.push({ phase:'final', i:m, j:n, dp:dp.map(r=>[...r]), match:false, isNewMax:false, maxVal,
+    msg:`Done! Max length of repeated subarray = <code>${maxVal}</code>` });
+  return res;
+}
+
+function v18CellClass(s, m, n, ci, cj) {
+  const isBase = ci === 0 || cj === 0;
+  if (s.phase === 'final') {
+    if (isBase) return '';
+    if (s.maxVal > 0 && s.dp[ci][cj] === s.maxVal) return 'cell-best';
+    return 'cell-filled';
+  }
+  if (s.phase !== 'fill') return '';
+  if (ci === s.i && cj === s.j) {
+    return !s.match ? 'cell-amber' : (s.isNewMax ? 'cell-best' : 'cell-cur');
+  }
+  if (s.match && ci === s.i-1 && cj === s.j-1) return 'cell-zero';
+  if (isBase) return '';
+  const done = ci < s.i || (ci === s.i && cj < s.j);
+  return done ? 'cell-filled' : '';
+}
+
+function v18Render() {
+  if (!v18Steps.length) return;
+  const s = v18Steps[v18Idx];
+  const m = v18A1.length, n = v18A2.length;
+  for (let i = 0; i <= m; i++) {
+    for (let j = 0; j <= n; j++) {
+      const el = document.getElementById(`v18-${i}-${j}`);
+      if (!el) continue;
+      el.className = v18CellClass(s, m, n, i, j);
+      const isBase = i === 0 || j === 0;
+      const isComp = !isBase && (s.phase === 'final' ||
+        (s.phase === 'fill' && (i < s.i || (i === s.i && j <= s.j))));
+      el.textContent = isComp ? s.dp[i][j] : '';
+    }
+  }
+  document.getElementById('v18-si').textContent  = s.phase === 'fill' ? s.i : '—';
+  document.getElementById('v18-sj').textContent  = s.phase === 'fill' ? s.j : '—';
+  document.getElementById('v18-sv1').textContent = s.phase === 'fill' ? v18A1[s.i-1] : '—';
+  document.getElementById('v18-sv2').textContent = s.phase === 'fill' ? v18A2[s.j-1] : '—';
+  document.getElementById('v18-smax').textContent = s.maxVal;
+  document.getElementById('v18-info').innerHTML  = s.msg;
+  document.getElementById('v18-prog').textContent = `Step ${v18Idx + 1} / ${v18Steps.length}`;
+}
+
+function v18Init() {
+  v18A1 = document.getElementById('v18-a1').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x)).slice(0, 10);
+  v18A2 = document.getElementById('v18-a2').value.split(',').map(s => parseInt(s.trim())).filter(x => !isNaN(x)).slice(0, 10);
+  if (!v18A1.length || !v18A2.length) return;
+  const m = v18A1.length, n = v18A2.length;
+  v18Steps = v18BuildSteps(v18A1, v18A2);
+  v18Idx = 0;
+  let html = '<table class="dp-table"><thead><tr><th></th><th></th>';
+  for (let j = 0; j < n; j++) html += `<th>${v18A2[j]}</th>`;
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i <= m; i++) {
+    html += `<tr><th class="row-header">${i > 0 ? v18A1[i-1] : ''}</th>`;
+    for (let j = 0; j <= n; j++) html += `<td id="v18-${i}-${j}"></td>`;
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('v18-table').innerHTML = html;
+  v18Render();
+}
+function v18Fwd()  { if (v18Idx < v18Steps.length - 1) { v18Idx++; v18Render(); } }
+function v18Back() { if (v18Idx > 0) { v18Idx--; v18Render(); } }
+function v18Skip() { v18Idx = v18Steps.length - 1; v18Render(); }
+
+v18Init();
+
+/* ════════════════════════════════════════
+   VIZ 19 — Longest Increasing Subsequence (#300)
+   ════════════════════════════════════════ */
+let v19Steps=[],v19Idx=0,v19Nums=[];
+
+function v19BuildSteps(nums){
+  const n=nums.length;
+  const dp=new Array(n).fill(1);
+  let ans=1;
+  const res=[];
+  res.push({phase:'init',i:-1,j:-1,dp:[...dp],ans,cand:undefined,
+    msg:`Init: <code>dp[k]=1</code> for all k — every element alone is an LIS of length 1.`});
+  for(let i=1;i<n;i++){
+    for(let j=0;j<i;j++){
+      const eligible=nums[i]>nums[j];
+      const cand=dp[j]+1;
+      const oldDpi=dp[i];
+      const updated=eligible&&cand>dp[i];
+      if(updated) dp[i]=cand;
+      res.push({phase:'fill',i,j,dp:[...dp],ans,eligible,cand,updated,oldDpi,
+        msg:eligible
+          ?(updated
+            ?`nums[${i}]=${nums[i]} > nums[${j}]=${nums[j]} → dp[${j}]+1=${cand} > ${oldDpi} → dp[${i}] = <strong>${cand}</strong>`
+            :`nums[${i}]=${nums[i]} > nums[${j}]=${nums[j]} → dp[${j}]+1=${cand} ≤ dp[${i}]=${dp[i]}, no update`)
+          :`nums[${i}]=${nums[i]} ≤ nums[${j}]=${nums[j]} — not strictly increasing, skip`});
+    }
+    ans=Math.max(ans,dp[i]);
+  }
+  res.push({phase:'final',i:-1,j:-1,dp:[...dp],ans,cand:undefined,
+    msg:`Done! Longest increasing subsequence length = <strong>${ans}</strong>.`});
+  return res;
+}
+
+function v19Render(){
+  if(!v19Steps.length) return;
+  const s=v19Steps[v19Idx];
+  const n=v19Nums.length;
+  for(let k=0;k<n;k++){
+    const ne=document.getElementById(`v19-n${k}`);
+    const de=document.getElementById(`v19-d${k}`);
+    if(!ne||!de) continue;
+    ne.className='dp-val'; ne.textContent=v19Nums[k];
+    de.className='dp-val'; de.textContent=s.dp[k];
+    if(s.phase==='final'){
+      if(s.dp[k]===s.ans){ ne.classList.add('is-amber'); de.classList.add('is-amber'); }
+      else                  { ne.classList.add('is-filled'); de.classList.add('is-filled'); }
+    } else {
+      const isI=k===s.i, isJ=s.phase==='fill'&&k===s.j;
+      if(isI)           { ne.classList.add('is-cur');    de.classList.add('is-cur');    }
+      else if(isJ)      { ne.classList.add('is-zero');   de.classList.add('is-zero');   }
+      else if(s.i>0&&k<s.i){ ne.classList.add('is-filled'); de.classList.add('is-filled'); }
+    }
+  }
+  document.getElementById('v19-si').textContent   =s.i>=0?s.i:'—';
+  document.getElementById('v19-sj').textContent   =s.j>=0?s.j:'—';
+  document.getElementById('v19-sni').textContent  =s.i>=0?v19Nums[s.i]:'—';
+  document.getElementById('v19-snj').textContent  =s.j>=0?v19Nums[s.j]:'—';
+  document.getElementById('v19-scand').textContent=s.cand!==undefined?s.cand:'—';
+  document.getElementById('v19-sans').textContent =s.phase==='final'?s.ans:'…';
+  document.getElementById('v19-info').innerHTML   =s.msg;
+  document.getElementById('v19-prog').textContent =`Step ${v19Idx+1} / ${v19Steps.length}`;
+}
+
+function v19Init(){
+  v19Nums=document.getElementById('v19-nums').value.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x)).slice(0,14);
+  if(!v19Nums.length) return;
+  v19Steps=v19BuildSteps(v19Nums); v19Idx=0;
+  const nr=document.getElementById('v19-nums-row'); nr.innerHTML='';
+  const dr=document.getElementById('v19-dp-row');   dr.innerHTML='';
+  v19Nums.forEach((_,k)=>{
+    const nw=document.createElement('div'); nw.className='dp-cell';
+    nw.innerHTML=`<div class="dp-idx">${k}</div><div class="dp-val" id="v19-n${k}"></div>`;
+    nr.appendChild(nw);
+    const dw=document.createElement('div'); dw.className='dp-cell';
+    dw.innerHTML=`<div class="dp-idx">${k}</div><div class="dp-val" id="v19-d${k}"></div>`;
+    dr.appendChild(dw);
+  });
+  v19Render();
+}
+function v19Fwd(){if(v19Idx<v19Steps.length-1){v19Idx++;v19Render();}}
+function v19Back(){if(v19Idx>0){v19Idx--;v19Render();}}
+function v19Skip(){v19Idx=v19Steps.length-1;v19Render();}
+
+v19Init();
+
+/* ════════════════════════════════════════
+   VIZ 20 — Unique Paths (#62)
+   ════════════════════════════════════════ */
+let v20Steps=[],v20Idx=0,v20M=3,v20N=7;
+
+function v20BuildSteps(m,n){
+  const dp=Array.from({length:m},()=>new Array(n).fill(0));
+  const res=[];
+  res.push({phase:'init',i:-1,j:-1,ci:-1,cj:-1,dp:dp.map(r=>[...r]),left:null,above:null,
+    msg:`Grid is ${m}×${n}. Robot starts at (0,0) and must reach (${m-1},${n-1}) moving only right or down.`});
+  for(let r=0;r<m;r++){
+    dp[r][0]=1;
+    res.push({phase:'col',i:-1,j:-1,ci:r,cj:0,dp:dp.map(row=>[...row]),left:null,above:null,
+      msg:`Base: dp[${r}][0]=1 — only one way to reach any cell in column 0 (keep moving down).`});
+  }
+  for(let c=1;c<n;c++){
+    dp[0][c]=1;
+    res.push({phase:'row',i:-1,j:-1,ci:0,cj:c,dp:dp.map(row=>[...row]),left:null,above:null,
+      msg:`Base: dp[0][${c}]=1 — only one way to reach any cell in row 0 (keep moving right).`});
+  }
+  for(let i=1;i<m;i++){
+    for(let j=1;j<n;j++){
+      const left=dp[i][j-1],above=dp[i-1][j];
+      dp[i][j]=left+above;
+      res.push({phase:'fill',i,j,ci:-1,cj:-1,dp:dp.map(r=>[...r]),left,above,
+        msg:`dp[${i}][${j}] = dp[${i}][${j-1}] + dp[${i-1}][${j}] = ${left} + ${above} = <strong>${dp[i][j]}</strong>`});
+    }
+  }
+  res.push({phase:'final',i:m-1,j:n-1,ci:-1,cj:-1,dp:dp.map(r=>[...r]),left:null,above:null,
+    msg:`Done! <code>dp[${m-1}][${n-1}] = ${dp[m-1][n-1]}</code> unique paths from (0,0) to (${m-1},${n-1}).`});
+  return res;
+}
+
+function v20BuildTable(s){
+  const m=v20M,n=v20N;
+  let h='<table class="dp-table"><thead><tr><th class="row-header"></th>';
+  for(let j=0;j<n;j++) h+=`<th>j=${j}</th>`;
+  h+='</tr></thead><tbody>';
+  for(let r=0;r<m;r++){
+    h+=`<tr><th class="row-header" style="font-size:12px">i=${r}</th>`;
+    for(let c=0;c<n;c++){
+      const v=s.dp[r][c];
+      let cls='cell-empty';
+      if(s.phase==='final'&&r===m-1&&c===n-1)          cls='cell-best';
+      else if(s.phase==='fill'&&r===s.i&&c===s.j)       cls='cell-cur';
+      else if(s.phase==='fill'&&r===s.i&&c===s.j-1)     cls='cell-src-same';
+      else if(s.phase==='fill'&&r===s.i-1&&c===s.j)     cls='cell-src-above';
+      else if((s.phase==='col'||s.phase==='row')&&r===s.ci&&c===s.cj) cls='cell-cur';
+      else if(v>0) cls=(r===0||c===0)?'cell-zero':'cell-filled';
+      h+=`<td class="${cls}">${v>0||cls==='cell-cur'?v:''}</td>`;
+    }
+    h+='</tr>';
+  }
+  return h+'</tbody></table>';
+}
+
+function v20Render(){
+  if(!v20Steps.length) return;
+  const s=v20Steps[v20Idx];
+  document.getElementById('v20-table-wrap').innerHTML=v20BuildTable(s);
+  document.getElementById('v20-si').textContent    =s.i>=0?s.i:'—';
+  document.getElementById('v20-sj').textContent    =s.j>=0?s.j:'—';
+  document.getElementById('v20-sleft').textContent =s.left!==null?s.left:'—';
+  document.getElementById('v20-sabove').textContent=s.above!==null?s.above:'—';
+  document.getElementById('v20-sans').textContent  =s.phase==='final'?s.dp[v20M-1][v20N-1]:'…';
+  document.getElementById('v20-info').innerHTML    =s.msg;
+  document.getElementById('v20-prog').textContent  =`Step ${v20Idx+1} / ${v20Steps.length}`;
+}
+
+function v20Init(){
+  v20M=Math.min(8,Math.max(1,parseInt(document.getElementById('v20-m').value)||3));
+  v20N=Math.min(8,Math.max(1,parseInt(document.getElementById('v20-n').value)||7));
+  v20Steps=v20BuildSteps(v20M,v20N); v20Idx=0;
+  v20Render();
+}
+function v20Fwd(){if(v20Idx<v20Steps.length-1){v20Idx++;v20Render();}}
+function v20Back(){if(v20Idx>0){v20Idx--;v20Render();}}
+function v20Skip(){v20Idx=v20Steps.length-1;v20Render();}
+
+v20Init();
+
+/* ════════════════════════════════════════
+   VIZ 21 — Minimum Path Sum (#64)
+   ════════════════════════════════════════ */
+let v21Steps=[],v21Idx=0,v21Grid=[];
+
+function v21BuildSteps(grid){
+  const m=grid.length,n=grid[0].length;
+  const dp=Array.from({length:m},()=>new Array(n).fill(0));
+  const shown=Array.from({length:m},()=>new Array(n).fill(false));
+  const res=[];
+  res.push({phase:'init',i:-1,j:-1,ci:-1,cj:-1,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),left:null,above:null,fromLeft:null,
+    msg:`Grid is ${m}×${n}. dp[i][j] = minimum path sum from (0,0) to (i,j).`});
+  dp[0][0]=grid[0][0]; shown[0][0]=true;
+  res.push({phase:'corner',i:-1,j:-1,ci:0,cj:0,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),left:null,above:null,fromLeft:null,
+    msg:`dp[0][0] = grid[0][0] = <strong>${grid[0][0]}</strong>`});
+  for(let j=1;j<n;j++){
+    const prev=dp[0][j-1]; dp[0][j]=prev+grid[0][j]; shown[0][j]=true;
+    res.push({phase:'row',i:-1,j:-1,ci:0,cj:j,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),left:null,above:null,fromLeft:null,
+      msg:`dp[0][${j}] = dp[0][${j-1}] + grid[0][${j}] = ${prev} + ${grid[0][j]} = <strong>${dp[0][j]}</strong>`});
+  }
+  for(let i=1;i<m;i++){
+    const prev=dp[i-1][0]; dp[i][0]=prev+grid[i][0]; shown[i][0]=true;
+    res.push({phase:'col',i:-1,j:-1,ci:i,cj:0,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),left:null,above:null,fromLeft:null,
+      msg:`dp[${i}][0] = dp[${i-1}][0] + grid[${i}][0] = ${prev} + ${grid[i][0]} = <strong>${dp[i][0]}</strong>`});
+  }
+  for(let i=1;i<m;i++){
+    for(let j=1;j<n;j++){
+      const left=dp[i][j-1],above=dp[i-1][j];
+      const chosenMin=Math.min(left,above),fl=left<=above;
+      dp[i][j]=grid[i][j]+chosenMin; shown[i][j]=true;
+      res.push({phase:'fill',i,j,ci:-1,cj:-1,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),left,above,fromLeft:fl,
+        msg:`dp[${i}][${j}] = grid[${i}][${j}] + min(dp[${i-1}][${j}]=${above}, dp[${i}][${j-1}]=${left}) = ${grid[i][j]} + ${chosenMin} = <strong>${dp[i][j]}</strong> &nbsp;← from <strong>${fl?'left':'above'}</strong>`});
+    }
+  }
+  res.push({phase:'final',i:m-1,j:n-1,ci:-1,cj:-1,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),left:null,above:null,fromLeft:null,
+    msg:`Done! Minimum path sum = <strong>${dp[m-1][n-1]}</strong>.`});
+  return res;
+}
+
+function v21BuildTable(s){
+  const g=v21Grid,m=g.length,n=g[0].length;
+  let h='<table class="dp-table"><thead><tr><th class="row-header"></th>';
+  for(let j=0;j<n;j++) h+=`<th>j=${j}</th>`;
+  h+='</tr></thead><tbody>';
+  for(let r=0;r<m;r++){
+    h+=`<tr><th class="row-header" style="font-size:12px">i=${r}</th>`;
+    for(let c=0;c<n;c++){
+      const v=s.dp[r][c],isShown=s.shown[r][c];
+      let cls='cell-empty';
+      if(s.phase==='final'&&r===m-1&&c===n-1)                        cls='cell-best';
+      else if(s.phase==='fill'&&r===s.i&&c===s.j)                    cls='cell-cur';
+      else if(s.phase==='fill'&&r===s.i&&c===s.j-1)                  cls='cell-src-same';
+      else if(s.phase==='fill'&&r===s.i-1&&c===s.j)                  cls='cell-src-above';
+      else if((s.phase==='corner'||s.phase==='row'||s.phase==='col')&&r===s.ci&&c===s.cj) cls='cell-cur';
+      else if(isShown) cls=(r===0||c===0)?'cell-zero':'cell-filled';
+      const dpStr=isShown||cls==='cell-cur'?v:'';
+      h+=`<td class="${cls}" style="padding:4px 6px;line-height:1.1"><div style="font-size:9px;opacity:.55">${g[r][c]}</div><div style="font-size:13px;font-weight:600">${dpStr}</div></td>`;
+    }
+    h+='</tr>';
+  }
+  return h+'</tbody></table>';
+}
+
+function v21Render(){
+  if(!v21Steps.length) return;
+  const s=v21Steps[v21Idx];
+  document.getElementById('v21-table-wrap').innerHTML=v21BuildTable(s);
+  document.getElementById('v21-si').textContent    =s.i>=0?s.i:'—';
+  document.getElementById('v21-sj').textContent    =s.j>=0?s.j:'—';
+  document.getElementById('v21-sleft').textContent =s.left!==null?s.left:'—';
+  document.getElementById('v21-sabove').textContent=s.above!==null?s.above:'—';
+  document.getElementById('v21-sdir').textContent  =s.phase==='fill'?(s.fromLeft?'← left':'↑ above'):'—';
+  document.getElementById('v21-sans').textContent  =s.phase==='final'?s.dp[v21Grid.length-1][v21Grid[0].length-1]:'…';
+  document.getElementById('v21-info').innerHTML    =s.msg;
+  document.getElementById('v21-prog').textContent  =`Step ${v21Idx+1} / ${v21Steps.length}`;
+}
+
+function v21Init(){
+  v21Grid=document.getElementById('v21-grid').value.trim().split(';')
+    .map(row=>row.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x)))
+    .filter(r=>r.length>0).slice(0,7);
+  if(!v21Grid.length) return;
+  const maxN=Math.max(...v21Grid.map(r=>r.length));
+  v21Grid=v21Grid.map(r=>r.slice(0,Math.min(maxN,7)));
+  v21Steps=v21BuildSteps(v21Grid); v21Idx=0;
+  v21Render();
+}
+function v21Fwd(){if(v21Idx<v21Steps.length-1){v21Idx++;v21Render();}}
+function v21Back(){if(v21Idx>0){v21Idx--;v21Render();}}
+function v21Skip(){v21Idx=v21Steps.length-1;v21Render();}
+
+v21Init();
+
+/* ════════════════════════════════════════
+   VIZ 22 — Unique Paths II (#63)
+   ════════════════════════════════════════ */
+let v22Steps=[],v22Idx=0,v22OG=[];
+
+function v22BuildSteps(og){
+  const m=og.length,n=og[0].length;
+  const dp=Array.from({length:m},()=>new Array(n).fill(0));
+  const shown=Array.from({length:m},()=>new Array(n).fill(false));
+  const res=[];
+  res.push({phase:'init',i:-1,j:-1,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),above:null,left:null,
+    msg:`Grid is ${m}×${n}. Cells marked 1 are obstacles (✖). dp[i][j] = unique paths to reach (i,j).`});
+  if(og[0][0]===1){
+    shown[0][0]=true;
+    res.push({phase:'blocked',i:0,j:0,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),above:null,left:null,
+      msg:`Start (0,0) is an <strong>obstacle</strong> — return 0 immediately.`});
+    return res;
+  }
+  dp[0][0]=1; shown[0][0]=true;
+  res.push({phase:'corner',i:0,j:0,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),above:null,left:null,
+    msg:`dp[0][0] = 1 — robot starts here (not an obstacle).`});
+  for(let i=0;i<m;i++){
+    for(let j=0;j<n;j++){
+      if(i===0&&j===0) continue;
+      const isObs=og[i][j]===1;
+      const fromAbove=i>0?dp[i-1][j]:null;
+      const fromLeft=j>0?dp[i][j-1]:null;
+      if(isObs){
+        dp[i][j]=0;
+      } else {
+        dp[i][j]=(fromAbove||0)+(fromLeft||0);
+      }
+      shown[i][j]=true;
+      let msg;
+      if(isObs){
+        msg=`(${i},${j}) is an <strong>obstacle</strong> → dp[${i}][${j}] = 0`;
+      } else {
+        const parts=[];
+        if(i>0) parts.push(`dp[${i-1}][${j}]=${fromAbove}`);
+        if(j>0) parts.push(`dp[${i}][${j-1}]=${fromLeft}`);
+        msg=`dp[${i}][${j}] = ${parts.length?parts.join(' + '):'0 (no valid neighbors)'} = <strong>${dp[i][j]}</strong>`;
+      }
+      res.push({phase:'loop',i,j,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),above:fromAbove,left:fromLeft,isObs,msg});
+    }
+  }
+  res.push({phase:'final',i:m-1,j:n-1,dp:dp.map(r=>[...r]),shown:shown.map(r=>[...r]),above:null,left:null,
+    msg:`Done! Unique paths = <strong>${dp[m-1][n-1]}</strong>.`});
+  return res;
+}
+
+function v22BuildTable(s){
+  const og=v22OG,m=og.length,n=og[0].length;
+  let h='<table class="dp-table"><thead><tr><th class="row-header"></th>';
+  for(let j=0;j<n;j++) h+=`<th>j=${j}</th>`;
+  h+='</tr></thead><tbody>';
+  for(let r=0;r<m;r++){
+    h+=`<tr><th class="row-header" style="font-size:12px">i=${r}</th>`;
+    for(let c=0;c<n;c++){
+      const v=s.dp[r][c],isShown=s.shown[r][c],isObs=og[r][c]===1;
+      if(isObs){
+        const isCur=s.phase==='loop'&&r===s.i&&c===s.j;
+        h+=`<td style="background:var(--red-bg);border:.5px solid var(--red-border);color:var(--red-border);font-weight:700;font-size:14px${isCur?';outline:2.5px solid var(--red-border);outline-offset:-2px':''}">✖</td>`;
+        continue;
+      }
+      if(!isShown){ h+=`<td class="cell-empty"></td>`; continue; }
+      let cls;
+      if(s.phase==='final'&&r===m-1&&c===n-1)           cls='cell-best';
+      else if((s.phase==='loop'||s.phase==='corner')&&r===s.i&&c===s.j) cls='cell-cur';
+      else if(s.phase==='loop'&&r===s.i&&c===s.j-1&&s.j>0)  cls='cell-src-same';
+      else if(s.phase==='loop'&&r===s.i-1&&c===s.j&&s.i>0)  cls='cell-src-above';
+      else cls=v>0?'cell-filled':'cell-empty';
+      h+=`<td class="${cls}">${v}</td>`;
+    }
+    h+='</tr>';
+  }
+  return h+'</tbody></table>';
+}
+
+function v22Render(){
+  if(!v22Steps.length) return;
+  const s=v22Steps[v22Idx];
+  document.getElementById('v22-table-wrap').innerHTML=v22BuildTable(s);
+  document.getElementById('v22-si').textContent    =s.i>=0?s.i:'—';
+  document.getElementById('v22-sj').textContent    =s.j>=0?s.j:'—';
+  document.getElementById('v22-sabove').textContent=s.above!==null?s.above:'—';
+  document.getElementById('v22-sleft').textContent =s.left!==null?s.left:'—';
+  document.getElementById('v22-sans').textContent  =s.phase==='final'?s.dp[v22OG.length-1][v22OG[0].length-1]:'…';
+  document.getElementById('v22-info').innerHTML    =s.msg;
+  document.getElementById('v22-prog').textContent  =`Step ${v22Idx+1} / ${v22Steps.length}`;
+}
+
+function v22Init(){
+  v22OG=document.getElementById('v22-grid').value.trim().split(';')
+    .map(row=>row.split(',').map(s=>parseInt(s.trim())).filter(x=>!isNaN(x)))
+    .filter(r=>r.length>0).slice(0,7);
+  if(!v22OG.length) return;
+  const maxN=Math.max(...v22OG.map(r=>r.length));
+  v22OG=v22OG.map(r=>r.slice(0,Math.min(maxN,7)));
+  v22Steps=v22BuildSteps(v22OG); v22Idx=0;
+  v22Render();
+}
+function v22Fwd(){if(v22Idx<v22Steps.length-1){v22Idx++;v22Render();}}
+function v22Back(){if(v22Idx>0){v22Idx--;v22Render();}}
+function v22Skip(){v22Idx=v22Steps.length-1;v22Render();}
+
+v22Init();
+</script>
+</body>
+</html>
