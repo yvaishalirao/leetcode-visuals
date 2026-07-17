@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#692 Top K Frequent Words · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-top-k-words" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#692</div>
+      <h1>Top K Frequent Words</h1>
+      <a href="https://leetcode.com/problems/top-k-frequent-words/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an array of strings <code>words</code> and an integer <code>k</code>, return the <code>k</code> most frequent strings, sorted by frequency from highest to lowest. Words with the same frequency are sorted in lexicographical order.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def topKFrequent(self, words, k):
+        dict1 = {}
+
+        for i in words:
+            dict1[i] = dict1.get(i, 0) + 1
+
+        sorted_items = sorted(dict1.items(), key=lambda item: (-item[1], item[0]))
+
+        ans = []
+        for i in sorted_items:
+            ans.append(i[0])
+            k -= 1
+            if k == 0:
+                break
+
+        return ans</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>words</label><input type="text" id="v24-words" value="i,love,leetcode,i,love,coding" style="width:280px"></div>
+      <div class="ig"><label>k</label><input type="number" id="v24-k" value="2" style="width:70px" min="1"></div>
+      <button onclick="v24Init()">Run</button>
+    </div>
+
+    <div class="section-label">words — current one highlighted while counting</div>
+    <div id="v24-word-strip" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem"></div>
+
+    <div class="section-label">dict1 — frequency map</div>
+    <div id="v24-freq" style="display:flex;flex-wrap:wrap;gap:6px;min-height:48px;margin-bottom:1rem"></div>
+
+    <div class="section-label">sorted_items — key = (−count, word)</div>
+    <div id="v24-sorted" style="display:flex;flex-wrap:wrap;gap:6px;min-height:48px;margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v24-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">current word</div><div class="sval" id="v24-sword">—</div></div>
+      <div class="stat"><div class="slabel">dict1[word]</div><div class="sval" id="v24-scnt">—</div></div>
+      <div class="stat"><div class="slabel">unique words</div><div class="sval" id="v24-suniq">—</div></div>
+      <div class="stat"><div class="slabel">k remaining</div><div class="sval" id="v24-sk">—</div></div>
+      <div class="stat best"><div class="slabel">ans</div><div class="sval" id="v24-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v24Back()">← Prev</button>
+      <button onclick="v24Fwd()">Next →</button>
+      <button onclick="v24Skip()">Skip to end</button>
+      <span class="prog" id="v24-prog"></span>
+    </div>
+
+    <div class="section-label">ans — picked so far</div>
+    <div class="history-list" id="v24-ans"></div>
+
+    <div class="legend" style="margin-top:12px">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent)"></div>word being counted / picked</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>count just updated</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>picked into ans</div>
+      <div class="leg"><div class="lb" style="background:var(--s1);border-color:var(--border-strong)"></div>not picked (k ran out)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #692 Top K Frequent Words — count, sort by (−count, word), take k */
+let v24Steps = [], v24Idx = 0, v24Words = [], v24K = 0;
+
+function v24Build(words, k0) {
+  const steps = [];
+  const counts = {};
+  words.forEach((w, i) => {
+    const prev = counts[w] || 0;
+    counts[w] = prev + 1;
+    steps.push({ phase: 'count', i, word: w, cnt: prev + 1, counts: { ...counts },
+      msg: `<code>words[${i}] = '${w}'</code> → <code>dict1['${w}'] = ${prev === 0 ? `dict1.get('${w}', 0)` : prev} + 1 = ${prev + 1}</code>` });
+  });
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
+  const ties = {};
+  sorted.forEach(([, c]) => ties[c] = (ties[c] || 0) + 1);
+  const tieNote = Object.values(ties).some(v => v > 1)
+    ? ' Words with equal counts are ordered alphabetically.' : '';
+  steps.push({ phase: 'sorted', counts, sorted,
+    msg: `<code>sorted(dict1.items(), key=λ item: (−item[1], item[0]))</code> — highest count first.${tieNote} Result: ${sorted.map(([w, c]) => `<code>('${w}', ${c})`).join(' ').replace(/$/, '</code>').split('<code>').join('<code>')}` });
+  const ans = [];
+  let k = k0;
+  for (let j = 0; j < sorted.length; j++) {
+    const [w, c] = sorted[j];
+    ans.push(w); k -= 1;
+    steps.push({ phase: 'pick', j, word: w, cnt: c, counts, sorted, k, ans: [...ans],
+      msg: `Take <code>'${w}'</code> (count ${c}) → <code>ans = [${ans.map(a => `'${a}'`).join(', ')}]</code> · <code>k = ${k}</code>` });
+    if (k === 0) break;
+  }
+  steps.push({ phase: 'done', counts, sorted, k, picked: ans.length, ans,
+    msg: (k === 0 ? `<code>k = 0</code> → stop. ` : `All ${sorted.length} unique words taken before k hit 0. `) +
+      `Answer: <strong>[${ans.map(a => `'${a}'`).join(', ')}]</strong>` });
+  return steps;
+}
+
+function v24Render() {
+  if (!v24Steps.length) return;
+  const s = v24Steps[v24Idx];
+
+  const strip = document.getElementById('v24-word-strip');
+  strip.innerHTML = '';
+  v24Words.forEach((w, i) => {
+    const c = document.createElement('div');
+    c.className = 'word-chip' + (s.phase === 'count' && i === s.i ? ' active' : '');
+    c.textContent = w;
+    strip.appendChild(c);
+  });
+
+  const freq = document.getElementById('v24-freq');
+  freq.innerHTML = '';
+  Object.entries(s.counts).forEach(([w, c]) => {
+    const card = document.createElement('div');
+    card.className = 'sum-card' + (s.phase === 'count' && w === s.word ? ' sc-filled' : '');
+    card.innerHTML = `<span class="sc-sum">${w}</span><span class="sc-cnt">× ${c}</span>`;
+    freq.appendChild(card);
+  });
+
+  const sortedEl = document.getElementById('v24-sorted');
+  sortedEl.innerHTML = '';
+  if (s.sorted) {
+    const pickedCount = s.phase === 'pick' ? s.j + 1 : s.phase === 'done' ? s.picked : 0;
+    s.sorted.forEach(([w, c], j) => {
+      const card = document.createElement('div');
+      card.className = 'sum-card';
+      if (j < pickedCount) card.classList.add('sc-best');
+      if (s.phase === 'pick' && j === s.j) card.classList.add('sc-filled');
+      card.innerHTML = `<span class="sc-sum">${w}</span><span class="sc-cnt">× ${c}</span>`;
+      sortedEl.appendChild(card);
+    });
+  }
+
+  const ansEl = document.getElementById('v24-ans');
+  ansEl.innerHTML = '';
+  (s.ans || []).forEach(w => {
+    const chip = document.createElement('span');
+    chip.className = 'h-chip'; chip.textContent = w;
+    ansEl.appendChild(chip);
+  });
+
+  document.getElementById('v24-info').innerHTML = s.msg;
+  document.getElementById('v24-sword').textContent = s.word !== undefined ? s.word : '—';
+  document.getElementById('v24-scnt').textContent = s.cnt !== undefined ? s.cnt : '—';
+  document.getElementById('v24-suniq').textContent = Object.keys(s.counts).length;
+  document.getElementById('v24-sk').textContent = s.k !== undefined ? s.k : v24K;
+  document.getElementById('v24-sans').textContent = s.phase === 'done' ? s.ans.length + ' words' : '…';
+  document.getElementById('v24-prog').textContent = `Step ${v24Idx + 1} / ${v24Steps.length}`;
+}
+
+function v24Init() {
+  v24Words = document.getElementById('v24-words').value.split(',').map(w => w.trim()).filter(Boolean);
+  v24K = parseInt(document.getElementById('v24-k').value, 10);
+  if (!v24Words.length || isNaN(v24K) || v24K < 1) {
+    document.getElementById('v24-info').innerHTML = `<span style="color:var(--red-text)">Need at least one word and k ≥ 1.</span>`;
+    return;
+  }
+  v24Steps = v24Build(v24Words, v24K);
+  v24Idx = 0;
+  v24Render();
+}
+function v24Fwd()  { if (v24Idx < v24Steps.length - 1) { v24Idx++; v24Render(); } }
+function v24Back() { if (v24Idx > 0) { v24Idx--; v24Render(); } }
+function v24Skip() { v24Idx = v24Steps.length - 1; v24Render(); }
+
+v24Init();
+initPage('0692-top-k-frequent-words.html', v24Fwd, v24Back);
+</script>
+
+</body>
+</html>
