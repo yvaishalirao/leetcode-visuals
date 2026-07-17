@@ -23,4 +23,5 @@ const PROBLEMS = [
   { num: '62', title: "Unique Paths", file: '0062-unique-paths.html' },
   { num: '64', title: "Minimum Path Sum", file: '0064-minimum-path-sum.html' },
   { num: '63', title: "Unique Paths II", file: '0063-unique-paths-ii.html' },
+  { num: '400', title: "Nth Digit", file: '0400-nth-digit.html' },
 ];
