@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#102 Binary Tree Level Order Traversal · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-level-order" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#102</div>
+      <h1>Binary Tree Level Order Traversal</h1>
+      <a href="https://leetcode.com/problems/binary-tree-level-order-traversal/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given the root of a binary tree, return the level order traversal of its nodes' values (i.e., from left to right, level by level). Input uses LeetCode's array form, e.g. <code>3,9,20,null,null,15,7</code>.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>from collections import deque
+
+class Solution(object):
+    def levelOrder(self, root):
+        if not root:
+            return []
+
+        q = deque([root])
+        ans = []
+
+        while q:
+            level = []
+            for _ in range(len(q)):
+                node = q.popleft()
+                level.append(node.val)
+
+                if node.left:
+                    q.append(node.left)
+                if node.right:
+                    q.append(node.right)
+
+            ans.append(level)
+
+        return ans</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v25-tree-input" value="3,9,20,null,null,15,7" style="width:280px"></div>
+      <button onclick="v25Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — colors show BFS progress</div>
+    <div class="tree-wrap"><div id="v25-tree"></div></div>
+
+    <div class="section-label">q — deque, front on the left</div>
+    <div class="chain-row" id="v25-queue"></div>
+
+    <div class="section-label">level — being built this pass</div>
+    <div class="array-row" id="v25-level"></div>
+
+    <div class="info-box" id="v25-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">dequeued node</div><div class="sval" id="v25-scur">—</div></div>
+      <div class="stat"><div class="slabel">queue size</div><div class="sval" id="v25-sqsize">—</div></div>
+      <div class="stat"><div class="slabel">level index</div><div class="sval" id="v25-slvl">—</div></div>
+      <div class="stat best"><div class="slabel">levels so far</div><div class="sval" id="v25-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v25Back()">← Prev</button>
+      <button onclick="v25Fwd()">Next →</button>
+      <button onclick="v25Skip()">Skip to end</button>
+      <span class="prog" id="v25-prog"></span>
+    </div>
+
+    <div class="section-label">ans — completed levels</div>
+    <div id="v25-ans" style="margin-bottom:.5rem"></div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>waiting in queue</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current (just dequeued)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>done (already dequeued)</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet discovered</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #102 Binary Tree Level Order Traversal — BFS with a deque, one level per outer pass */
+let v25Root = null, v25Nodes = [], v25Edges = [], v25NodeById = {}, v25Steps = [], v25Idx = 0;
+
+function v25Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v25Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v25BuildTreeDOM() {
+  const cont = document.getElementById('v25-tree');
+  if (!v25Root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v25Nodes.map(n => n.x));
+  const maxY = Math.max(...v25Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v25Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v25Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v25-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v25Build(root) {
+  const steps = [];
+  if (!root) {
+    steps.push({ phase: 'empty', queueIds: [], doneIds: [], currentId: null, level: [], ans: [],
+      msg: `<code>root</code> is <code>None</code> → return <code>[]</code> immediately.` });
+    return steps;
+  }
+  const q = [root];
+  const ansLevels = [];
+  steps.push({ phase: 'init', queueIds: [root.id], doneIds: [], currentId: null, level: [], levelIdx: 0, ans: [],
+    msg: `Start with <code>q = deque([root])</code> — queue holds just the root, value <code>${root.val}</code>.` });
+  let levelIdx = 0, doneIds = [];
+  while (q.length) {
+    const levelSize = q.length;
+    const level = [];
+    for (let k = 0; k < levelSize; k++) {
+      const node = q.shift();
+      level.push(node.val);
+      doneIds = [...doneIds, node.id];
+      const enq = [];
+      if (node.left) { q.push(node.left); enq.push(`left child ${node.left.val}`); }
+      if (node.right) { q.push(node.right); enq.push(`right child ${node.right.val}`); }
+      let msg = `Dequeue <code>${node.val}</code> → append to level ${levelIdx}: <code>[${level.join(', ')}]</code>.`;
+      msg += enq.length ? ` Enqueue ${enq.join(' and ')}.` : ` No children to enqueue.`;
+      steps.push({ phase: 'process', currentId: node.id, queueIds: q.map(n => n.id), doneIds,
+        level: [...level], levelIdx, ans: ansLevels.map(l => [...l]), msg });
+    }
+    ansLevels.push(level);
+    steps.push({ phase: 'level-done', currentId: null, queueIds: q.map(n => n.id), doneIds,
+      level: [...level], levelIdx, ans: ansLevels.map(l => [...l]),
+      msg: `Level ${levelIdx} complete → <code>ans.append([${level.join(', ')}])</code>. Queue now holds the next level (${q.length} node${q.length === 1 ? '' : 's'}).` });
+    levelIdx++;
+  }
+  steps.push({ phase: 'done', currentId: null, queueIds: [], doneIds,
+    level: [], levelIdx, ans: ansLevels.map(l => [...l]),
+    msg: `Queue empty → return <code>ans</code> with <strong>${ansLevels.length}</strong> level${ansLevels.length === 1 ? '' : 's'}.` });
+  return steps;
+}
+
+function v25Render() {
+  if (!v25Steps.length) return;
+  const s = v25Steps[v25Idx];
+
+  v25Nodes.forEach(n => {
+    const el = document.getElementById('v25-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.currentId === n.id) el.classList.add('tn-current');
+    else if ((s.doneIds || []).includes(n.id)) el.classList.add('tn-done');
+    else if ((s.queueIds || []).includes(n.id)) el.classList.add('tn-queued');
+  });
+
+  const qEl = document.getElementById('v25-queue');
+  qEl.innerHTML = '';
+  const queueIds = s.queueIds || [];
+  if (!queueIds.length) {
+    qEl.innerHTML = '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+  } else {
+    queueIds.forEach((id, idx) => {
+      const nd = document.createElement('div');
+      nd.className = 'chain-node' + (idx === 0 ? ' cur-node' : '');
+      nd.innerHTML = `${v25NodeById[id].val}${idx === 0 ? '<div class="cn-sub">front</div>' : ''}`;
+      qEl.appendChild(nd);
+      if (idx < queueIds.length - 1) {
+        const ar = document.createElement('span'); ar.className = 'chain-arrow'; ar.textContent = '→';
+        qEl.appendChild(ar);
+      }
+    });
+  }
+
+  const lvlEl = document.getElementById('v25-level');
+  lvlEl.innerHTML = '';
+  (s.level || []).forEach((v, i) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    lvlEl.appendChild(c);
+  });
+
+  const ansEl = document.getElementById('v25-ans');
+  ansEl.innerHTML = '';
+  (s.ans || []).forEach((lvl, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap';
+    row.innerHTML = `<span class="sv-label">L${i}:</span>` + lvl.map(v => `<span class="h-chip">${v}</span>`).join('');
+    ansEl.appendChild(row);
+  });
+
+  document.getElementById('v25-info').innerHTML = s.msg;
+  document.getElementById('v25-scur').textContent = s.currentId != null ? v25NodeById[s.currentId].val : '—';
+  document.getElementById('v25-sqsize').textContent = queueIds.length;
+  document.getElementById('v25-slvl').textContent = s.levelIdx !== undefined ? s.levelIdx : '—';
+  document.getElementById('v25-sans').textContent = (s.ans || []).length;
+  document.getElementById('v25-prog').textContent = `Step ${v25Idx + 1} / ${v25Steps.length}`;
+}
+
+function v25Init() {
+  const raw = document.getElementById('v25-tree-input').value;
+  v25Root = v25Parse(raw);
+  v25NodeById = {};
+  if (v25Root) {
+    const { nodes, edges } = v25Layout(v25Root);
+    v25Nodes = nodes; v25Edges = edges;
+    nodes.forEach(n => v25NodeById[n.id] = n);
+  } else {
+    v25Nodes = []; v25Edges = [];
+  }
+  v25BuildTreeDOM();
+  v25Steps = v25Build(v25Root);
+  v25Idx = 0;
+  v25Render();
+}
+function v25Fwd()  { if (v25Idx < v25Steps.length - 1) { v25Idx++; v25Render(); } }
+function v25Back() { if (v25Idx > 0) { v25Idx--; v25Render(); } }
+function v25Skip() { v25Idx = v25Steps.length - 1; v25Render(); }
+
+v25Init();
+initPage('0102-binary-tree-level-order-traversal.html', v25Fwd, v25Back);
+</script>
+
+</body>
+</html>
