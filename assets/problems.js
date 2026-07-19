@@ -26,4 +26,5 @@ const PROBLEMS = [
   { num: '400', title: "Nth Digit", file: '0400-nth-digit.html' },
   { num: '692', title: "Top K Frequent Words", file: '0692-top-k-frequent-words.html' },
   { num: '102', title: "Binary Tree Level Order Traversal", file: '0102-binary-tree-level-order-traversal.html' },
+  { num: '1081', title: "Smallest Subsequence of Distinct Characters", file: '1081-smallest-subsequence-of-distinct-characters.html' },
 ];

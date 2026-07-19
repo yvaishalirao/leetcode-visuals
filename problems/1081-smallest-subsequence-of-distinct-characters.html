@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1081 Smallest Subsequence of Distinct Characters · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-smallest-subseq" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1081</div>
+      <h1>Smallest Subsequence of Distinct Characters</h1>
+      <a href="https://leetcode.com/problems/smallest-subsequence-of-distinct-characters/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given a string <code>s</code>, return the lexicographically smallest subsequence of <code>s</code> that contains all the distinct characters of <code>s</code> exactly once.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution:
+    def smallestSubsequence(self, s: str) -> str:
+        freq = Counter(s)
+        seen = set()
+        stack = []
+
+        for c in s:
+            freq[c] -= 1
+            if c in seen: continue
+
+            while stack and stack[-1] > c and freq[stack[-1]]:
+                seen.remove(stack.pop())
+
+            stack.append(c)
+            seen.add(c)
+
+        return "".join(stack)</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s</label><input type="text" id="v26-s" value="cbacdcbc" style="width:220px"></div>
+      <button onclick="v26Init()">Run</button>
+    </div>
+
+    <div class="section-label">s — current position</div>
+    <div id="v26-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem"></div>
+
+    <div class="section-label">freq — remaining occurrences from this point on</div>
+    <div class="freq-row" id="v26-freq"></div>
+
+    <div class="section-label">stack (bottom → top, left → right)</div>
+    <div class="array-row" id="v26-stack"></div>
+
+    <div class="info-box" id="v26-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">char c</div><div class="sval" id="v26-sc">—</div></div>
+      <div class="stat"><div class="slabel">freq[c] after</div><div class="sval" id="v26-sfreq">—</div></div>
+      <div class="stat"><div class="slabel">stack</div><div class="sval" id="v26-sstack">—</div></div>
+      <div class="stat"><div class="slabel">seen size</div><div class="sval" id="v26-sseen">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v26-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v26Back()">← Prev</button>
+      <button onclick="v26Fwd()">Next →</button>
+      <button onclick="v26Skip()">Skip to end</button>
+      <span class="prog" id="v26-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent)"></div>current char c</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>reappears later (poppable) / just pushed</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>exhausted (0 left) / about to pop</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1081 Smallest Subsequence of Distinct Characters — monotonic stack + last-occurrence counts */
+let v26Str = '', v26Unique = [], v26Steps = [], v26Idx = 0;
+
+function v26Build(s) {
+  const steps = [];
+  const freq = {};
+  for (const ch of s) freq[ch] = (freq[ch] || 0) + 1;
+  const seen = new Set();
+  const stack = [];
+  steps.push({ phase: 'start', i: -1, c: null, freq: { ...freq }, stack: [], seen: [],
+    msg: `Initial <code>freq</code> counts every occurrence of each character in <code>s = "${s}"</code>. Process left to right, building a stack that ends up holding each distinct character exactly once, as small as possible.` });
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    freq[c] -= 1;
+    steps.push({ phase: 'decrement', i, c, freq: { ...freq }, stack: [...stack], seen: [...seen],
+      msg: `<code>s[${i}] = '${c}'</code> → <code>freq['${c}'] -= 1</code> → <code>${freq[c]}</code> occurrence${freq[c] === 1 ? '' : 's'} left after this point.` });
+    if (seen.has(c)) {
+      steps.push({ phase: 'skip', i, c, freq: { ...freq }, stack: [...stack], seen: [...seen],
+        msg: `<code>'${c}'</code> is already in the stack (<code>seen</code>) → <code>continue</code>, nothing changes.` });
+      continue;
+    }
+    while (stack.length && stack[stack.length - 1] > c && freq[stack[stack.length - 1]] > 0) {
+      const top = stack[stack.length - 1];
+      steps.push({ phase: 'pop', i, c, top, popIndex: stack.length - 1, freq: { ...freq }, stack: [...stack], seen: [...seen],
+        msg: `Stack top <code>'${top}'</code> &gt; <code>'${c}'</code>, and <code>'${top}'</code> still occurs again later (<code>freq['${top}'] = ${freq[top]}</code>) → pop it, it can be re-added later in a better spot.` });
+      stack.pop(); seen.delete(top);
+    }
+    stack.push(c); seen.add(c);
+    steps.push({ phase: 'push', i, c, pushIndex: stack.length - 1, freq: { ...freq }, stack: [...stack], seen: [...seen],
+      msg: `Push <code>'${c}'</code> → stack = <code>[${stack.join(', ')}]</code>.` });
+  }
+  steps.push({ phase: 'done', i: s.length, c: null, freq: { ...freq }, stack: [...stack], seen: [...seen],
+    msg: `All characters processed → <code>"".join(stack)</code> = <strong>"${stack.join('')}"</strong>.` });
+  return steps;
+}
+
+function v26Render() {
+  if (!v26Steps.length) return;
+  const s = v26Steps[v26Idx];
+
+  const strip = document.getElementById('v26-strip');
+  strip.innerHTML = '';
+  for (let k = 0; k < v26Str.length; k++) {
+    const d = document.createElement('div');
+    d.className = 'char-box' + (k < s.i ? ' s-past' : k === s.i ? ' s-cur' : '');
+    d.innerHTML = `${v26Str[k]}<span class="ci">${k}</span>`;
+    strip.appendChild(d);
+  }
+
+  const freqRow = document.getElementById('v26-freq');
+  freqRow.innerHTML = '';
+  v26Unique.forEach(ch => {
+    const cell = document.createElement('div');
+    let cls = 'freq-cell';
+    if (s.phase === 'pop' && ch === s.top) cls += ' fc-chain';
+    else if (ch === s.c) cls += ' fc-active';
+    else if ((s.freq[ch] || 0) === 0) cls += ' fc-break';
+    cell.className = cls;
+    cell.innerHTML = `<span class="fval">${ch}</span><span class="fcnt">${s.freq[ch] || 0} left</span>`;
+    freqRow.appendChild(cell);
+  });
+
+  const stackRow = document.getElementById('v26-stack');
+  stackRow.innerHTML = '';
+  if (!s.stack.length) {
+    stackRow.innerHTML = '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+  } else {
+    s.stack.forEach((ch, idx) => {
+      const cell = document.createElement('div');
+      cell.className = 'arr-cell';
+      if (s.phase === 'pop' && idx === s.popIndex) cell.classList.add('cell-false');
+      else if (s.phase === 'push' && idx === s.pushIndex) cell.classList.add('cell-true');
+      cell.innerHTML = `${ch}<span class="cidx">${idx}</span>`;
+      stackRow.appendChild(cell);
+    });
+  }
+
+  document.getElementById('v26-info').innerHTML = s.msg;
+  document.getElementById('v26-sc').textContent = s.c !== null ? s.c : '—';
+  document.getElementById('v26-sfreq').textContent = s.c !== null ? s.freq[s.c] : '—';
+  document.getElementById('v26-sstack').textContent = s.stack.length ? s.stack.join('') : '(empty)';
+  document.getElementById('v26-sseen').textContent = s.seen.length;
+  document.getElementById('v26-sans').textContent = s.phase === 'done' ? s.stack.join('') : '…';
+  document.getElementById('v26-prog').textContent = `Step ${v26Idx + 1} / ${v26Steps.length}`;
+}
+
+function v26Init() {
+  v26Str = document.getElementById('v26-s').value.trim();
+  if (!v26Str) {
+    document.getElementById('v26-info').innerHTML = `<span style="color:var(--red-text)">s must be non-empty.</span>`;
+    return;
+  }
+  v26Unique = [...new Set(v26Str.split(''))].sort();
+  v26Steps = v26Build(v26Str);
+  v26Idx = 0;
+  v26Render();
+}
+function v26Fwd()  { if (v26Idx < v26Steps.length - 1) { v26Idx++; v26Render(); } }
+function v26Back() { if (v26Idx > 0) { v26Idx--; v26Render(); } }
+function v26Skip() { v26Idx = v26Steps.length - 1; v26Render(); }
+
+v26Init();
+initPage('1081-smallest-subsequence-of-distinct-characters.html', v26Fwd, v26Back);
+</script>
+
+</body>
+</html>
