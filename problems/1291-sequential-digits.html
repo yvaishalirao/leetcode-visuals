@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1291 Sequential Digits · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-sequential-digits" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1291</div>
+      <h1>Sequential Digits</h1>
+      <a href="https://leetcode.com/problems/sequential-digits/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">An integer has sequential digits if each digit is one more than the previous digit. Return a sorted list of all integers in <code>[low, high]</code> that have sequential digits.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def sequentialDigits(self, low, high):
+        ans = []
+
+        s = "123456789"
+        l = str(low)
+        h = str(high)
+
+        for length in range(len(l), len(h) + 1):
+            for start in range(0, 10 - length):
+                num = int(s[start:start + length])
+                if low &lt;= num &lt;= high:
+                    ans.append(num)
+
+        return ans</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>low</label><input type="number" id="v27-low" value="1000" style="width:110px"></div>
+      <div class="ig"><label>high</label><input type="number" id="v27-high" value="13000" style="width:110px"></div>
+      <button onclick="v27Init()">Run</button>
+    </div>
+
+    <div class="section-label">s = "123456789" — sliding window of the current length</div>
+    <div class="array-row" id="v27-src"></div>
+
+    <div class="info-box" id="v27-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">length</div><div class="sval" id="v27-slen">—</div></div>
+      <div class="stat"><div class="slabel">start</div><div class="sval" id="v27-sstart">—</div></div>
+      <div class="stat"><div class="slabel">num</div><div class="sval" id="v27-snum">—</div></div>
+      <div class="stat"><div class="slabel">low ≤ num ≤ high</div><div class="sval" id="v27-sok">—</div></div>
+      <div class="stat best"><div class="slabel">ans count</div><div class="sval" id="v27-scount">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v27Back()">← Prev</button>
+      <button onclick="v27Fwd()">Next →</button>
+      <button onclick="v27Skip()">Skip to end</button>
+      <span class="prog" id="v27-prog"></span>
+    </div>
+
+    <div class="section-label">ans — collected so far</div>
+    <div class="history-list" id="v27-ans"></div>
+
+    <div class="legend" style="margin-top:12px">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>inside window</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>window start</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>window end</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1291 Sequential Digits — slide a window of each length across "123456789" */
+let v27Steps = [], v27Idx = 0;
+const V27_S = "123456789";
+
+function v27Build(low, high) {
+  const l = String(low), h = String(high);
+  const steps = [];
+  const ans = [];
+  for (let length = l.length; length <= h.length; length++) {
+    for (let start = 0; start <= 9 - length; start++) {
+      const numStr = V27_S.substring(start, start + length);
+      const num = parseInt(numStr, 10);
+      const ok = low <= num && num <= high;
+      if (ok) ans.push(num);
+      steps.push({ length, start, num, ok, ans: [...ans],
+        msg: `length=<code>${length}</code>, start=<code>${start}</code> → window <code>s[${start}:${start + length}] = "${numStr}"</code> → <code>num = ${num}</code>. Check <code>${low} ≤ ${num} ≤ ${high}</code> → <code>${ok}</code>${ok ? ' → <strong>append!</strong>' : ''}` });
+    }
+  }
+  if (!steps.length) {
+    steps.push({ length: null, start: null, num: null, ok: false, ans: [],
+      msg: `No window length between <code>len("${low}") = ${l.length}</code> and <code>len("${high}") = ${h.length}</code> fits inside the 9-digit source string "123456789" — nothing to check.` });
+  }
+  steps.push({ phase: 'done', length: null, start: null, num: null, ok: null, ans: [...ans],
+    msg: `Done scanning all lengths → <code>ans = [${ans.join(', ')}]</code>.` });
+  return steps;
+}
+
+function v27Render() {
+  if (!v27Steps.length) return;
+  const s = v27Steps[v27Idx];
+
+  const src = document.getElementById('v27-src');
+  src.innerHTML = '';
+  for (let k = 0; k < V27_S.length; k++) {
+    const c = document.createElement('div');
+    c.className = 'arr-cell';
+    if (s.length !== null && k >= s.start && k < s.start + s.length) c.classList.add('in-window');
+    if (s.length !== null && k === s.start) c.classList.add('is-l');
+    if (s.length !== null && k === s.start + s.length - 1) c.classList.add('is-r');
+    c.innerHTML = `${V27_S[k]}<span class="cidx">${k}</span>`;
+    src.appendChild(c);
+  }
+
+  const ansEl = document.getElementById('v27-ans');
+  ansEl.innerHTML = '';
+  s.ans.forEach(n => {
+    const chip = document.createElement('span'); chip.className = 'h-chip'; chip.textContent = n;
+    ansEl.appendChild(chip);
+  });
+
+  document.getElementById('v27-info').innerHTML = s.msg;
+  document.getElementById('v27-slen').textContent = s.length !== null ? s.length : '—';
+  document.getElementById('v27-sstart').textContent = s.start !== null ? s.start : '—';
+  document.getElementById('v27-snum').textContent = s.num !== null ? s.num : '—';
+  document.getElementById('v27-sok').textContent = s.ok === null ? '—' : s.ok ? 'True' : 'False';
+  document.getElementById('v27-scount').textContent = s.ans.length;
+  document.getElementById('v27-prog').textContent = `Step ${v27Idx + 1} / ${v27Steps.length}`;
+}
+
+function v27Init() {
+  const low = parseInt(document.getElementById('v27-low').value, 10);
+  const high = parseInt(document.getElementById('v27-high').value, 10);
+  if (isNaN(low) || isNaN(high) || low > high) {
+    document.getElementById('v27-info').innerHTML = `<span style="color:var(--red-text)">Need low ≤ high, both integers.</span>`;
+    return;
+  }
+  v27Steps = v27Build(low, high);
+  v27Idx = 0;
+  v27Render();
+}
+function v27Fwd()  { if (v27Idx < v27Steps.length - 1) { v27Idx++; v27Render(); } }
+function v27Back() { if (v27Idx > 0) { v27Idx--; v27Render(); } }
+function v27Skip() { v27Idx = v27Steps.length - 1; v27Render(); }
+
+v27Init();
+initPage('1291-sequential-digits.html', v27Fwd, v27Back);
+</script>
+
+</body>
+</html>
