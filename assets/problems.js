@@ -28,4 +28,5 @@ const PROBLEMS = [
   { num: '102', title: "Binary Tree Level Order Traversal", file: '0102-binary-tree-level-order-traversal.html' },
   { num: '1081', title: "Smallest Subsequence of Distinct Characters", file: '1081-smallest-subsequence-of-distinct-characters.html' },
   { num: '1291', title: "Sequential Digits", file: '1291-sequential-digits.html' },
+  { num: '938', title: "Range Sum of BST", file: '0938-range-sum-of-bst.html' },
 ];

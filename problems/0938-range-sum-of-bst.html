@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#938 Range Sum of BST · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-range-sum-bst" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#938</div>
+      <h1>Range Sum of BST</h1>
+      <a href="https://leetcode.com/problems/range-sum-of-bst/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given the root of a binary search tree and two integers <code>low</code> and <code>high</code>, return the sum of values of all nodes with a value in the inclusive range <code>[low, high]</code>. The BST property lets the recursion skip entire subtrees that can't possibly contain a value in range.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def rangeSumBST(self, root, low, high):
+        if not root:
+            return 0
+        sum=0
+        if root.val&gt;low:
+            sum+=self.rangeSumBST(root.left,low,high)
+        if root.val&gt;=low and root.val&lt;=high:
+            sum+=root.val
+        if root.val&lt;high:
+            sum+=self.rangeSumBST(root.right,low,high)
+        return sum</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v28-tree-input" value="10,5,15,3,7,null,18" style="width:260px"></div>
+      <div class="ig"><label>low</label><input type="number" id="v28-low" value="7" style="width:80px"></div>
+      <div class="ig"><label>high</label><input type="number" id="v28-high" value="15" style="width:80px"></div>
+      <button onclick="v28Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — colors show which nodes get counted vs. pruned</div>
+    <div class="tree-wrap"><div id="v28-tree"></div></div>
+
+    <div class="info-box" id="v28-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">current node</div><div class="sval" id="v28-scur">—</div></div>
+      <div class="stat"><div class="slabel">running sum</div><div class="sval" id="v28-ssum">0</div></div>
+      <div class="stat"><div class="slabel">nodes pruned</div><div class="sval" id="v28-spruned">0</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v28-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v28Back()">← Prev</button>
+      <button onclick="v28Fwd()">Next →</button>
+      <button onclick="v28Skip()">Skip to end</button>
+      <span class="prog" id="v28-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current node</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>counted (in range)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>visited, not in range</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>pruned — subtree skipped entirely</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet reached</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #938 Range Sum of BST — DFS with BST-property pruning */
+let v28Root = null, v28Nodes = [], v28Edges = [], v28NodeById = {}, v28Steps = [], v28Idx = 0;
+
+function v28Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v28Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v28BuildTreeDOM() {
+  const cont = document.getElementById('v28-tree');
+  if (!v28Root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v28Nodes.map(n => n.x));
+  const maxY = Math.max(...v28Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v28Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v28Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v28-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v28SubtreeIds(node) {
+  const ids = [];
+  function collect(n) { if (!n) return; ids.push(n.id); collect(n.left); collect(n.right); }
+  collect(node);
+  return ids;
+}
+
+function v28Build(root, low, high) {
+  const steps = [];
+  let sum = 0;
+  let visitedIds = [], countedIds = [], prunedIds = [];
+
+  function visit(node) {
+    if (!node) {
+      steps.push({ phase: 'null', currentId: null, visitedIds: [...visitedIds], countedIds: [...countedIds], prunedIds: [...prunedIds], sum,
+        msg: `Node is <code>None</code> → this branch contributes <code>0</code>.` });
+      return;
+    }
+    visitedIds = [...visitedIds, node.id];
+    steps.push({ phase: 'enter', currentId: node.id, val: node.val, visitedIds: [...visitedIds], countedIds: [...countedIds], prunedIds: [...prunedIds], sum,
+      msg: `Visit node <code>${node.val}</code>.` });
+
+    const goLeft = node.val > low;
+    if (!goLeft && node.left) prunedIds = [...prunedIds, ...v28SubtreeIds(node.left)];
+    steps.push({ phase: goLeft ? 'go-left' : 'prune-left', currentId: node.id, val: node.val,
+      visitedIds: [...visitedIds], countedIds: [...countedIds], prunedIds: [...prunedIds], sum,
+      msg: goLeft
+        ? `<code>${node.val} &gt; ${low}</code> → the left subtree may still hold values ≥ ${low} → recurse left.`
+        : `<code>${node.val} ≤ ${low}</code> → by the BST property every node in the left subtree is ≤ ${node.val}, so all of them are ≤ ${low} too → <strong>skip the entire left subtree</strong>.` });
+    if (goLeft) visit(node.left);
+
+    const inRange = node.val >= low && node.val <= high;
+    if (inRange) { sum += node.val; countedIds = [...countedIds, node.id]; }
+    steps.push({ phase: inRange ? 'count' : 'no-count', currentId: node.id, val: node.val,
+      visitedIds: [...visitedIds], countedIds: [...countedIds], prunedIds: [...prunedIds], sum,
+      msg: inRange
+        ? `<code>${low} ≤ ${node.val} ≤ ${high}</code> → add <code>${node.val}</code> → running sum = <code>${sum}</code>.`
+        : `<code>${node.val}</code> is outside <code>[${low}, ${high}]</code> → not added.` });
+
+    const goRight = node.val < high;
+    if (!goRight && node.right) prunedIds = [...prunedIds, ...v28SubtreeIds(node.right)];
+    steps.push({ phase: goRight ? 'go-right' : 'prune-right', currentId: node.id, val: node.val,
+      visitedIds: [...visitedIds], countedIds: [...countedIds], prunedIds: [...prunedIds], sum,
+      msg: goRight
+        ? `<code>${node.val} &lt; ${high}</code> → the right subtree may still hold values ≤ ${high} → recurse right.`
+        : `<code>${node.val} ≥ ${high}</code> → every node in the right subtree is ≥ ${node.val}, so all of them are ≥ ${high} too → <strong>skip the entire right subtree</strong>.` });
+    if (goRight) visit(node.right);
+  }
+
+  visit(root);
+  steps.push({ phase: 'done', currentId: null, val: null, visitedIds: [...visitedIds], countedIds: [...countedIds], prunedIds: [...prunedIds], sum,
+    msg: `Recursion complete → <strong>answer = ${sum}</strong>.` });
+  return steps;
+}
+
+function v28Render() {
+  if (!v28Steps.length) return;
+  const s = v28Steps[v28Idx];
+
+  v28Nodes.forEach(n => {
+    const el = document.getElementById('v28-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.currentId === n.id) el.classList.add('tn-current');
+    else if ((s.countedIds || []).includes(n.id)) el.classList.add('tn-done');
+    else if ((s.prunedIds || []).includes(n.id)) el.classList.add('tn-pruned');
+    else if ((s.visitedIds || []).includes(n.id)) el.classList.add('tn-visited');
+  });
+
+  document.getElementById('v28-info').innerHTML = s.msg;
+  document.getElementById('v28-scur').textContent = s.val != null ? s.val : '—';
+  document.getElementById('v28-ssum').textContent = s.sum;
+  document.getElementById('v28-spruned').textContent = (s.prunedIds || []).length;
+  document.getElementById('v28-sans').textContent = s.phase === 'done' ? s.sum : '…';
+  document.getElementById('v28-prog').textContent = `Step ${v28Idx + 1} / ${v28Steps.length}`;
+}
+
+function v28Init() {
+  const raw = document.getElementById('v28-tree-input').value;
+  const low = parseInt(document.getElementById('v28-low').value, 10);
+  const high = parseInt(document.getElementById('v28-high').value, 10);
+  v28Root = v28Parse(raw);
+  v28NodeById = {};
+  if (v28Root) {
+    const { nodes, edges } = v28Layout(v28Root);
+    v28Nodes = nodes; v28Edges = edges;
+    nodes.forEach(n => v28NodeById[n.id] = n);
+  } else {
+    v28Nodes = []; v28Edges = [];
+  }
+  v28BuildTreeDOM();
+  v28Steps = v28Build(v28Root, low, high);
+  v28Idx = 0;
+  v28Render();
+}
+function v28Fwd()  { if (v28Idx < v28Steps.length - 1) { v28Idx++; v28Render(); } }
+function v28Back() { if (v28Idx > 0) { v28Idx--; v28Render(); } }
+function v28Skip() { v28Idx = v28Steps.length - 1; v28Render(); }
+
+v28Init();
+initPage('0938-range-sum-of-bst.html', v28Fwd, v28Back);
+</script>
+
+</body>
+</html>
