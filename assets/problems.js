@@ -30,4 +30,5 @@ const PROBLEMS = [
   { num: '1291', title: "Sequential Digits", file: '1291-sequential-digits.html' },
   { num: '938', title: "Range Sum of BST", file: '0938-range-sum-of-bst.html' },
   { num: '103', title: "Binary Tree Zigzag Level Order Traversal", file: '0103-binary-tree-zigzag-level-order-traversal.html' },
+  { num: '105', title: "Construct Binary Tree from Preorder and Inorder Traversal", file: '0105-construct-binary-tree-from-preorder-and-inorder-traversal.html' },
 ];

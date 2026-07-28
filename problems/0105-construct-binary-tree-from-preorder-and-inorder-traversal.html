@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#105 Construct Binary Tree from Preorder and Inorder Traversal · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-build-tree" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#105</div>
+      <h1>Construct Binary Tree from Preorder and Inorder Traversal</h1>
+      <a href="https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given <code>preorder</code> and <code>inorder</code> traversals of a binary tree, construct and return the tree. Each call to <code>helper</code> takes the next unused value from <code>preorder</code> as the root, finds it in <code>inorder</code> to split the remaining range into left/right subtrees, and recurses.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def buildTree(self, preorder, inorder):
+        idx_map = {val: i for i, val in enumerate(inorder)}
+        self.index = 0
+
+        def helper(start, end):
+            if start &gt; end:
+                return None
+            root_val = preorder[self.index]
+            self.index += 1
+            root = TreeNode(root_val)
+
+            mid = idx_map[root_val]
+            root.left = helper(start, mid - 1)
+            root.right = helper(mid + 1, end)
+            return root
+
+        return helper(0, len(inorder) - 1)</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>preorder</label><input type="text" id="v30-pre" value="3,9,20,15,7" style="width:200px"></div>
+      <div class="ig"><label>inorder</label><input type="text" id="v30-in" value="9,3,15,20,7" style="width:200px"></div>
+      <button onclick="v30Init()">Run</button>
+    </div>
+
+    <div class="section-label">preorder — next root value to consume</div>
+    <div class="array-row" id="v30-pre-row"></div>
+
+    <div class="section-label">inorder — current [start, end] range and split point</div>
+    <div class="array-row" id="v30-in-row"></div>
+
+    <div class="section-label">Tree being built</div>
+    <div class="tree-wrap"><div id="v30-tree"></div></div>
+
+    <div class="info-box" id="v30-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">range [start, end]</div><div class="sval" id="v30-srange">—</div></div>
+      <div class="stat"><div class="slabel">mid (split index)</div><div class="sval" id="v30-smid">—</div></div>
+      <div class="stat"><div class="slabel">node value</div><div class="sval" id="v30-sval">—</div></div>
+      <div class="stat"><div class="slabel">preorder index</div><div class="sval" id="v30-spidx">—</div></div>
+      <div class="stat best"><div class="slabel">nodes created</div><div class="sval" id="v30-scount">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v30Back()">← Prev</button>
+      <button onclick="v30Fwd()">Next →</button>
+      <button onclick="v30Skip()">Skip to end</button>
+      <span class="prog" id="v30-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>preorder: already consumed</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>preorder pointer / inorder split (mid)</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>inorder: current [start, end] window</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>tree: created node</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #105 Construct Binary Tree from Preorder and Inorder Traversal */
+let v30Steps = [], v30Idx = 0, v30Pre = [], v30In = [], v30Nodes = [], v30Edges = [];
+
+function v30Build(preorder, inorder) {
+  const idxMap = {};
+  inorder.forEach((v, i) => idxMap[v] = i);
+  let preIdx = 0;
+  let idc = 0;
+  const nodesById = {};
+  const steps = [];
+  let createdIds = [], edges = [];
+
+  function helper(start, end) {
+    if (start > end) {
+      steps.push({ phase: 'base', currentId: null, start, end, preIdx, mid: null, val: null,
+        createdIds: [...createdIds], edges: edges.map(e => [...e]),
+        msg: `<code>start(${start}) &gt; end(${end})</code> → empty range → return <code>None</code>.` });
+      return null;
+    }
+    const rootVal = preorder[preIdx];
+    const usedIdx = preIdx;
+    preIdx += 1;
+    const id = idc++;
+    nodesById[id] = { id, val: rootVal, left: null, right: null };
+    createdIds = [...createdIds, id];
+    const mid = idxMap[rootVal];
+    steps.push({ phase: 'create', currentId: id, start, end, preIdx, mid, val: rootVal, usedIdx,
+      createdIds: [...createdIds], edges: edges.map(e => [...e]),
+      msg: `<code>preorder[${usedIdx}] = ${rootVal}</code> → create node <code>${rootVal}</code>. In <code>inorder</code>, <code>${rootVal}</code> sits at index <code>${mid}</code> inside range <code>[${start}, ${end}]</code> → left subtree = <code>[${start}, ${mid - 1}]</code>, right subtree = <code>[${mid + 1}, ${end}]</code>.` });
+
+    const leftId = helper(start, mid - 1);
+    if (leftId != null) { nodesById[id].left = nodesById[leftId]; edges = [...edges, [id, leftId]]; }
+    steps.push({ phase: 'attach-left', currentId: id, start, end, preIdx, mid, val: rootVal,
+      createdIds: [...createdIds], edges: edges.map(e => [...e]),
+      msg: leftId != null
+        ? `<code>${rootVal}.left</code> = node <code>${nodesById[leftId].val}</code>.`
+        : `<code>${rootVal}.left</code> = <code>None</code> (range <code>[${start}, ${mid - 1}]</code> was empty).` });
+
+    const rightId = helper(mid + 1, end);
+    if (rightId != null) { nodesById[id].right = nodesById[rightId]; edges = [...edges, [id, rightId]]; }
+    steps.push({ phase: 'attach-right', currentId: id, start, end, preIdx, mid, val: rootVal,
+      createdIds: [...createdIds], edges: edges.map(e => [...e]),
+      msg: rightId != null
+        ? `<code>${rootVal}.right</code> = node <code>${nodesById[rightId].val}</code>.`
+        : `<code>${rootVal}.right</code> = <code>None</code> (range <code>[${mid + 1}, ${end}]</code> was empty).` });
+
+    return id;
+  }
+
+  const rootId = helper(0, inorder.length - 1);
+  steps.push({ phase: 'done', currentId: null, start: null, end: null, preIdx, mid: null, val: null,
+    createdIds: [...createdIds], edges: edges.map(e => [...e]),
+    msg: `Recursion complete → tree fully built from <strong>${createdIds.length}</strong> node${createdIds.length === 1 ? '' : 's'}.` });
+
+  return { steps, root: rootId != null ? nodesById[rootId] : null };
+}
+
+function v30Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v30BuildTreeDOM(root) {
+  const cont = document.getElementById('v30-tree');
+  if (!root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v30Nodes.map(n => n.x));
+  const maxY = Math.max(...v30Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v30Edges.forEach(([p, c]) => {
+    svg += `<line id="v30-edge-${p.id}-${c.id}" x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5;stroke-opacity:0;transition:stroke-opacity .2s"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v30Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v30-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px;opacity:0;transition:opacity .2s">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v30Render() {
+  if (!v30Steps.length) return;
+  const s = v30Steps[v30Idx];
+
+  v30Nodes.forEach(n => {
+    const el = document.getElementById('v30-tn-' + n.id);
+    if (!el) return;
+    const created = (s.createdIds || []).includes(n.id);
+    el.style.opacity = created ? '1' : '0';
+    el.className = 'tree-node';
+    if (created) el.classList.add(s.currentId === n.id ? 'tn-current' : 'tn-done');
+  });
+  v30Edges.forEach(([p, c]) => {
+    const line = document.getElementById(`v30-edge-${p.id}-${c.id}`);
+    const drawn = (s.edges || []).some(e => e[0] === p.id && e[1] === c.id);
+    line.style.strokeOpacity = drawn ? '1' : '0';
+  });
+
+  const preRow = document.getElementById('v30-pre-row');
+  preRow.innerHTML = '';
+  v30Pre.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if (s.phase === 'create' && k === s.usedIdx) c.classList.add('cell-cur');
+    else if (k < s.preIdx) c.classList.add('cell-true');
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    preRow.appendChild(c);
+  });
+
+  const inRow = document.getElementById('v30-in-row');
+  inRow.innerHTML = '';
+  v30In.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if (s.start !== null && k >= s.start && k <= s.end) c.classList.add('in-window');
+    if (s.mid !== null && k === s.mid) c.classList.add('cell-cur');
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    inRow.appendChild(c);
+  });
+
+  document.getElementById('v30-info').innerHTML = s.msg;
+  document.getElementById('v30-srange').textContent = s.start !== null ? `[${s.start}, ${s.end}]` : '—';
+  document.getElementById('v30-smid').textContent = s.mid !== null ? s.mid : '—';
+  document.getElementById('v30-sval').textContent = s.val !== null ? s.val : '—';
+  document.getElementById('v30-spidx').textContent = s.preIdx;
+  document.getElementById('v30-scount').textContent = (s.createdIds || []).length;
+  document.getElementById('v30-prog').textContent = `Step ${v30Idx + 1} / ${v30Steps.length}`;
+}
+
+function v30Init() {
+  v30Pre = document.getElementById('v30-pre').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  v30In = document.getElementById('v30-in').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  if (!v30Pre.length || v30Pre.length !== v30In.length) {
+    document.getElementById('v30-info').innerHTML = `<span style="color:var(--red-text)">preorder and inorder must be non-empty and the same length.</span>`;
+    return;
+  }
+  const { steps, root } = v30Build(v30Pre, v30In);
+  if (root) {
+    const { nodes, edges } = v30Layout(root);
+    v30Nodes = nodes; v30Edges = edges;
+  } else {
+    v30Nodes = []; v30Edges = [];
+  }
+  v30BuildTreeDOM(root);
+  v30Steps = steps;
+  v30Idx = 0;
+  v30Render();
+}
+function v30Fwd()  { if (v30Idx < v30Steps.length - 1) { v30Idx++; v30Render(); } }
+function v30Back() { if (v30Idx > 0) { v30Idx--; v30Render(); } }
+function v30Skip() { v30Idx = v30Steps.length - 1; v30Render(); }
+
+v30Init();
+initPage('0105-construct-binary-tree-from-preorder-and-inorder-traversal.html', v30Fwd, v30Back);
+</script>
+
+</body>
+</html>
