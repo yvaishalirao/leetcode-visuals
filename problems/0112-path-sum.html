@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#112 Path Sum · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-path-sum" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#112</div>
+      <h1>Path Sum</h1>
+      <a href="https://leetcode.com/problems/path-sum/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given the root of a binary tree and an integer <code>targetSum</code>, return <code>true</code> if the tree has a root-to-leaf path whose values sum to <code>targetSum</code>. A leaf is a node with no children. Two parallel deques track each queued node alongside its running sum from the root.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def hasPathSum(self, root, targetSum):
+        from collections import deque
+        if root is None:
+            return False
+        s1=deque()
+        s2=deque()
+        s1.append(root)
+        s2.append(root.val)
+        while s1:
+            node=s1.popleft()
+            temp=s2.popleft()
+            if node.left is None and node.right is None and temp == targetSum:
+                return True
+            if node.left is not None:
+                s1.append(node.left)
+                s2.append(node.left.val + temp)
+            if node.right is not None:
+                s1.append(node.right)
+                s2.append(node.right.val + temp)
+        return False</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v32-tree-input" value="5,4,8,11,null,13,4,7,2,null,null,null,1" style="width:320px"></div>
+      <div class="ig"><label>targetSum</label><input type="number" id="v32-target" value="22" style="width:90px"></div>
+      <button onclick="v32Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — search stops the instant a matching leaf is dequeued</div>
+    <div class="tree-wrap"><div id="v32-tree"></div></div>
+
+    <div class="section-label">s1 (nodes) &amp; s2 (running sums) — paired, front on the left</div>
+    <div class="chain-row" id="v32-queue"></div>
+
+    <div class="info-box" id="v32-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">dequeued node</div><div class="sval" id="v32-scur">—</div></div>
+      <div class="stat"><div class="slabel">running sum</div><div class="sval" id="v32-ssum">—</div></div>
+      <div class="stat"><div class="slabel">targetSum</div><div class="sval" id="v32-star">—</div></div>
+      <div class="stat"><div class="slabel">queue size</div><div class="sval" id="v32-sqsize">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v32-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v32Back()">← Prev</button>
+      <button onclick="v32Fwd()">Next →</button>
+      <button onclick="v32Skip()">Skip to end</button>
+      <span class="prog" id="v32-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>waiting in queue</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current / matching leaf found here</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>done (already dequeued)</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>never visited — search stopped early</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #112 Path Sum — BFS with a parallel deque of running sums */
+let v32Root = null, v32Nodes = [], v32Edges = [], v32NodeById = {}, v32Steps = [], v32Idx = 0;
+
+function v32Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v32Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v32BuildTreeDOM() {
+  const cont = document.getElementById('v32-tree');
+  if (!v32Root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v32Nodes.map(n => n.x));
+  const maxY = Math.max(...v32Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v32Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v32Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v32-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v32Build(root, targetSum) {
+  const steps = [];
+  if (!root) {
+    steps.push({ phase: 'empty', s1: [], s2: [], doneIds: [], currentId: null, answerId: null, sum: null, answer: false,
+      msg: `<code>root is None</code> → return <code>False</code> immediately.` });
+    return steps;
+  }
+  let s1 = [root], s2 = [root.val];
+  let doneIds = [];
+  steps.push({ phase: 'init', s1: [root.id], s2: [...s2], doneIds: [], currentId: null, answerId: null, sum: null,
+    msg: `Start with <code>s1 = [root]</code>, <code>s2 = [root.val]</code> — node <code>${root.val}</code> with running sum <code>${root.val}</code>.` });
+  let answer = false, answerId = null;
+  while (s1.length) {
+    const node = s1.shift();
+    const temp = s2.shift();
+    doneIds = [...doneIds, node.id];
+    const isLeaf = !node.left && !node.right;
+    if (isLeaf && temp === targetSum) {
+      answer = true; answerId = node.id;
+      steps.push({ phase: 'found', currentId: node.id, answerId: node.id, s1: s1.map(n => n.id), s2: [...s2], doneIds, sum: temp,
+        msg: `Dequeue <code>${node.val}</code> (running sum <code>${temp}</code>) → leaf and <code>${temp} == targetSum(${targetSum})</code> → <strong>return True</strong>. The rest of the queue and tree are never touched.` });
+      break;
+    }
+    if (isLeaf) {
+      steps.push({ phase: 'leaf-miss', currentId: node.id, answerId: null, s1: s1.map(n => n.id), s2: [...s2], doneIds, sum: temp,
+        msg: `Dequeue <code>${node.val}</code> (running sum <code>${temp}</code>) → leaf but <code>${temp} ≠ targetSum(${targetSum})</code> → this path fails, continue.` });
+    } else {
+      const enq = [];
+      if (node.left) { s1.push(node.left); s2.push(node.left.val + temp); enq.push(`left ${node.left.val} (sum ${node.left.val + temp})`); }
+      if (node.right) { s1.push(node.right); s2.push(node.right.val + temp); enq.push(`right ${node.right.val} (sum ${node.right.val + temp})`); }
+      steps.push({ phase: 'process', currentId: node.id, answerId: null, s1: s1.map(n => n.id), s2: [...s2], doneIds, sum: temp,
+        msg: `Dequeue <code>${node.val}</code> (running sum <code>${temp}</code>) → not a leaf → enqueue ${enq.join(' and ')}.` });
+    }
+  }
+  steps.push({ phase: 'done', currentId: null, answerId, s1: [], s2: [], doneIds, sum: null, answer,
+    msg: `<strong>Answer: ${answer ? 'True' : 'False'}</strong>.` });
+  return steps;
+}
+
+function v32Render() {
+  if (!v32Steps.length) return;
+  const s = v32Steps[v32Idx];
+
+  v32Nodes.forEach(n => {
+    const el = document.getElementById('v32-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.currentId === n.id || s.answerId === n.id) el.classList.add('tn-current');
+    else if ((s.doneIds || []).includes(n.id)) el.classList.add('tn-done');
+    else if ((s.s1 || []).includes(n.id)) el.classList.add('tn-queued');
+  });
+
+  const qEl = document.getElementById('v32-queue');
+  qEl.innerHTML = '';
+  const s1 = s.s1 || [], s2 = s.s2 || [];
+  if (!s1.length) {
+    qEl.innerHTML = '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+  } else {
+    s1.forEach((id, idx) => {
+      const nd = document.createElement('div');
+      nd.className = 'chain-node' + (idx === 0 ? ' cur-node' : '');
+      nd.innerHTML = `${v32NodeById[id].val}<div class="cn-sub">sum ${s2[idx]}${idx === 0 ? ' · front' : ''}</div>`;
+      qEl.appendChild(nd);
+      if (idx < s1.length - 1) {
+        const ar = document.createElement('span'); ar.className = 'chain-arrow'; ar.textContent = '→';
+        qEl.appendChild(ar);
+      }
+    });
+  }
+
+  document.getElementById('v32-info').innerHTML = s.msg;
+  document.getElementById('v32-scur').textContent = s.currentId != null ? v32NodeById[s.currentId].val : '—';
+  document.getElementById('v32-ssum').textContent = s.sum !== null && s.sum !== undefined ? s.sum : '—';
+  document.getElementById('v32-star').textContent = v32Target;
+  document.getElementById('v32-sqsize').textContent = s1.length;
+  document.getElementById('v32-sans').textContent = (s.phase === 'done' || s.phase === 'empty') ? (s.answer ? 'True' : 'False') : '…';
+  document.getElementById('v32-prog').textContent = `Step ${v32Idx + 1} / ${v32Steps.length}`;
+}
+
+let v32Target = 0;
+function v32Init() {
+  const raw = document.getElementById('v32-tree-input').value;
+  v32Target = parseInt(document.getElementById('v32-target').value, 10);
+  v32Root = v32Parse(raw);
+  v32NodeById = {};
+  if (v32Root) {
+    const { nodes, edges } = v32Layout(v32Root);
+    v32Nodes = nodes; v32Edges = edges;
+    nodes.forEach(n => v32NodeById[n.id] = n);
+  } else {
+    v32Nodes = []; v32Edges = [];
+  }
+  v32BuildTreeDOM();
+  v32Steps = v32Build(v32Root, v32Target);
+  v32Idx = 0;
+  v32Render();
+}
+function v32Fwd()  { if (v32Idx < v32Steps.length - 1) { v32Idx++; v32Render(); } }
+function v32Back() { if (v32Idx > 0) { v32Idx--; v32Render(); } }
+function v32Skip() { v32Idx = v32Steps.length - 1; v32Render(); }
+
+v32Init();
+initPage('0112-path-sum.html', v32Fwd, v32Back);
+</script>
+
+</body>
+</html>

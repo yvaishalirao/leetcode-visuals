@@ -32,4 +32,5 @@ const PROBLEMS = [
   { num: '103', title: "Binary Tree Zigzag Level Order Traversal", file: '0103-binary-tree-zigzag-level-order-traversal.html' },
   { num: '105', title: "Construct Binary Tree from Preorder and Inorder Traversal", file: '0105-construct-binary-tree-from-preorder-and-inorder-traversal.html' },
   { num: '111', title: "Minimum Depth of Binary Tree", file: '0111-minimum-depth-of-binary-tree.html' },
+  { num: '112', title: "Path Sum", file: '0112-path-sum.html' },
 ];
