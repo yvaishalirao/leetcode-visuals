@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#111 Minimum Depth of Binary Tree · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-min-depth" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#111</div>
+      <h1>Minimum Depth of Binary Tree</h1>
+      <a href="https://leetcode.com/problems/minimum-depth-of-binary-tree/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given a binary tree, find its minimum depth — the number of nodes along the shortest path from the root to the nearest leaf. BFS finds this efficiently: the very first leaf dequeued is at the minimum depth, so the search can stop immediately without exploring the rest of the tree.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def minDepth(self, root):
+        depth=1
+        if root is None:
+            return 0
+        q=[]
+        q.append(root)
+        while(q):
+            n=len(q)
+            for i in range(n):
+                node=q.pop(0)
+                if node.left==None and node.right==None:
+                    return depth
+                if node.left!=None:
+                    q.append(node.left)
+                if node.right!=None:
+                    q.append(node.right)
+            depth+=1
+        return depth</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v31-tree-input" value="3,9,20,null,null,15,7" style="width:280px"></div>
+      <button onclick="v31Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — search stops the instant a leaf is dequeued</div>
+    <div class="tree-wrap"><div id="v31-tree"></div></div>
+
+    <div class="section-label">q — deque, front on the left</div>
+    <div class="chain-row" id="v31-queue"></div>
+
+    <div class="info-box" id="v31-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">dequeued node</div><div class="sval" id="v31-scur">—</div></div>
+      <div class="stat"><div class="slabel">queue size</div><div class="sval" id="v31-sqsize">—</div></div>
+      <div class="stat"><div class="slabel">depth</div><div class="sval" id="v31-sdepth">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v31-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v31Back()">← Prev</button>
+      <button onclick="v31Fwd()">Next →</button>
+      <button onclick="v31Skip()">Skip to end</button>
+      <span class="prog" id="v31-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>waiting in queue</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current / leaf found here</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>done (already dequeued)</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>never visited — search stopped early</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #111 Minimum Depth of Binary Tree — BFS, return the instant a leaf is dequeued */
+let v31Root = null, v31Nodes = [], v31Edges = [], v31NodeById = {}, v31Steps = [], v31Idx = 0;
+
+function v31Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v31Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v31BuildTreeDOM() {
+  const cont = document.getElementById('v31-tree');
+  if (!v31Root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v31Nodes.map(n => n.x));
+  const maxY = Math.max(...v31Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v31Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v31Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v31-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v31Build(root) {
+  const steps = [];
+  if (!root) {
+    steps.push({ phase: 'empty', queueIds: [], doneIds: [], currentId: null, answerId: null, depth: 0,
+      msg: `<code>root is None</code> → return <code>0</code> immediately.` });
+    return steps;
+  }
+  const q = [root];
+  let depth = 1;
+  let doneIds = [];
+  let answer = null, answerId = null;
+  steps.push({ phase: 'init', queueIds: [root.id], doneIds: [], currentId: null, answerId: null, depth,
+    msg: `Start with <code>depth = 1</code>, <code>q = [root]</code> (value ${root.val}).` });
+  outer:
+  while (q.length) {
+    const levelSize = q.length;
+    for (let k = 0; k < levelSize; k++) {
+      const node = q.shift();
+      doneIds = [...doneIds, node.id];
+      const isLeaf = !node.left && !node.right;
+      if (isLeaf) {
+        answer = depth; answerId = node.id;
+        steps.push({ phase: 'leaf', currentId: node.id, answerId: node.id, queueIds: q.map(n => n.id), doneIds, depth,
+          msg: `Dequeue <code>${node.val}</code> → no children → <strong>leaf found at depth ${depth}</strong> → return <code>${depth}</code> immediately. The rest of the queue and tree are never touched.` });
+        break outer;
+      }
+      const enq = [];
+      if (node.left) { q.push(node.left); enq.push(`left ${node.left.val}`); }
+      if (node.right) { q.push(node.right); enq.push(`right ${node.right.val}`); }
+      steps.push({ phase: 'process', currentId: node.id, answerId: null, queueIds: q.map(n => n.id), doneIds, depth,
+        msg: `Dequeue <code>${node.val}</code> → not a leaf → enqueue ${enq.join(' and ')}.` });
+    }
+    if (answer !== null) break;
+    depth += 1;
+    steps.push({ phase: 'level-done', currentId: null, answerId: null, queueIds: q.map(n => n.id), doneIds, depth,
+      msg: `Level fully processed, no leaf found → <code>depth += 1</code> → now <code>${depth}</code>.` });
+  }
+  steps.push({ phase: 'done', currentId: null, answerId, queueIds: [], doneIds, depth: answer,
+    msg: `<strong>Minimum depth = ${answer}</strong>.` });
+  return steps;
+}
+
+function v31Render() {
+  if (!v31Steps.length) return;
+  const s = v31Steps[v31Idx];
+
+  v31Nodes.forEach(n => {
+    const el = document.getElementById('v31-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.currentId === n.id || s.answerId === n.id) el.classList.add('tn-current');
+    else if ((s.doneIds || []).includes(n.id)) el.classList.add('tn-done');
+    else if ((s.queueIds || []).includes(n.id)) el.classList.add('tn-queued');
+  });
+
+  const qEl = document.getElementById('v31-queue');
+  qEl.innerHTML = '';
+  const queueIds = s.queueIds || [];
+  if (!queueIds.length) {
+    qEl.innerHTML = '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+  } else {
+    queueIds.forEach((id, idx) => {
+      const nd = document.createElement('div');
+      nd.className = 'chain-node' + (idx === 0 ? ' cur-node' : '');
+      nd.innerHTML = `${v31NodeById[id].val}${idx === 0 ? '<div class="cn-sub">front</div>' : ''}`;
+      qEl.appendChild(nd);
+      if (idx < queueIds.length - 1) {
+        const ar = document.createElement('span'); ar.className = 'chain-arrow'; ar.textContent = '→';
+        qEl.appendChild(ar);
+      }
+    });
+  }
+
+  document.getElementById('v31-info').innerHTML = s.msg;
+  document.getElementById('v31-scur').textContent = s.currentId != null ? v31NodeById[s.currentId].val : '—';
+  document.getElementById('v31-sqsize').textContent = queueIds.length;
+  document.getElementById('v31-sdepth').textContent = s.depth !== undefined ? s.depth : '—';
+  document.getElementById('v31-sans').textContent = (s.phase === 'done' || s.phase === 'empty') ? (s.depth != null ? s.depth : 0) : '…';
+  document.getElementById('v31-prog').textContent = `Step ${v31Idx + 1} / ${v31Steps.length}`;
+}
+
+function v31Init() {
+  const raw = document.getElementById('v31-tree-input').value;
+  v31Root = v31Parse(raw);
+  v31NodeById = {};
+  if (v31Root) {
+    const { nodes, edges } = v31Layout(v31Root);
+    v31Nodes = nodes; v31Edges = edges;
+    nodes.forEach(n => v31NodeById[n.id] = n);
+  } else {
+    v31Nodes = []; v31Edges = [];
+  }
+  v31BuildTreeDOM();
+  v31Steps = v31Build(v31Root);
+  v31Idx = 0;
+  v31Render();
+}
+function v31Fwd()  { if (v31Idx < v31Steps.length - 1) { v31Idx++; v31Render(); } }
+function v31Back() { if (v31Idx > 0) { v31Idx--; v31Render(); } }
+function v31Skip() { v31Idx = v31Steps.length - 1; v31Render(); }
+
+v31Init();
+initPage('0111-minimum-depth-of-binary-tree.html', v31Fwd, v31Back);
+</script>
+
+</body>
+</html>
