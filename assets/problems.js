@@ -36,4 +36,5 @@ const PROBLEMS = [
   { num: '637', title: "Average of Levels in Binary Tree", file: '0637-average-of-levels-in-binary-tree.html' },
   { num: '199', title: "Binary Tree Right Side View", file: '0199-binary-tree-right-side-view.html' },
   { num: '226', title: "Invert Binary Tree", file: '0226-invert-binary-tree.html' },
+  { num: '337', title: "House Robber III", file: '0337-house-robber-iii.html' },
 ];

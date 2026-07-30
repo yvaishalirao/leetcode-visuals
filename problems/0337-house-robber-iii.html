@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#337 House Robber III · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-house-robber-3" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#337</div>
+      <h1>House Robber III</h1>
+      <a href="https://leetcode.com/problems/house-robber-iii/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Houses form a binary tree; two directly-linked houses can't both be robbed. Return the maximum amount robbable. Each node's postorder call returns a pair <code>[rob, skip]</code> — the best total if this node <em>is</em> robbed, and the best total if it <em>isn't</em> — computed from its children's pairs.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def rob(self, root):
+        def travel(root):
+            if root is None:
+                return [0,0]
+            ln=travel(root.left)
+            rn=travel(root.right)
+            ans=[0,0]
+            ans[0]=root.val+ln[1]+rn[1]
+            ans[1]=max(ln[0],ln[1])+max(rn[0],rn[1])
+            return ans
+
+        ans=travel(root)
+        return max(ans[0],ans[1])</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v36-tree-input" value="3,2,3,null,3,null,1" style="width:280px"></div>
+      <button onclick="v36Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — each node shows [rob, skip] once both children resolve</div>
+    <div class="tree-wrap" id="v36-tree-wrap"><div id="v36-tree"></div></div>
+
+    <div class="info-box" id="v36-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">current node</div><div class="sval" id="v36-scur">—</div></div>
+      <div class="stat"><div class="slabel">rob this (ans[0])</div><div class="sval" id="v36-srob">—</div></div>
+      <div class="stat"><div class="slabel">skip this (ans[1])</div><div class="sval" id="v36-sskip">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v36-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v36Back()">← Prev</button>
+      <button onclick="v36Fwd()">Next →</button>
+      <button onclick="v36Skip()">Skip to end</button>
+      <span class="prog" id="v36-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current node</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>entered, waiting on children</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>[rob, skip] computed</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet visited</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #337 House Robber III — postorder tree DP, [rob, skip] pair per node */
+let v36Nodes = [], v36Edges = [], v36Steps = [], v36Idx = 0;
+
+function v36Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v36Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v36BuildTreeDOM(root) {
+  const cont = document.getElementById('v36-tree');
+  if (!root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 60, GAP_Y = 74, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v36Nodes.map(n => n.x));
+  const maxY = Math.max(...v36Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2 + 16;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v36Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v36Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v36-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+    divs += `<div id="v36-pair-${n.id}" style="position:absolute;left:${cx(n) - 40}px;top:${cy(n) + SIZE / 2 + 3}px;width:80px;text-align:center;font-size:10px;font-family:monospace;color:var(--text-muted)"></div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v36Build(root) {
+  const steps = [];
+  if (!root) {
+    steps.push({ phase: 'empty', currentId: null, pairs: {}, visitedIds: [], doneIds: [], answer: 0,
+      msg: `<code>root is None</code> → <code>travel</code> returns <code>[0, 0]</code> → <code>max(0, 0) = 0</code>.` });
+    return steps;
+  }
+  const pairsById = {};
+  let visitedIds = [], doneIds = [];
+
+  function travel(node) {
+    if (!node) {
+      steps.push({ phase: 'null', currentId: null, pairs: { ...pairsById }, visitedIds: [...visitedIds], doneIds: [...doneIds],
+        msg: `Node is <code>None</code> → return <code>[0, 0]</code> (no house here, nothing to rob either way).` });
+      return [0, 0];
+    }
+    visitedIds = [...visitedIds, node.id];
+    steps.push({ phase: 'enter', currentId: node.id, pairs: { ...pairsById }, visitedIds: [...visitedIds], doneIds: [...doneIds],
+      msg: `Visit node <code>${node.val}</code> → recurse left, then right, before combining.` });
+
+    const ln = travel(node.left);
+    const rn = travel(node.right);
+
+    const ans0 = node.val + ln[1] + rn[1];
+    const ans1 = Math.max(ln[0], ln[1]) + Math.max(rn[0], rn[1]);
+    pairsById[node.id] = [ans0, ans1];
+    doneIds = [...doneIds, node.id];
+    steps.push({ phase: 'compute', currentId: node.id, pairs: { ...pairsById }, visitedIds: [...visitedIds], doneIds: [...doneIds], ans0, ans1,
+      msg: `Both children of <code>${node.val}</code> are resolved (left=[${ln[0]}, ${ln[1]}], right=[${rn[0]}, ${rn[1]}]).<br>` +
+        `Rob <code>${node.val}</code>: <code>${node.val} + ln[1](${ln[1]}) + rn[1](${rn[1]}) = ${ans0}</code>.<br>` +
+        `Skip <code>${node.val}</code>: <code>max(${ln[0]},${ln[1]}) + max(${rn[0]},${rn[1]}) = ${ans1}</code>.` });
+    return [ans0, ans1];
+  }
+
+  const [a0, a1] = travel(root);
+  const answer = Math.max(a0, a1);
+  steps.push({ phase: 'done', currentId: null, pairs: { ...pairsById }, visitedIds: [...visitedIds], doneIds: [...doneIds], answer,
+    msg: `<code>max(${a0}, ${a1}) = ${answer}</code> → <strong>maximum amount = ${answer}</strong>.` });
+  return steps;
+}
+
+function v36Render() {
+  if (!v36Steps.length) return;
+  const s = v36Steps[v36Idx];
+
+  v36Nodes.forEach(n => {
+    const el = document.getElementById('v36-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.currentId === n.id) el.classList.add('tn-current');
+    else if ((s.doneIds || []).includes(n.id)) el.classList.add('tn-done');
+    else if ((s.visitedIds || []).includes(n.id)) el.classList.add('tn-visited');
+    const label = document.getElementById('v36-pair-' + n.id);
+    if (label) label.textContent = s.pairs && s.pairs[n.id] ? `[${s.pairs[n.id][0]}, ${s.pairs[n.id][1]}]` : '';
+  });
+
+  document.getElementById('v36-info').innerHTML = s.msg;
+  document.getElementById('v36-scur').textContent = s.currentId != null ? v36Nodes.find(n => n.id === s.currentId).val : '—';
+  document.getElementById('v36-srob').textContent = s.phase === 'compute' ? s.ans0 : '—';
+  document.getElementById('v36-sskip').textContent = s.phase === 'compute' ? s.ans1 : '—';
+  document.getElementById('v36-sans').textContent = (s.phase === 'done' || s.phase === 'empty') ? s.answer : '…';
+  document.getElementById('v36-prog').textContent = `Step ${v36Idx + 1} / ${v36Steps.length}`;
+}
+
+function v36Init() {
+  const raw = document.getElementById('v36-tree-input').value;
+  const root = v36Parse(raw);
+  if (root) {
+    const { nodes, edges } = v36Layout(root);
+    v36Nodes = nodes; v36Edges = edges;
+  } else {
+    v36Nodes = []; v36Edges = [];
+  }
+  v36BuildTreeDOM(root);
+  v36Steps = v36Build(root);
+  v36Idx = 0;
+  v36Render();
+}
+function v36Fwd()  { if (v36Idx < v36Steps.length - 1) { v36Idx++; v36Render(); } }
+function v36Back() { if (v36Idx > 0) { v36Idx--; v36Render(); } }
+function v36Skip() { v36Idx = v36Steps.length - 1; v36Render(); }
+
+v36Init();
+initPage('0337-house-robber-iii.html', v36Fwd, v36Back);
+</script>
+
+</body>
+</html>
