@@ -340,3 +340,4 @@ a.problem-item { text-decoration: none; color: inherit; }
 .tree-node.tn-done { background: var(--green-bg); border-color: var(--green-border); color: var(--green-text); }
 .tree-node.tn-visited { background: var(--amber-bg); border-color: var(--amber-border); color: var(--amber-text); }
 .tree-node.tn-pruned { background: var(--red-bg); border-color: var(--red-border); color: var(--red-text); opacity: 0.75; }
+.tree-node.tn-visible { background: var(--green-bg); border-color: var(--green-border); color: var(--green-text); outline: 2px solid var(--green-border); outline-offset: -2px; }

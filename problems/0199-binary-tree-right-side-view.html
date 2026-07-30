@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#199 Binary Tree Right Side View · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-right-side-view" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#199</div>
+      <h1>Binary Tree Right Side View</h1>
+      <a href="https://leetcode.com/problems/binary-tree-right-side-view/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given the root of a binary tree, imagine standing on its right side — return the values of the nodes you can see, top to bottom. BFS processes each level left-to-right; the <em>last</em> node dequeued in every level is the one visible from the right.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def rightSideView(self, root):
+        if root is None:
+            return []
+        from collections import deque
+        q=deque()
+        q.append(root)
+        ans=[]
+        while q:
+            n=len(q)
+            for i in range(n):
+                node=q.popleft()
+                if node.left!=None:
+                    q.append(node.left)
+                if node.right!=None:
+                    q.append(node.right)
+                if i ==n-1:
+                    ans.append(node.val)
+        return ans</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v34-tree-input" value="1,2,3,null,5,null,4" style="width:280px"></div>
+      <button onclick="v34Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — the last node dequeued per level is visible from the right</div>
+    <div class="tree-wrap"><div id="v34-tree"></div></div>
+
+    <div class="section-label">q — deque, front on the left</div>
+    <div class="chain-row" id="v34-queue"></div>
+
+    <div class="info-box" id="v34-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">dequeued node</div><div class="sval" id="v34-scur">—</div></div>
+      <div class="stat"><div class="slabel">position i / n−1</div><div class="sval" id="v34-spos">—</div></div>
+      <div class="stat"><div class="slabel">level index</div><div class="sval" id="v34-slvl">—</div></div>
+      <div class="stat"><div class="slabel">queue size</div><div class="sval" id="v34-sqsize">—</div></div>
+      <div class="stat best"><div class="slabel">ans so far</div><div class="sval" id="v34-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v34Back()">← Prev</button>
+      <button onclick="v34Fwd()">Next →</button>
+      <button onclick="v34Skip()">Skip to end</button>
+      <span class="prog" id="v34-prog"></span>
+    </div>
+
+    <div class="section-label">ans — right-side values collected so far</div>
+    <div class="history-list" id="v34-ans"></div>
+
+    <div class="legend" style="margin-top:12px">
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>waiting in queue</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current (just dequeued)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>picked into ans (rightmost in its level)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>done, not rightmost</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet discovered</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #199 Binary Tree Right Side View — BFS, keep the last node dequeued per level */
+let v34Root = null, v34Nodes = [], v34Edges = [], v34NodeById = {}, v34Steps = [], v34Idx = 0;
+
+function v34Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v34Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v34BuildTreeDOM() {
+  const cont = document.getElementById('v34-tree');
+  if (!v34Root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v34Nodes.map(n => n.x));
+  const maxY = Math.max(...v34Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v34Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v34Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v34-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v34Build(root) {
+  const steps = [];
+  if (!root) {
+    steps.push({ phase: 'empty', queueIds: [], doneIds: [], visibleIds: [], currentId: null, levelIdx: 0, ans: [],
+      msg: `<code>root is None</code> → return <code>[]</code> immediately.` });
+    return steps;
+  }
+  const q = [root];
+  const ansList = [];
+  let doneIds = [], visibleIds = [];
+  steps.push({ phase: 'init', queueIds: [root.id], doneIds: [], visibleIds: [], currentId: null, levelIdx: 0, ans: [],
+    msg: `Start with <code>q = deque([root])</code>, value <code>${root.val}</code>.` });
+  let levelIdx = 0;
+  while (q.length) {
+    const levelSize = q.length;
+    for (let k = 0; k < levelSize; k++) {
+      const node = q.shift();
+      doneIds = [...doneIds, node.id];
+      const enq = [];
+      if (node.left) { q.push(node.left); enq.push(`left ${node.left.val}`); }
+      if (node.right) { q.push(node.right); enq.push(`right ${node.right.val}`); }
+      const isLast = k === levelSize - 1;
+      let msg = `Dequeue <code>${node.val}</code> (position <code>i=${k}</code> of <code>n-1=${levelSize - 1}</code> in level ${levelIdx}).`;
+      msg += enq.length ? ` Enqueue ${enq.join(' and ')}.` : ` No children to enqueue.`;
+      if (isLast) {
+        ansList.push(node.val);
+        visibleIds = [...visibleIds, node.id];
+        msg += ` <code>i == n-1</code> → the <strong>last node in level ${levelIdx}</strong>, visible from the right → <code>ans.append(${node.val})</code>.`;
+      }
+      steps.push({ phase: isLast ? 'visible' : 'process', currentId: node.id, posIdx: k, levelSize,
+        queueIds: q.map(n => n.id), doneIds: [...doneIds], visibleIds: [...visibleIds], levelIdx, ans: [...ansList], msg });
+    }
+    levelIdx++;
+  }
+  steps.push({ phase: 'done', currentId: null, posIdx: null, levelSize: null, queueIds: [],
+    doneIds: [...doneIds], visibleIds: [...visibleIds], levelIdx, ans: [...ansList],
+    msg: `Queue empty → return <code>ans = [${ansList.join(', ')}]</code>.` });
+  return steps;
+}
+
+function v34Render() {
+  if (!v34Steps.length) return;
+  const s = v34Steps[v34Idx];
+
+  v34Nodes.forEach(n => {
+    const el = document.getElementById('v34-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.currentId === n.id) el.classList.add('tn-current');
+    else if ((s.visibleIds || []).includes(n.id)) el.classList.add('tn-visible');
+    else if ((s.doneIds || []).includes(n.id)) el.classList.add('tn-done');
+    else if ((s.queueIds || []).includes(n.id)) el.classList.add('tn-queued');
+  });
+
+  const qEl = document.getElementById('v34-queue');
+  qEl.innerHTML = '';
+  const queueIds = s.queueIds || [];
+  if (!queueIds.length) {
+    qEl.innerHTML = '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+  } else {
+    queueIds.forEach((id, idx) => {
+      const nd = document.createElement('div');
+      nd.className = 'chain-node' + (idx === 0 ? ' cur-node' : '');
+      nd.innerHTML = `${v34NodeById[id].val}${idx === 0 ? '<div class="cn-sub">front</div>' : ''}`;
+      qEl.appendChild(nd);
+      if (idx < queueIds.length - 1) {
+        const ar = document.createElement('span'); ar.className = 'chain-arrow'; ar.textContent = '→';
+        qEl.appendChild(ar);
+      }
+    });
+  }
+
+  const ansEl = document.getElementById('v34-ans');
+  ansEl.innerHTML = '';
+  (s.ans || []).forEach(v => {
+    const chip = document.createElement('span'); chip.className = 'h-chip'; chip.textContent = v;
+    ansEl.appendChild(chip);
+  });
+
+  document.getElementById('v34-info').innerHTML = s.msg;
+  document.getElementById('v34-scur').textContent = s.currentId != null ? v34NodeById[s.currentId].val : '—';
+  document.getElementById('v34-spos').textContent = s.posIdx !== null && s.posIdx !== undefined ? `${s.posIdx} / ${s.levelSize - 1}` : '—';
+  document.getElementById('v34-slvl').textContent = s.levelIdx !== undefined ? s.levelIdx : '—';
+  document.getElementById('v34-sqsize').textContent = queueIds.length;
+  document.getElementById('v34-sans').textContent = (s.ans || []).length;
+  document.getElementById('v34-prog').textContent = `Step ${v34Idx + 1} / ${v34Steps.length}`;
+}
+
+function v34Init() {
+  const raw = document.getElementById('v34-tree-input').value;
+  v34Root = v34Parse(raw);
+  v34NodeById = {};
+  if (v34Root) {
+    const { nodes, edges } = v34Layout(v34Root);
+    v34Nodes = nodes; v34Edges = edges;
+    nodes.forEach(n => v34NodeById[n.id] = n);
+  } else {
+    v34Nodes = []; v34Edges = [];
+  }
+  v34BuildTreeDOM();
+  v34Steps = v34Build(v34Root);
+  v34Idx = 0;
+  v34Render();
+}
+function v34Fwd()  { if (v34Idx < v34Steps.length - 1) { v34Idx++; v34Render(); } }
+function v34Back() { if (v34Idx > 0) { v34Idx--; v34Render(); } }
+function v34Skip() { v34Idx = v34Steps.length - 1; v34Render(); }
+
+v34Init();
+initPage('0199-binary-tree-right-side-view.html', v34Fwd, v34Back);
+</script>
+
+</body>
+</html>
