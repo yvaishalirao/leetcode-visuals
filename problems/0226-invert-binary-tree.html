@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#226 Invert Binary Tree · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-invert-tree" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#226</div>
+      <h1>Invert Binary Tree</h1>
+      <a href="https://leetcode.com/problems/invert-binary-tree/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given the root of a binary tree, invert the tree (mirror it left-right) and return its root. The recursion inverts both subtrees first, then swaps the current node's own left and right pointers — so the tree's layout actually flips as you step through.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def invertTree(self, root):
+        if not root:
+            return root
+        self.invertTree(root.left)
+        self.invertTree(root.right)
+        root.left, root.right = root.right, root.left
+        return root</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v35-tree-input" value="4,2,7,1,3,6,9" style="width:280px"></div>
+      <button onclick="v35Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — layout redraws each step as subtrees flip sides</div>
+    <div class="tree-wrap"><div id="v35-tree"></div></div>
+
+    <div class="info-box" id="v35-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">current node</div><div class="sval" id="v35-scur">—</div></div>
+      <div class="stat"><div class="slabel">nodes visited</div><div class="sval" id="v35-svisited">0</div></div>
+      <div class="stat best"><div class="slabel">nodes swapped</div><div class="sval" id="v35-sswapped">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v35Back()">← Prev</button>
+      <button onclick="v35Fwd()">Next →</button>
+      <button onclick="v35Skip()">Skip to end</button>
+      <span class="prog" id="v35-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current node</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>visited, subtrees not yet swapped</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>swapped — this subtree is now inverted</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet visited</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #226 Invert Binary Tree — postorder recursion, swap children on the way back up */
+let v35RootId = null, v35Steps = [], v35Idx = 0;
+
+function v35Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v35SnapshotLinks(root) {
+  const links = {};
+  function walk(node) {
+    if (!node) return;
+    links[node.id] = { left: node.left ? node.left.id : null, right: node.right ? node.right.id : null, val: node.val };
+    walk(node.left); walk(node.right);
+  }
+  walk(root);
+  return links;
+}
+
+function v35LayoutFromLinks(links, rootId) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(id, depth) {
+    if (id == null) return;
+    const link = links[id];
+    walk(link.left, depth + 1);
+    const x = counter++;
+    nodes.push({ id, val: link.val, x, y: depth });
+    if (link.left != null) edges.push([id, link.left]);
+    if (link.right != null) edges.push([id, link.right]);
+    walk(link.right, depth + 1);
+  }
+  walk(rootId, 0);
+  return { nodes, edges };
+}
+
+function v35Build(root) {
+  const steps = [];
+  if (!root) {
+    steps.push({ phase: 'empty', currentId: null, visitedIds: [], swappedIds: [], links: {},
+      msg: `<code>root</code> is falsy (<code>None</code>) → return it immediately — nothing to invert.` });
+    return steps;
+  }
+  let visitedIds = [], swappedIds = [];
+  function visit(node) {
+    if (!node) {
+      steps.push({ phase: 'null', currentId: null, visitedIds: [...visitedIds], swappedIds: [...swappedIds], links: v35SnapshotLinks(root),
+        msg: `Node is <code>None</code> → return immediately.` });
+      return;
+    }
+    visitedIds = [...visitedIds, node.id];
+    steps.push({ phase: 'enter', currentId: node.id, visitedIds: [...visitedIds], swappedIds: [...swappedIds], links: v35SnapshotLinks(root),
+      msg: `Visit node <code>${node.val}</code> → recurse into its left subtree first, then its right subtree, before touching its own children.` });
+
+    visit(node.left);
+    visit(node.right);
+
+    const oldLeftVal = node.left ? node.left.val : null;
+    const oldRightVal = node.right ? node.right.val : null;
+    const tmp = node.left; node.left = node.right; node.right = tmp;
+    swappedIds = [...swappedIds, node.id];
+    steps.push({ phase: 'swap', currentId: node.id, visitedIds: [...visitedIds], swappedIds: [...swappedIds], links: v35SnapshotLinks(root),
+      msg: `Both subtrees of <code>${node.val}</code> are already fully inverted → <code>root.left, root.right = root.right, root.left</code> → swap <code>${node.val}</code>'s own children (was left=${oldLeftVal ?? 'None'}, right=${oldRightVal ?? 'None'} → now left=${oldRightVal ?? 'None'}, right=${oldLeftVal ?? 'None'}).` });
+  }
+  visit(root);
+  steps.push({ phase: 'done', currentId: null, visitedIds: [...visitedIds], swappedIds: [...swappedIds], links: v35SnapshotLinks(root),
+    msg: `Recursion complete → tree fully inverted.` });
+  return steps;
+}
+
+function v35Render() {
+  if (!v35Steps.length) return;
+  const s = v35Steps[v35Idx];
+  const cont = document.getElementById('v35-tree');
+
+  if (s.phase === 'empty' || v35RootId == null) {
+    cont.style.width = ''; cont.style.height = '40px';
+    cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>';
+  } else {
+    const { nodes, edges } = v35LayoutFromLinks(s.links, v35RootId);
+    const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+    const maxX = Math.max(...nodes.map(n => n.x));
+    const maxY = Math.max(...nodes.map(n => n.y));
+    const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+    const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+    const byId = {}; nodes.forEach(n => byId[n.id] = n);
+
+    let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+    edges.forEach(([pid, cid]) => {
+      const p = byId[pid], c = byId[cid];
+      svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+    });
+    svg += '</svg>';
+
+    let divs = '';
+    nodes.forEach(n => {
+      let cls = 'tree-node';
+      if (s.currentId === n.id) cls += ' tn-current';
+      else if ((s.swappedIds || []).includes(n.id)) cls += ' tn-done';
+      else if ((s.visitedIds || []).includes(n.id)) cls += ' tn-visited';
+      divs += `<div class="${cls}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+    });
+
+    cont.style.width = W + 'px'; cont.style.height = H + 'px';
+    cont.innerHTML = svg + divs;
+
+    document.getElementById('v35-scur').textContent = s.currentId != null ? byId[s.currentId].val : '—';
+  }
+
+  if (s.phase === 'empty') document.getElementById('v35-scur').textContent = '—';
+  document.getElementById('v35-info').innerHTML = s.msg;
+  document.getElementById('v35-svisited').textContent = (s.visitedIds || []).length;
+  document.getElementById('v35-sswapped').textContent = (s.swappedIds || []).length;
+  document.getElementById('v35-prog').textContent = `Step ${v35Idx + 1} / ${v35Steps.length}`;
+}
+
+function v35Init() {
+  const raw = document.getElementById('v35-tree-input').value;
+  const root = v35Parse(raw);
+  v35RootId = root ? root.id : null;
+  v35Steps = v35Build(root);
+  v35Idx = 0;
+  v35Render();
+}
+function v35Fwd()  { if (v35Idx < v35Steps.length - 1) { v35Idx++; v35Render(); } }
+function v35Back() { if (v35Idx > 0) { v35Idx--; v35Render(); } }
+function v35Skip() { v35Idx = v35Steps.length - 1; v35Render(); }
+
+v35Init();
+initPage('0226-invert-binary-tree.html', v35Fwd, v35Back);
+</script>
+
+</body>
+</html>

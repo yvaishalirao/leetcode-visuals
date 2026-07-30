@@ -35,4 +35,5 @@ const PROBLEMS = [
   { num: '112', title: "Path Sum", file: '0112-path-sum.html' },
   { num: '637', title: "Average of Levels in Binary Tree", file: '0637-average-of-levels-in-binary-tree.html' },
   { num: '199', title: "Binary Tree Right Side View", file: '0199-binary-tree-right-side-view.html' },
+  { num: '226', title: "Invert Binary Tree", file: '0226-invert-binary-tree.html' },
 ];
