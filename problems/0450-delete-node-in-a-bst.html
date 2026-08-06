@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#450 Delete Node in a BST · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-delete-node-bst" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#450</div>
+      <h1>Delete Node in a BST</h1>
+      <a href="https://leetcode.com/problems/delete-node-in-a-bst/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given a BST and a key, delete the node with that value and return the (possibly new) root. A node with 0–1 children is simply bypassed. A node with two children is replaced by its in-order successor — the leftmost node in its right subtree — whose value is copied in, then that successor is deleted from the right subtree.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def deleteNode(self, root, key):
+        if not root: return None
+
+        if root.val == key:
+            if not root.right: return root.left
+
+            if not root.left: return root.right
+
+            if root.left and root.right:
+                temp = root.right
+                while temp.left: temp = temp.left
+                root.val = temp.val
+                root.right = self.deleteNode(root.right, root.val)
+
+        elif root.val > key:
+            root.left = self.deleteNode(root.left, key)
+        else:
+            root.right = self.deleteNode(root.right, key)
+
+        return root</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v39-tree-input" value="5,3,6,2,4,null,7" style="width:260px"></div>
+      <div class="ig"><label>key</label><input type="number" id="v39-key" value="3" style="width:90px"></div>
+      <button onclick="v39Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — redraws each step as the structure changes</div>
+    <div class="tree-wrap"><div id="v39-tree"></div></div>
+
+    <div class="info-box" id="v39-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">current node</div><div class="sval" id="v39-scur">—</div></div>
+      <div class="stat"><div class="slabel">key</div><div class="sval" id="v39-skey">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v39Back()">← Prev</button>
+      <button onclick="v39Fwd()">Next →</button>
+      <button onclick="v39Skip()">Skip to end</button>
+      <span class="prog" id="v39-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current node</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>on the search / successor path so far</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet visited</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #450 Delete Node in a BST — search, then bypass or splice in the in-order successor */
+let v39Steps = [], v39Idx = 0;
+
+function v39Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v39SnapshotLinks(root) {
+  const links = {};
+  function walk(node) {
+    if (!node) return;
+    links[node.id] = { left: node.left ? node.left.id : null, right: node.right ? node.right.id : null, val: node.val };
+    walk(node.left); walk(node.right);
+  }
+  walk(root);
+  return links;
+}
+
+function v39LayoutFromLinks(links, rootId) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(id, depth) {
+    if (id == null) return;
+    const link = links[id];
+    walk(link.left, depth + 1);
+    const x = counter++;
+    nodes.push({ id, val: link.val, x, y: depth });
+    if (link.left != null) edges.push([id, link.left]);
+    if (link.right != null) edges.push([id, link.right]);
+    walk(link.right, depth + 1);
+  }
+  walk(rootId, 0);
+  return { nodes, edges };
+}
+
+function v39Build(root, key) {
+  const steps = [];
+  if (!root) {
+    steps.push({ phase: 'empty', currentId: null, visitedIds: [], links: {}, rootId: null,
+      msg: `<code>root is None</code> → return <code>None</code>.` });
+    return steps;
+  }
+  const origRootId = root.id;
+  let visitedIds = [];
+
+  const push = (fields) => steps.push({ links: v39SnapshotLinks(root), rootId: origRootId, visitedIds: [...visitedIds], ...fields });
+
+  function del(node, k) {
+    if (!node) {
+      push({ phase: 'null', currentId: null, msg: `Node is <code>None</code> → return <code>None</code> (key not found here).` });
+      return null;
+    }
+    visitedIds = [...visitedIds, node.id];
+    push({ phase: 'enter', currentId: node.id, msg: `Visit node <code>${node.val}</code>. Compare with key <code>${k}</code>.` });
+
+    if (node.val === k) {
+      if (!node.right) {
+        push({ phase: 'bypass', currentId: node.id,
+          msg: `<code>${node.val} == key</code> and no right child → replace this node with its left child (<code>${node.left ? node.left.val : 'None'}</code>).` });
+        return node.left;
+      }
+      if (!node.left) {
+        push({ phase: 'bypass', currentId: node.id,
+          msg: `<code>${node.val} == key</code> and no left child → replace this node with its right child (<code>${node.right.val}</code>).` });
+        return node.right;
+      }
+      push({ phase: 'two-children', currentId: node.id,
+        msg: `<code>${node.val} == key</code> and it has both children → find the in-order successor: the leftmost node in its right subtree.` });
+      let temp = node.right;
+      visitedIds = [...visitedIds, temp.id];
+      push({ phase: 'successor', currentId: temp.id, msg: `Start successor search at <code>${temp.val}</code> (<code>root.right</code>).` });
+      while (temp.left) {
+        temp = temp.left;
+        visitedIds = [...visitedIds, temp.id];
+        push({ phase: 'successor', currentId: temp.id, msg: `<code>temp.left</code> exists → move to <code>${temp.val}</code>.` });
+      }
+      const oldVal = node.val;
+      node.val = temp.val;
+      push({ phase: 'copy-value', currentId: node.id,
+        msg: `Successor found: <code>${temp.val}</code>. Copy its value into this node → <code>root.val = ${temp.val}</code> (was <code>${oldVal}</code>).` });
+      node.right = del(node.right, node.val);
+      push({ phase: 'reattach', currentId: node.id,
+        msg: `Recursively delete the now-duplicate <code>${temp.val}</code> from the right subtree, then reattach: <code>root.right = deleteNode(root.right, ${node.val})</code>.` });
+      return node;
+    } else if (node.val > k) {
+      push({ phase: 'go-left', currentId: node.id, msg: `<code>${node.val} &gt; ${k}</code> → key must be in the left subtree → recurse left.` });
+      node.left = del(node.left, k);
+      push({ phase: 'reattach', currentId: node.id, msg: `<code>root.left = deleteNode(root.left, ${k})</code>.` });
+      return node;
+    } else {
+      push({ phase: 'go-right', currentId: node.id, msg: `<code>${node.val} &lt; ${k}</code> → key must be in the right subtree → recurse right.` });
+      node.right = del(node.right, k);
+      push({ phase: 'reattach', currentId: node.id, msg: `<code>root.right = deleteNode(root.right, ${k})</code>.` });
+      return node;
+    }
+  }
+
+  const newRoot = del(root, key);
+  const finalRootId = newRoot ? newRoot.id : null;
+  steps.push({ phase: 'done', currentId: null, visitedIds: [...visitedIds],
+    links: v39SnapshotLinks(newRoot), rootId: finalRootId,
+    msg: `Deletion complete → <strong>${newRoot ? 'tree updated' : 'tree is now empty'}</strong>.` });
+  return steps;
+}
+
+function v39Render() {
+  if (!v39Steps.length) return;
+  const s = v39Steps[v39Idx];
+  const cont = document.getElementById('v39-tree');
+
+  if (s.rootId == null) {
+    cont.style.width = ''; cont.style.height = '40px';
+    cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>';
+    document.getElementById('v39-scur').textContent = '—';
+  } else {
+    const { nodes, edges } = v39LayoutFromLinks(s.links, s.rootId);
+    const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+    const maxX = Math.max(...nodes.map(n => n.x));
+    const maxY = Math.max(...nodes.map(n => n.y));
+    const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+    const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+    const byId = {}; nodes.forEach(n => byId[n.id] = n);
+
+    let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+    edges.forEach(([pid, cid]) => {
+      const p = byId[pid], c = byId[cid];
+      svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+    });
+    svg += '</svg>';
+
+    let divs = '';
+    nodes.forEach(n => {
+      let cls = 'tree-node';
+      if (s.currentId === n.id) cls += ' tn-current';
+      else if ((s.visitedIds || []).includes(n.id)) cls += ' tn-visited';
+      divs += `<div class="${cls}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+    });
+
+    cont.style.width = W + 'px'; cont.style.height = H + 'px';
+    cont.innerHTML = svg + divs;
+    document.getElementById('v39-scur').textContent = s.currentId != null ? byId[s.currentId].val : '—';
+  }
+
+  document.getElementById('v39-info').innerHTML = s.msg;
+  document.getElementById('v39-prog').textContent = `Step ${v39Idx + 1} / ${v39Steps.length}`;
+}
+
+function v39Init() {
+  const raw = document.getElementById('v39-tree-input').value;
+  const key = parseInt(document.getElementById('v39-key').value, 10);
+  const root = v39Parse(raw);
+  document.getElementById('v39-skey').textContent = key;
+  v39Steps = v39Build(root, key);
+  v39Idx = 0;
+  v39Render();
+}
+function v39Fwd()  { if (v39Idx < v39Steps.length - 1) { v39Idx++; v39Render(); } }
+function v39Back() { if (v39Idx > 0) { v39Idx--; v39Render(); } }
+function v39Skip() { v39Idx = v39Steps.length - 1; v39Render(); }
+
+v39Init();
+initPage('0450-delete-node-in-a-bst.html', v39Fwd, v39Back);
+</script>
+
+</body>
+</html>

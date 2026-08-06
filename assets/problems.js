@@ -39,4 +39,5 @@ const PROBLEMS = [
   { num: '337', title: "House Robber III", file: '0337-house-robber-iii.html' },
   { num: '572', title: "Subtree of Another Tree", file: '0572-subtree-of-another-tree.html' },
   { num: '501', title: "Find Mode in Binary Search Tree", file: '0501-find-mode-in-binary-search-tree.html' },
+  { num: '450', title: "Delete Node in a BST", file: '0450-delete-node-in-a-bst.html' },
 ];
