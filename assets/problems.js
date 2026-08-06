@@ -37,4 +37,5 @@ const PROBLEMS = [
   { num: '199', title: "Binary Tree Right Side View", file: '0199-binary-tree-right-side-view.html' },
   { num: '226', title: "Invert Binary Tree", file: '0226-invert-binary-tree.html' },
   { num: '337', title: "House Robber III", file: '0337-house-robber-iii.html' },
+  { num: '572', title: "Subtree of Another Tree", file: '0572-subtree-of-another-tree.html' },
 ];

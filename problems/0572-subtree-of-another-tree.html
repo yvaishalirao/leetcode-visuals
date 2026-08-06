@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#572 Subtree of Another Tree · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-subtree" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#572</div>
+      <h1>Subtree of Another Tree</h1>
+      <a href="https://leetcode.com/problems/subtree-of-another-tree/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given two binary trees <code>root</code> and <code>subRoot</code>, return <code>true</code> if <code>subRoot</code> matches some subtree of <code>root</code> exactly. The trick: serialize each tree to a comma-delimited preorder string (with <code>#</code> for nulls, so <code>12</code> can never falsely match inside <code>112</code>), then just check substring containment.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def isSubtree(self, root, subRoot):
+        def ser(n):
+            if not n:
+                return ',#'
+            return ',' + str(n.val) + ser(n.left) + ser(n.right)
+        return ser(subRoot) in ser(root)</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>root</label><input type="text" id="v37-root-input" value="3,4,5,1,2" style="width:200px"></div>
+      <div class="ig"><label>subRoot</label><input type="text" id="v37-sub-input" value="4,1,2" style="width:160px"></div>
+      <button onclick="v37Init()">Run</button>
+    </div>
+
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:1rem">
+      <div style="flex:1;min-width:220px">
+        <div class="section-label">subRoot — serialized first</div>
+        <div class="tree-wrap" id="v37-sub-wrap"><div id="v37-tree-sub"></div></div>
+        <div class="info-box" id="v37-str-sub" style="font-family:monospace;font-size:13px;word-break:break-all">ser(subRoot) = ""</div>
+      </div>
+      <div style="flex:1;min-width:260px">
+        <div class="section-label">root</div>
+        <div class="tree-wrap" id="v37-root-wrap"><div id="v37-tree-root"></div></div>
+        <div class="info-box" id="v37-str-root" style="font-family:monospace;font-size:13px;word-break:break-all">ser(root) = ""</div>
+      </div>
+    </div>
+
+    <div class="info-box" id="v37-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">serializing</div><div class="sval" id="v37-swhich">—</div></div>
+      <div class="stat"><div class="slabel">current node</div><div class="sval" id="v37-scur">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v37-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v37Back()">← Prev</button>
+      <button onclick="v37Fwd()">Next →</button>
+      <button onclick="v37Skip()">Skip to end</button>
+      <span class="prog" id="v37-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current node</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>already serialized</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet visited</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg)"></div>matched substring in ser(root)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #572 Subtree of Another Tree — preorder serialize both trees, check substring containment */
+let v37RootNodes = [], v37RootEdges = [], v37SubNodes = [], v37SubEdges = [], v37Steps = [], v37Idx = 0;
+
+function v37Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v37Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v37BuildTreeDOM(root, nodes, edges, prefix) {
+  const cont = document.getElementById(prefix);
+  if (!root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 52, GAP_Y = 60, PAD = 22, SIZE = 36;
+  const maxX = Math.max(...nodes.map(n => n.x));
+  const maxY = Math.max(...nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  nodes.forEach(n => {
+    divs += `<div class="tree-node" id="${prefix}-tn-${n.id}" style="width:${SIZE}px;height:${SIZE}px;font-size:12px;left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v37Build(root, subRoot) {
+  const steps = [];
+  let subStr = '', rootStr = '';
+  let subDoneIds = [], rootDoneIds = [];
+
+  function visit(node, treeKey) {
+    if (!node) {
+      if (treeKey === 'sub') subStr += ',#'; else rootStr += ',#';
+      steps.push({ treeKey, currentId: null, phase: 'null', subStr, rootStr,
+        subDoneIds: [...subDoneIds], rootDoneIds: [...rootDoneIds],
+        msg: `(${treeKey === 'sub' ? 'subRoot' : 'root'}) Node is <code>None</code> → append <code>",#"</code>.` });
+      return;
+    }
+    const frag = ',' + node.val;
+    if (treeKey === 'sub') subStr += frag; else rootStr += frag;
+    if (treeKey === 'sub') subDoneIds = [...subDoneIds, node.id]; else rootDoneIds = [...rootDoneIds, node.id];
+    steps.push({ treeKey, currentId: node.id, phase: 'visit', subStr, rootStr,
+      subDoneIds: [...subDoneIds], rootDoneIds: [...rootDoneIds],
+      msg: `(${treeKey === 'sub' ? 'subRoot' : 'root'}) Visit <code>${node.val}</code> → append <code>",${node.val}"</code>.` });
+    visit(node.left, treeKey);
+    visit(node.right, treeKey);
+  }
+
+  visit(subRoot, 'sub');
+  steps.push({ treeKey: 'sub', currentId: null, phase: 'sub-done', subStr, rootStr,
+    subDoneIds: [...subDoneIds], rootDoneIds: [...rootDoneIds],
+    msg: `<code>ser(subRoot) = "${subStr}"</code> — fully built.` });
+
+  visit(root, 'root');
+  steps.push({ treeKey: 'root', currentId: null, phase: 'root-done', subStr, rootStr,
+    subDoneIds: [...subDoneIds], rootDoneIds: [...rootDoneIds],
+    msg: `<code>ser(root) = "${rootStr}"</code> — fully built.` });
+
+  const idx = rootStr.indexOf(subStr);
+  const found = idx !== -1;
+  steps.push({ treeKey: null, currentId: null, phase: 'done', subStr, rootStr,
+    subDoneIds: [...subDoneIds], rootDoneIds: [...rootDoneIds], found, idx,
+    msg: found
+      ? `<code>"${subStr}"</code> found inside <code>ser(root)</code> at index ${idx} → <strong>return True</strong>.`
+      : `<code>"${subStr}"</code> not found inside <code>ser(root)</code> → <strong>return False</strong>.` });
+  return steps;
+}
+
+function v37RenderStr(elId, str, highlightSub, highlightIdx) {
+  const el = document.getElementById(elId);
+  const label = elId === 'v37-str-sub' ? 'ser(subRoot)' : 'ser(root)';
+  if (highlightSub != null && highlightIdx != null && highlightIdx >= 0) {
+    const before = str.slice(0, highlightIdx);
+    const match = str.slice(highlightIdx, highlightIdx + highlightSub.length);
+    const after = str.slice(highlightIdx + highlightSub.length);
+    el.innerHTML = `${label} = "${before}<span style="background:var(--green-bg);color:var(--green-text);border-radius:3px">${match}</span>${after}"`;
+  } else {
+    el.textContent = `${label} = "${str}"`;
+  }
+}
+
+function v37Render() {
+  if (!v37Steps.length) return;
+  const s = v37Steps[v37Idx];
+
+  v37SubNodes.forEach(n => {
+    const el = document.getElementById('v37-tree-sub-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.treeKey === 'sub' && s.currentId === n.id) el.classList.add('tn-current');
+    else if ((s.subDoneIds || []).includes(n.id)) el.classList.add('tn-done');
+  });
+  v37RootNodes.forEach(n => {
+    const el = document.getElementById('v37-tree-root-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.treeKey === 'root' && s.currentId === n.id) el.classList.add('tn-current');
+    else if ((s.rootDoneIds || []).includes(n.id)) el.classList.add('tn-done');
+  });
+
+  const isDone = s.phase === 'done';
+  v37RenderStr('v37-str-sub', s.subStr, null, null);
+  v37RenderStr('v37-str-root', s.rootStr, isDone && s.found ? s.subStr : null, isDone && s.found ? s.idx : null);
+
+  document.getElementById('v37-info').innerHTML = s.msg;
+  document.getElementById('v37-swhich').textContent = s.treeKey === 'sub' ? 'subRoot' : s.treeKey === 'root' ? 'root' : '—';
+  const curVal = s.treeKey === 'sub' ? v37SubNodes.find(n => n.id === s.currentId) : s.treeKey === 'root' ? v37RootNodes.find(n => n.id === s.currentId) : null;
+  document.getElementById('v37-scur').textContent = curVal ? curVal.val : '—';
+  document.getElementById('v37-sans').textContent = isDone ? (s.found ? 'True' : 'False') : '…';
+  document.getElementById('v37-prog').textContent = `Step ${v37Idx + 1} / ${v37Steps.length}`;
+}
+
+function v37Init() {
+  const root = v37Parse(document.getElementById('v37-root-input').value);
+  const subRoot = v37Parse(document.getElementById('v37-sub-input').value);
+
+  if (root) { const { nodes, edges } = v37Layout(root); v37RootNodes = nodes; v37RootEdges = edges; }
+  else { v37RootNodes = []; v37RootEdges = []; }
+  if (subRoot) { const { nodes, edges } = v37Layout(subRoot); v37SubNodes = nodes; v37SubEdges = edges; }
+  else { v37SubNodes = []; v37SubEdges = []; }
+
+  v37BuildTreeDOM(root, v37RootNodes, v37RootEdges, 'v37-tree-root');
+  v37BuildTreeDOM(subRoot, v37SubNodes, v37SubEdges, 'v37-tree-sub');
+
+  v37Steps = v37Build(root, subRoot);
+  v37Idx = 0;
+  v37Render();
+}
+function v37Fwd()  { if (v37Idx < v37Steps.length - 1) { v37Idx++; v37Render(); } }
+function v37Back() { if (v37Idx > 0) { v37Idx--; v37Render(); } }
+function v37Skip() { v37Idx = v37Steps.length - 1; v37Render(); }
+
+v37Init();
+initPage('0572-subtree-of-another-tree.html', v37Fwd, v37Back);
+</script>
+
+</body>
+</html>
