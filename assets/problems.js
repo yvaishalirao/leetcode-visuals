@@ -38,4 +38,5 @@ const PROBLEMS = [
   { num: '226', title: "Invert Binary Tree", file: '0226-invert-binary-tree.html' },
   { num: '337', title: "House Robber III", file: '0337-house-robber-iii.html' },
   { num: '572', title: "Subtree of Another Tree", file: '0572-subtree-of-another-tree.html' },
+  { num: '501', title: "Find Mode in Binary Search Tree", file: '0501-find-mode-in-binary-search-tree.html' },
 ];

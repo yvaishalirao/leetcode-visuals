@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#501 Find Mode in Binary Search Tree · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-find-mode" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#501</div>
+      <h1>Find Mode in Binary Search Tree</h1>
+      <a href="https://leetcode.com/problems/find-mode-in-binary-search-tree/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given the root of a BST with duplicates, return all the mode(s) — the most frequently occurring value(s). In-order traversal of a BST visits values in sorted order, so every run of equal values is <em>adjacent</em> — no hashmap needed, just track a running streak against <code>prev</code>.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    prev = None
+    max_count = 0
+    current_count = 0
+    result = []
+
+    def findMode(self, root):
+        self.dfs(root)
+        return self.result
+
+    def dfs(self, node):
+        if not node: return
+        self.dfs(node.left)
+        self.current_count = 1 if node.val != self.prev else self.current_count + 1
+        if self.current_count == self.max_count:
+            self.result.append(node.val)
+        elif self.current_count > self.max_count:
+            self.result = [node.val]
+            self.max_count = self.current_count
+        self.prev = node.val
+        self.dfs(node.right)</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v38-tree-input" value="1,null,2,2" style="width:220px"></div>
+      <button onclick="v38Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — in-order visits values in sorted order</div>
+    <div class="tree-wrap"><div id="v38-tree"></div></div>
+
+    <div class="section-label">In-order sequence so far</div>
+    <div class="array-row" id="v38-seq"></div>
+
+    <div class="info-box" id="v38-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">current node</div><div class="sval" id="v38-scur">—</div></div>
+      <div class="stat"><div class="slabel">prev</div><div class="sval" id="v38-sprev">—</div></div>
+      <div class="stat"><div class="slabel">current_count</div><div class="sval" id="v38-scc">—</div></div>
+      <div class="stat"><div class="slabel">max_count</div><div class="sval" id="v38-smc">—</div></div>
+      <div class="stat best"><div class="slabel">result</div><div class="sval" id="v38-sres">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v38Back()">← Prev</button>
+      <button onclick="v38Fwd()">Next →</button>
+      <button onclick="v38Skip()">Skip to end</button>
+      <span class="prog" id="v38-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current node</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>value currently in result (mode)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>visited, not a mode</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet visited</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #501 Find Mode in Binary Search Tree — in-order DFS, track streaks against prev */
+let v38Nodes = [], v38Edges = [], v38Steps = [], v38Idx = 0;
+
+function v38Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v38Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v38BuildTreeDOM(root) {
+  const cont = document.getElementById('v38-tree');
+  if (!root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v38Nodes.map(n => n.x));
+  const maxY = Math.max(...v38Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v38Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v38Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v38-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v38Build(root) {
+  const steps = [];
+  if (!root) {
+    steps.push({ phase: 'empty', currentId: null, visitedIds: [], sequence: [], prev: null, currentCount: 0, maxCount: 0, result: [],
+      msg: `<code>root is None</code> → <code>dfs</code> returns immediately → <code>result = []</code>.` });
+    return steps;
+  }
+  let prev = null, currentCount = 0, maxCount = 0, result = [];
+  let visitedIds = [], sequence = [];
+
+  function dfs(node) {
+    if (!node) {
+      steps.push({ phase: 'null', currentId: null, visitedIds: [...visitedIds], sequence: [...sequence], prev, currentCount, maxCount, result: [...result],
+        msg: `Node is <code>None</code> → return.` });
+      return;
+    }
+    dfs(node.left);
+
+    const oldPrev = prev;
+    const isSame = oldPrev !== null && node.val === oldPrev;
+    currentCount = isSame ? currentCount + 1 : 1;
+
+    let msg = `In-order visit <code>${node.val}</code>. `;
+    msg += oldPrev === null
+      ? `<code>prev</code> is None (first value) → `
+      : `compare with <code>prev = ${oldPrev}</code> → `;
+    msg += isSame
+      ? `same value → <code>current_count = ${currentCount - 1} + 1 = ${currentCount}</code>.`
+      : `different value → <code>current_count = 1</code>.`;
+
+    if (currentCount === maxCount) {
+      result = [...result, node.val];
+      msg += ` <code>current_count(${currentCount}) == max_count(${maxCount})</code> → tie → append <code>${node.val}</code> → <code>result = [${result.join(', ')}]</code>.`;
+    } else if (currentCount > maxCount) {
+      const oldMax = maxCount;
+      result = [node.val];
+      maxCount = currentCount;
+      msg += ` <code>current_count(${currentCount}) &gt; max_count(${oldMax})</code> → new max → <code>result = [${node.val}]</code>, <code>max_count = ${maxCount}</code>.`;
+    } else {
+      msg += ` <code>current_count(${currentCount}) &lt; max_count(${maxCount})</code> → no change to result.`;
+    }
+
+    prev = node.val;
+    visitedIds = [...visitedIds, node.id];
+    sequence = [...sequence, node.val];
+    steps.push({ phase: 'visit', currentId: node.id, visitedIds: [...visitedIds], sequence: [...sequence], prev, currentCount, maxCount, result: [...result], msg });
+
+    dfs(node.right);
+  }
+
+  dfs(root);
+  steps.push({ phase: 'done', currentId: null, visitedIds: [...visitedIds], sequence: [...sequence], prev, currentCount, maxCount, result: [...result],
+    msg: `In-order traversal complete → <strong>modes = [${result.join(', ')}]</strong> (each appeared ${maxCount} time${maxCount === 1 ? '' : 's'}).` });
+  return steps;
+}
+
+function v38Render() {
+  if (!v38Steps.length) return;
+  const s = v38Steps[v38Idx];
+
+  v38Nodes.forEach(n => {
+    const el = document.getElementById('v38-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.currentId === n.id) el.classList.add('tn-current');
+    else if ((s.result || []).includes(n.val)) el.classList.add('tn-visible');
+    else if ((s.visitedIds || []).includes(n.id)) el.classList.add('tn-done');
+  });
+
+  const seqEl = document.getElementById('v38-seq');
+  seqEl.innerHTML = '';
+  (s.sequence || []).forEach((v, i) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if (i === (s.sequence.length - 1) && s.phase === 'visit') c.classList.add('in-window');
+    if ((s.result || []).includes(v)) c.classList.add('is-l');
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    seqEl.appendChild(c);
+  });
+
+  document.getElementById('v38-info').innerHTML = s.msg;
+  document.getElementById('v38-scur').textContent = s.currentId != null ? v38Nodes.find(n => n.id === s.currentId).val : '—';
+  document.getElementById('v38-sprev').textContent = s.prev !== null ? s.prev : 'None';
+  document.getElementById('v38-scc').textContent = s.currentCount;
+  document.getElementById('v38-smc').textContent = s.maxCount;
+  document.getElementById('v38-sres').textContent = (s.phase === 'done' || s.phase === 'empty') ? `[${s.result.join(', ')}]` : `[${s.result.join(', ')}] …`;
+  document.getElementById('v38-prog').textContent = `Step ${v38Idx + 1} / ${v38Steps.length}`;
+}
+
+function v38Init() {
+  const raw = document.getElementById('v38-tree-input').value;
+  const root = v38Parse(raw);
+  if (root) {
+    const { nodes, edges } = v38Layout(root);
+    v38Nodes = nodes; v38Edges = edges;
+  } else {
+    v38Nodes = []; v38Edges = [];
+  }
+  v38BuildTreeDOM(root);
+  v38Steps = v38Build(root);
+  v38Idx = 0;
+  v38Render();
+}
+function v38Fwd()  { if (v38Idx < v38Steps.length - 1) { v38Idx++; v38Render(); } }
+function v38Back() { if (v38Idx > 0) { v38Idx--; v38Render(); } }
+function v38Skip() { v38Idx = v38Steps.length - 1; v38Render(); }
+
+v38Init();
+initPage('0501-find-mode-in-binary-search-tree.html', v38Fwd, v38Back);
+</script>
+
+</body>
+</html>
