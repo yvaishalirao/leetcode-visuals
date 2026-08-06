@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1306 Jump Game III · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-jump-game-3" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1306</div>
+      <h1>Jump Game III</h1>
+      <a href="https://leetcode.com/problems/jump-game-iii/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Starting at index <code>start</code>, from index <code>i</code> you may jump to <code>i + arr[i]</code> or <code>i - arr[i]</code> (never outside the array). Return <code>true</code> if you can reach any index holding value <code>0</code>. The trick: negate <code>A[i]</code> the moment it's visited — a negative value doubles as both "already explored" (skip it) and, algebraically, still yields the correct two jump targets.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def canReach(self, A, i):
+        if 0 &lt;= i &lt; len(A) and A[i] &gt;= 0:
+            A[i] = -A[i]
+            return A[i] == 0 or self.canReach(A, i + A[i]) or self.canReach(A, i - A[i])
+        return False</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>arr</label><input type="text" id="v40-arr" value="4,2,3,0,3,1,2" style="width:220px"></div>
+      <div class="ig"><label>start</label><input type="number" id="v40-start" value="5" style="width:80px"></div>
+      <button onclick="v40Init()">Run</button>
+    </div>
+
+    <div class="section-label">arr — negated once visited (also doubles as the "already explored" marker)</div>
+    <div class="array-row" id="v40-array"></div>
+
+    <div class="info-box" id="v40-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">current index i</div><div class="sval" id="v40-si">—</div></div>
+      <div class="stat"><div class="slabel">A[i]</div><div class="sval" id="v40-sval">—</div></div>
+      <div class="stat"><div class="slabel">jump target</div><div class="sval" id="v40-star">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v40-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v40Back()">← Prev</button>
+      <button onclick="v40Fwd()">Next →</button>
+      <button onclick="v40Skip()">Skip to end</button>
+      <span class="prog" id="v40-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current index</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>jump target about to be tried</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>visited (negated)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>zero found</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1306 Jump Game III — DFS with in-place negation as the visited marker */
+let v40Steps = [], v40Idx = 0, v40N = 0;
+
+function v40Build(arr, start) {
+  const steps = [];
+  const A = [...arr];
+  const n = A.length;
+  v40N = n;
+  let foundIndex = null;
+  const push = (fields) => steps.push({ foundIndex, ...fields });
+
+  function canReach(i) {
+    if (!(i >= 0 && i < n)) {
+      push({ phase: 'oob', i, target: i, arr: [...A], msg: `Index <code>${i}</code> is out of bounds → return False.` });
+      return false;
+    }
+    if (A[i] < 0) {
+      push({ phase: 'blocked', i, arr: [...A], msg: `<code>A[${i}] = ${A[i]}</code> is negative → already visited → return False (avoid a cycle).` });
+      return false;
+    }
+    const orig = A[i];
+    A[i] = -A[i];
+    push({ phase: 'visit', i, val: A[i], arr: [...A],
+      msg: `Visit index <code>${i}</code>: <code>A[${i}] = ${orig} ≥ 0</code> → mark visited → <code>A[${i}] = ${A[i]}</code>.` });
+
+    if (A[i] === 0) {
+      foundIndex = i;
+      push({ phase: 'found', i, arr: [...A], msg: `<code>A[${i}] == 0</code> → <strong>found a zero!</strong> → return True.` });
+      return true;
+    }
+
+    const target1 = i + A[i];
+    push({ phase: 'try', i, val: A[i], target: target1, arr: [...A],
+      msg: `Try first branch: <code>i + A[i] = ${i} + (${A[i]}) = ${target1}</code>.` });
+    if (canReach(target1)) {
+      push({ phase: 'branch-ok', i, target: target1, arr: [...A],
+        msg: `Branch to <code>${target1}</code> returned True → index <code>${i}</code> can reach a zero → return True.` });
+      return true;
+    }
+
+    const target2 = i - A[i];
+    push({ phase: 'try', i, val: A[i], target: target2, arr: [...A],
+      msg: `First branch failed. Try second branch: <code>i - A[i] = ${i} - (${A[i]}) = ${target2}</code>.` });
+    const res2 = canReach(target2);
+    push({ phase: res2 ? 'branch-ok' : 'branch-fail', i, target: target2, arr: [...A],
+      msg: res2
+        ? `Branch to <code>${target2}</code> returned True → index <code>${i}</code> can reach a zero → return True.`
+        : `Both branches from index <code>${i}</code> failed → return False.` });
+    return res2;
+  }
+
+  const result = canReach(start);
+  push({ phase: 'done', arr: [...A], result, msg: `<strong>Answer: ${result ? 'True' : 'False'}</strong>.` });
+  return steps;
+}
+
+function v40Render() {
+  if (!v40Steps.length) return;
+  const s = v40Steps[v40Idx];
+
+  const arrEl = document.getElementById('v40-array');
+  arrEl.innerHTML = '';
+  s.arr.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    const isFoundHere = s.foundIndex != null && k === s.foundIndex;
+    if (v < 0 || isFoundHere) c.classList.add('is-l');            // visited (negated) or the zero found -> green fill
+    if (s.phase === 'try' && k === s.target) c.classList.add('is-r'); // about to try this target -> amber fill
+    if (isFoundHere) {
+      c.style.outline = '2px solid var(--green-border)'; c.style.outlineOffset = '-2px';
+    } else if (k === s.i && s.phase !== 'oob') {
+      c.style.outline = '2.5px solid var(--accent)'; c.style.outlineOffset = '-2px';
+    }
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    arrEl.appendChild(c);
+  });
+
+  document.getElementById('v40-info').innerHTML = s.msg;
+  document.getElementById('v40-si').textContent = s.i !== undefined ? s.i : '—';
+  document.getElementById('v40-sval').textContent = s.val !== undefined ? s.val : '—';
+  document.getElementById('v40-star').textContent = s.target !== undefined ? s.target : '—';
+  document.getElementById('v40-sans').textContent = s.phase === 'done' ? (s.result ? 'True' : 'False') : '…';
+  document.getElementById('v40-prog').textContent = `Step ${v40Idx + 1} / ${v40Steps.length}`;
+}
+
+function v40Init() {
+  const arr = document.getElementById('v40-arr').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  const start = parseInt(document.getElementById('v40-start').value, 10);
+  if (!arr.length || isNaN(start) || start < 0 || start >= arr.length) {
+    document.getElementById('v40-info').innerHTML = `<span style="color:var(--red-text)">arr must be non-empty and start must be a valid index.</span>`;
+    return;
+  }
+  v40Steps = v40Build(arr, start);
+  v40Idx = 0;
+  v40Render();
+}
+function v40Fwd()  { if (v40Idx < v40Steps.length - 1) { v40Idx++; v40Render(); } }
+function v40Back() { if (v40Idx > 0) { v40Idx--; v40Render(); } }
+function v40Skip() { v40Idx = v40Steps.length - 1; v40Render(); }
+
+v40Init();
+initPage('1306-jump-game-iii.html', v40Fwd, v40Back);
+</script>
+
+</body>
+</html>
