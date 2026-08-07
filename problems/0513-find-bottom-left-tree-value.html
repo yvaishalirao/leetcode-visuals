@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#513 Find Bottom Left Tree Value · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-bottom-left" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#513</div>
+      <h1>Find Bottom Left Tree Value</h1>
+      <a href="https://leetcode.com/problems/find-bottom-left-tree-value/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given the root of a binary tree, return the leftmost value in the tree's last row. Standard BFS builds every level left-to-right; the answer is simply the <em>first</em> value collected in the <em>last</em> level.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def findBottomLeftValue(self, root):
+        if root is None:
+            return 0
+        from collections import deque
+        q=deque()
+        q.append(root)
+        ans=[]
+        while q:
+            n=len(q)
+            temp=[]
+            for i in range(n):
+                node=q.popleft()
+                temp.append(node.val)
+                if node.left is not None:
+                    q.append(node.left)
+                if node.right is not None:
+                    q.append(node.right)
+            ans.append(temp)
+
+        return ans[-1][0]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v42-tree-input" value="1,2,3,4,null,5,6,null,null,7" style="width:300px"></div>
+      <button onclick="v42Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — colors show BFS progress</div>
+    <div class="tree-wrap"><div id="v42-tree"></div></div>
+
+    <div class="section-label">q — deque, front on the left</div>
+    <div class="chain-row" id="v42-queue"></div>
+
+    <div class="section-label">temp — current level being built</div>
+    <div class="array-row" id="v42-level"></div>
+
+    <div class="info-box" id="v42-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">dequeued node</div><div class="sval" id="v42-scur">—</div></div>
+      <div class="stat"><div class="slabel">queue size</div><div class="sval" id="v42-sqsize">—</div></div>
+      <div class="stat"><div class="slabel">level index</div><div class="sval" id="v42-slvl">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v42-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v42Back()">← Prev</button>
+      <button onclick="v42Fwd()">Next →</button>
+      <button onclick="v42Skip()">Skip to end</button>
+      <span class="prog" id="v42-prog"></span>
+    </div>
+
+    <div class="section-label">ans — completed levels</div>
+    <div id="v42-ans" style="margin-bottom:.5rem"></div>
+
+    <div class="legend" style="margin-top:12px">
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>waiting in queue</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current (just dequeued)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>answer — leftmost of the last level</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>done (already dequeued)</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet discovered</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #513 Find Bottom Left Tree Value — level-order BFS, answer = first value of the last level */
+let v42Root = null, v42Nodes = [], v42Edges = [], v42NodeById = {}, v42Steps = [], v42Idx = 0;
+
+function v42Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v42Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v42BuildTreeDOM() {
+  const cont = document.getElementById('v42-tree');
+  if (!v42Root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v42Nodes.map(n => n.x));
+  const maxY = Math.max(...v42Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v42Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v42Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v42-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v42Build(root) {
+  const steps = [];
+  if (!root) {
+    steps.push({ phase: 'empty', queueIds: [], doneIds: [], currentId: null, answerId: null, level: [], levelIdx: 0, ans: [], answerVal: 0,
+      msg: `<code>root is None</code> → return <code>0</code> immediately.` });
+    return steps;
+  }
+  const q = [root];
+  const ansLevels = [];
+  steps.push({ phase: 'init', queueIds: [root.id], doneIds: [], currentId: null, answerId: null, level: [], levelIdx: 0, ans: [],
+    msg: `Start with <code>q = deque([root])</code>, value <code>${root.val}</code>.` });
+  let levelIdx = 0, doneIds = [];
+  let lastLevelFirstId = null, lastLevelFirstVal = null;
+  while (q.length) {
+    const levelSize = q.length;
+    const level = [];
+    let levelFirstId = null;
+    for (let k = 0; k < levelSize; k++) {
+      const node = q.shift();
+      if (k === 0) levelFirstId = node.id;
+      level.push(node.val);
+      doneIds = [...doneIds, node.id];
+      const enq = [];
+      if (node.left) { q.push(node.left); enq.push(`left ${node.left.val}`); }
+      if (node.right) { q.push(node.right); enq.push(`right ${node.right.val}`); }
+      let msg = `Dequeue <code>${node.val}</code> → append to <code>temp</code>: <code>[${level.join(', ')}]</code>.`;
+      msg += enq.length ? ` Enqueue ${enq.join(' and ')}.` : ` No children to enqueue.`;
+      steps.push({ phase: 'process', currentId: node.id, answerId: null, queueIds: q.map(n => n.id), doneIds: [...doneIds],
+        level: [...level], levelIdx, ans: ansLevels.map(l => [...l]), msg });
+    }
+    ansLevels.push(level);
+    lastLevelFirstId = levelFirstId;
+    lastLevelFirstVal = level[0];
+    steps.push({ phase: 'level-done', currentId: null, answerId: null, queueIds: q.map(n => n.id), doneIds: [...doneIds],
+      level: [...level], levelIdx, ans: ansLevels.map(l => [...l]),
+      msg: `Level ${levelIdx} complete → <code>ans.append([${level.join(', ')}])</code>.` });
+    levelIdx++;
+  }
+  steps.push({ phase: 'done', currentId: null, answerId: lastLevelFirstId, queueIds: [], doneIds: [...doneIds],
+    level: [], levelIdx, ans: ansLevels.map(l => [...l]), answerVal: lastLevelFirstVal,
+    msg: `Queue empty → last level is <code>ans[-1] = [${ansLevels[ansLevels.length - 1].join(', ')}]</code> → leftmost value = <strong>${lastLevelFirstVal}</strong>.` });
+  return steps;
+}
+
+function v42Render() {
+  if (!v42Steps.length) return;
+  const s = v42Steps[v42Idx];
+
+  v42Nodes.forEach(n => {
+    const el = document.getElementById('v42-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.currentId === n.id) el.classList.add('tn-current');
+    else if (s.answerId === n.id) el.classList.add('tn-visible');
+    else if ((s.doneIds || []).includes(n.id)) el.classList.add('tn-done');
+    else if ((s.queueIds || []).includes(n.id)) el.classList.add('tn-queued');
+  });
+
+  const qEl = document.getElementById('v42-queue');
+  qEl.innerHTML = '';
+  const queueIds = s.queueIds || [];
+  if (!queueIds.length) {
+    qEl.innerHTML = '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+  } else {
+    queueIds.forEach((id, idx) => {
+      const nd = document.createElement('div');
+      nd.className = 'chain-node' + (idx === 0 ? ' cur-node' : '');
+      nd.innerHTML = `${v42NodeById[id].val}${idx === 0 ? '<div class="cn-sub">front</div>' : ''}`;
+      qEl.appendChild(nd);
+      if (idx < queueIds.length - 1) {
+        const ar = document.createElement('span'); ar.className = 'chain-arrow'; ar.textContent = '→';
+        qEl.appendChild(ar);
+      }
+    });
+  }
+
+  const lvlEl = document.getElementById('v42-level');
+  lvlEl.innerHTML = '';
+  (s.level || []).forEach((v, i) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    lvlEl.appendChild(c);
+  });
+
+  const ansEl = document.getElementById('v42-ans');
+  ansEl.innerHTML = '';
+  (s.ans || []).forEach((lvl, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap';
+    row.innerHTML = `<span class="sv-label">L${i}:</span>` + lvl.map(v => `<span class="h-chip">${v}</span>`).join('');
+    ansEl.appendChild(row);
+  });
+
+  document.getElementById('v42-info').innerHTML = s.msg;
+  document.getElementById('v42-scur').textContent = s.currentId != null ? v42NodeById[s.currentId].val : '—';
+  document.getElementById('v42-sqsize').textContent = queueIds.length;
+  document.getElementById('v42-slvl').textContent = s.levelIdx !== undefined ? s.levelIdx : '—';
+  document.getElementById('v42-sans').textContent = (s.phase === 'done' || s.phase === 'empty') ? s.answerVal : '…';
+  document.getElementById('v42-prog').textContent = `Step ${v42Idx + 1} / ${v42Steps.length}`;
+}
+
+function v42Init() {
+  const raw = document.getElementById('v42-tree-input').value;
+  v42Root = v42Parse(raw);
+  v42NodeById = {};
+  if (v42Root) {
+    const { nodes, edges } = v42Layout(v42Root);
+    v42Nodes = nodes; v42Edges = edges;
+    nodes.forEach(n => v42NodeById[n.id] = n);
+  } else {
+    v42Nodes = []; v42Edges = [];
+  }
+  v42BuildTreeDOM();
+  v42Steps = v42Build(v42Root);
+  v42Idx = 0;
+  v42Render();
+}
+function v42Fwd()  { if (v42Idx < v42Steps.length - 1) { v42Idx++; v42Render(); } }
+function v42Back() { if (v42Idx > 0) { v42Idx--; v42Render(); } }
+function v42Skip() { v42Idx = v42Steps.length - 1; v42Render(); }
+
+v42Init();
+initPage('0513-find-bottom-left-tree-value.html', v42Fwd, v42Back);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1305 All Elements in Two Binary Search Trees · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-all-elements" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1305</div>
+      <h1>All Elements in Two Binary Search Trees</h1>
+      <a href="https://leetcode.com/problems/all-elements-in-two-binary-search-trees/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given two binary search trees, return a list of all their values, sorted ascending. No need for a merge-like approach here — just collect every value from both trees (any traversal order works) and sort once at the end.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def getAllElements(self, root1, root2):
+        ans = []
+
+        def trav(root):
+            if root is None:
+                return
+            ans.append(root.val)
+            trav(root.left)
+            trav(root.right)
+
+        trav(root1)
+        trav(root2)
+
+        ans.sort()
+        return ans</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>root1</label><input type="text" id="v41-root1-input" value="2,1,4" style="width:160px"></div>
+      <div class="ig"><label>root2</label><input type="text" id="v41-root2-input" value="1,0,3" style="width:160px"></div>
+      <button onclick="v41Init()">Run</button>
+    </div>
+
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:1rem">
+      <div style="flex:1;min-width:200px">
+        <div class="section-label">root1</div>
+        <div class="tree-wrap" id="v41-root1-wrap"><div id="v41-tree-root1"></div></div>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div class="section-label">root2</div>
+        <div class="tree-wrap" id="v41-root2-wrap"><div id="v41-tree-root2"></div></div>
+      </div>
+    </div>
+
+    <div class="section-label">ans — collected so far</div>
+    <div class="array-row" id="v41-ans"></div>
+
+    <div class="info-box" id="v41-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">traversing</div><div class="sval" id="v41-swhich">—</div></div>
+      <div class="stat"><div class="slabel">current node</div><div class="sval" id="v41-scur">—</div></div>
+      <div class="stat best"><div class="slabel">collected so far</div><div class="sval" id="v41-scount">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v41Back()">← Prev</button>
+      <button onclick="v41Fwd()">Next →</button>
+      <button onclick="v41Skip()">Skip to end</button>
+      <span class="prog" id="v41-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current node</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>already collected</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet visited</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1305 All Elements in Two Binary Search Trees — traverse both, collect, sort once */
+let v41Root1Nodes = [], v41Root1Edges = [], v41Root2Nodes = [], v41Root2Edges = [], v41Steps = [], v41Idx = 0;
+
+function v41Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v41Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v41BuildTreeDOM(root, nodes, edges, prefix) {
+  const cont = document.getElementById(prefix);
+  if (!root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 52, GAP_Y = 60, PAD = 22, SIZE = 36;
+  const maxX = Math.max(...nodes.map(n => n.x));
+  const maxY = Math.max(...nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  nodes.forEach(n => {
+    divs += `<div class="tree-node" id="${prefix}-tn-${n.id}" style="width:${SIZE}px;height:${SIZE}px;font-size:12px;left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v41Build(root1, root2) {
+  const steps = [];
+  let ans = [];
+  let done1 = [], done2 = [];
+
+  function trav(node, treeKey) {
+    if (!node) {
+      steps.push({ treeKey, currentId: null, phase: 'null', ans: [...ans], done1: [...done1], done2: [...done2],
+        msg: `(${treeKey === '1' ? 'root1' : 'root2'}) Node is None → return.` });
+      return;
+    }
+    ans = [...ans, node.val];
+    if (treeKey === '1') done1 = [...done1, node.id]; else done2 = [...done2, node.id];
+    steps.push({ treeKey, currentId: node.id, phase: 'visit', ans: [...ans], done1: [...done1], done2: [...done2],
+      msg: `(${treeKey === '1' ? 'root1' : 'root2'}) Visit <code>${node.val}</code> → append to ans → <code>[${ans.join(', ')}]</code>.` });
+    trav(node.left, treeKey);
+    trav(node.right, treeKey);
+  }
+
+  trav(root1, '1');
+  steps.push({ treeKey: '1', currentId: null, phase: 'tree1-done', ans: [...ans], done1: [...done1], done2: [...done2],
+    msg: `<code>trav(root1)</code> complete → <code>ans = [${ans.join(', ')}]</code>.` });
+  trav(root2, '2');
+  steps.push({ treeKey: '2', currentId: null, phase: 'tree2-done', ans: [...ans], done1: [...done1], done2: [...done2],
+    msg: `<code>trav(root2)</code> complete → <code>ans = [${ans.join(', ')}]</code>.` });
+
+  const sorted = [...ans].sort((a, b) => a - b);
+  steps.push({ treeKey: null, currentId: null, phase: 'done', ans: sorted, done1: [...done1], done2: [...done2],
+    msg: `<code>ans.sort()</code> → <strong>[${sorted.join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v41Render() {
+  if (!v41Steps.length) return;
+  const s = v41Steps[v41Idx];
+
+  v41Root1Nodes.forEach(n => {
+    const el = document.getElementById('v41-tree-root1-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.treeKey === '1' && s.currentId === n.id) el.classList.add('tn-current');
+    else if ((s.done1 || []).includes(n.id)) el.classList.add('tn-done');
+  });
+  v41Root2Nodes.forEach(n => {
+    const el = document.getElementById('v41-tree-root2-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.treeKey === '2' && s.currentId === n.id) el.classList.add('tn-current');
+    else if ((s.done2 || []).includes(n.id)) el.classList.add('tn-done');
+  });
+
+  const ansEl = document.getElementById('v41-ans');
+  ansEl.innerHTML = '';
+  (s.ans || []).forEach((v, i) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    ansEl.appendChild(c);
+  });
+
+  document.getElementById('v41-info').innerHTML = s.msg;
+  document.getElementById('v41-swhich').textContent = s.treeKey === '1' ? 'root1' : s.treeKey === '2' ? 'root2' : '—';
+  const curNode = s.treeKey === '1' ? v41Root1Nodes.find(n => n.id === s.currentId) : s.treeKey === '2' ? v41Root2Nodes.find(n => n.id === s.currentId) : null;
+  document.getElementById('v41-scur').textContent = curNode ? curNode.val : '—';
+  document.getElementById('v41-scount').textContent = (s.ans || []).length;
+  document.getElementById('v41-prog').textContent = `Step ${v41Idx + 1} / ${v41Steps.length}`;
+}
+
+function v41Init() {
+  const root1 = v41Parse(document.getElementById('v41-root1-input').value);
+  const root2 = v41Parse(document.getElementById('v41-root2-input').value);
+
+  if (root1) { const { nodes, edges } = v41Layout(root1); v41Root1Nodes = nodes; v41Root1Edges = edges; }
+  else { v41Root1Nodes = []; v41Root1Edges = []; }
+  if (root2) { const { nodes, edges } = v41Layout(root2); v41Root2Nodes = nodes; v41Root2Edges = edges; }
+  else { v41Root2Nodes = []; v41Root2Edges = []; }
+
+  v41BuildTreeDOM(root1, v41Root1Nodes, v41Root1Edges, 'v41-tree-root1');
+  v41BuildTreeDOM(root2, v41Root2Nodes, v41Root2Edges, 'v41-tree-root2');
+
+  v41Steps = v41Build(root1, root2);
+  v41Idx = 0;
+  v41Render();
+}
+function v41Fwd()  { if (v41Idx < v41Steps.length - 1) { v41Idx++; v41Render(); } }
+function v41Back() { if (v41Idx > 0) { v41Idx--; v41Render(); } }
+function v41Skip() { v41Idx = v41Steps.length - 1; v41Render(); }
+
+v41Init();
+initPage('1305-all-elements-in-two-binary-search-trees.html', v41Fwd, v41Back);
+</script>
+
+</body>
+</html>
