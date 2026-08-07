@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#515 Find Largest Value in Each Tree Row · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-largest-values" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#515</div>
+      <h1>Find Largest Value in Each Tree Row</h1>
+      <a href="https://leetcode.com/problems/find-largest-value-in-each-tree-row/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given the root of a binary tree, return an array of the largest value in each row. Standard level-order BFS collects every row's values into <code>temp</code>, then <code>max(temp)</code> becomes that row's answer.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def largestValues(self, root):
+        if root is None:
+            return []
+        from collections import deque
+        q=deque()
+        q.append(root)
+        ans=[]
+        while q:
+            n=len(q)
+            temp=[]
+            for i in range(n):
+                node=q.popleft()
+                temp.append(node.val)
+                if node.left is not None:
+                    q.append(node.left)
+                if node.right is not None:
+                    q.append(node.right)
+            ans.append(max(temp))
+
+        return ans</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v43-tree-input" value="1,3,2,5,3,null,9" style="width:280px"></div>
+      <button onclick="v43Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — the max of each row gets a persistent highlight</div>
+    <div class="tree-wrap"><div id="v43-tree"></div></div>
+
+    <div class="section-label">q — deque, front on the left</div>
+    <div class="chain-row" id="v43-queue"></div>
+
+    <div class="section-label">temp — current row being built</div>
+    <div class="array-row" id="v43-level"></div>
+
+    <div class="info-box" id="v43-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">dequeued node</div><div class="sval" id="v43-scur">—</div></div>
+      <div class="stat"><div class="slabel">queue size</div><div class="sval" id="v43-sqsize">—</div></div>
+      <div class="stat"><div class="slabel">row index</div><div class="sval" id="v43-slvl">—</div></div>
+      <div class="stat"><div class="slabel">row max</div><div class="sval" id="v43-smax">—</div></div>
+      <div class="stat best"><div class="slabel">ans</div><div class="sval" id="v43-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v43Back()">← Prev</button>
+      <button onclick="v43Fwd()">Next →</button>
+      <button onclick="v43Skip()">Skip to end</button>
+      <span class="prog" id="v43-prog"></span>
+    </div>
+
+    <div class="section-label">ans — largest value per row so far</div>
+    <div class="history-list" id="v43-ans"></div>
+
+    <div class="legend" style="margin-top:12px">
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>waiting in queue</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current (just dequeued)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>row's max value</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>done, not the row max</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet discovered</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #515 Find Largest Value in Each Tree Row — level-order BFS, track max(temp) per row */
+let v43Root = null, v43Nodes = [], v43Edges = [], v43NodeById = {}, v43Steps = [], v43Idx = 0;
+
+function v43Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v43Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v43BuildTreeDOM() {
+  const cont = document.getElementById('v43-tree');
+  if (!v43Root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v43Nodes.map(n => n.x));
+  const maxY = Math.max(...v43Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v43Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v43Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v43-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v43Build(root) {
+  const steps = [];
+  if (!root) {
+    steps.push({ phase: 'empty', queueIds: [], doneIds: [], currentId: null, maxIds: [], level: [], levelIdx: 0, ans: [],
+      msg: `<code>root is None</code> → return <code>[]</code> immediately.` });
+    return steps;
+  }
+  const q = [root];
+  const ansList = [];
+  let doneIds = [], maxIds = [];
+  steps.push({ phase: 'init', queueIds: [root.id], doneIds: [], currentId: null, maxIds: [], level: [], levelIdx: 0, ans: [],
+    msg: `Start with <code>q = deque([root])</code>, value <code>${root.val}</code>.` });
+  let levelIdx = 0;
+  while (q.length) {
+    const levelSize = q.length;
+    const level = [];
+    const levelIds = [];
+    for (let k = 0; k < levelSize; k++) {
+      const node = q.shift();
+      level.push(node.val);
+      levelIds.push(node.id);
+      doneIds = [...doneIds, node.id];
+      const enq = [];
+      if (node.left) { q.push(node.left); enq.push(`left ${node.left.val}`); }
+      if (node.right) { q.push(node.right); enq.push(`right ${node.right.val}`); }
+      let msg = `Dequeue <code>${node.val}</code> → append to <code>temp</code>: <code>[${level.join(', ')}]</code>.`;
+      msg += enq.length ? ` Enqueue ${enq.join(' and ')}.` : ` No children to enqueue.`;
+      steps.push({ phase: 'process', currentId: node.id, queueIds: q.map(n => n.id), doneIds: [...doneIds],
+        maxIds: [...maxIds], level: [...level], levelIdx, ans: [...ansList], msg });
+    }
+    const rowMax = Math.max(...level);
+    levelIds.forEach((id, idx) => { if (level[idx] === rowMax) maxIds = [...maxIds, id]; });
+    ansList.push(rowMax);
+    steps.push({ phase: 'level-done', currentId: null, queueIds: q.map(n => n.id), doneIds: [...doneIds],
+      maxIds: [...maxIds], level: [...level], levelIdx, ans: [...ansList], rowMax,
+      msg: `Row ${levelIdx} complete → <code>max([${level.join(', ')}]) = ${rowMax}</code> → <code>ans.append(${rowMax})</code>.` });
+    levelIdx++;
+  }
+  steps.push({ phase: 'done', currentId: null, queueIds: [], doneIds: [...doneIds], maxIds: [...maxIds],
+    level: [], levelIdx, ans: [...ansList],
+    msg: `Queue empty → return <code>ans = [${ansList.join(', ')}]</code>.` });
+  return steps;
+}
+
+function v43Render() {
+  if (!v43Steps.length) return;
+  const s = v43Steps[v43Idx];
+
+  v43Nodes.forEach(n => {
+    const el = document.getElementById('v43-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.currentId === n.id) el.classList.add('tn-current');
+    else if ((s.maxIds || []).includes(n.id)) el.classList.add('tn-visible');
+    else if ((s.doneIds || []).includes(n.id)) el.classList.add('tn-done');
+    else if ((s.queueIds || []).includes(n.id)) el.classList.add('tn-queued');
+  });
+
+  const qEl = document.getElementById('v43-queue');
+  qEl.innerHTML = '';
+  const queueIds = s.queueIds || [];
+  if (!queueIds.length) {
+    qEl.innerHTML = '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+  } else {
+    queueIds.forEach((id, idx) => {
+      const nd = document.createElement('div');
+      nd.className = 'chain-node' + (idx === 0 ? ' cur-node' : '');
+      nd.innerHTML = `${v43NodeById[id].val}${idx === 0 ? '<div class="cn-sub">front</div>' : ''}`;
+      qEl.appendChild(nd);
+      if (idx < queueIds.length - 1) {
+        const ar = document.createElement('span'); ar.className = 'chain-arrow'; ar.textContent = '→';
+        qEl.appendChild(ar);
+      }
+    });
+  }
+
+  const lvlEl = document.getElementById('v43-level');
+  lvlEl.innerHTML = '';
+  (s.level || []).forEach((v, i) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    lvlEl.appendChild(c);
+  });
+
+  const ansEl = document.getElementById('v43-ans');
+  ansEl.innerHTML = '';
+  (s.ans || []).forEach(v => {
+    const chip = document.createElement('span'); chip.className = 'h-chip'; chip.textContent = v;
+    ansEl.appendChild(chip);
+  });
+
+  document.getElementById('v43-info').innerHTML = s.msg;
+  document.getElementById('v43-scur').textContent = s.currentId != null ? v43NodeById[s.currentId].val : '—';
+  document.getElementById('v43-sqsize').textContent = queueIds.length;
+  document.getElementById('v43-slvl').textContent = s.levelIdx !== undefined ? s.levelIdx : '—';
+  document.getElementById('v43-smax').textContent = s.rowMax !== undefined ? s.rowMax : '—';
+  document.getElementById('v43-sans').textContent = (s.ans || []).length ? `[${s.ans.join(', ')}]` : '[]';
+  document.getElementById('v43-prog').textContent = `Step ${v43Idx + 1} / ${v43Steps.length}`;
+}
+
+function v43Init() {
+  const raw = document.getElementById('v43-tree-input').value;
+  v43Root = v43Parse(raw);
+  v43NodeById = {};
+  if (v43Root) {
+    const { nodes, edges } = v43Layout(v43Root);
+    v43Nodes = nodes; v43Edges = edges;
+    nodes.forEach(n => v43NodeById[n.id] = n);
+  } else {
+    v43Nodes = []; v43Edges = [];
+  }
+  v43BuildTreeDOM();
+  v43Steps = v43Build(v43Root);
+  v43Idx = 0;
+  v43Render();
+}
+function v43Fwd()  { if (v43Idx < v43Steps.length - 1) { v43Idx++; v43Render(); } }
+function v43Back() { if (v43Idx > 0) { v43Idx--; v43Render(); } }
+function v43Skip() { v43Idx = v43Steps.length - 1; v43Render(); }
+
+v43Init();
+initPage('0515-find-largest-value-in-each-tree-row.html', v43Fwd, v43Back);
+</script>
+
+</body>
+</html>
