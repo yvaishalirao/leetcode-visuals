@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#662 Maximum Width of Binary Tree · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-max-width" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#662</div>
+      <h1>Maximum Width of Binary Tree</h1>
+      <a href="https://leetcode.com/problems/maximum-width-of-binary-tree/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Return the maximum width among all levels, where width counts the null gaps between the leftmost and rightmost real nodes as if the tree were complete. The trick: give the root position <code>1</code>, and every node at position <code>pos</code> gives its left child position <code>2·pos</code> and right child <code>2·pos+1</code> — exactly like array-indexing a complete binary tree. A level's width is then just <code>last.pos − first.pos + 1</code>.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def widthOfBinaryTree(self, root):
+        if not root: return 0
+        q = [(root, 1)]
+        ans = 1
+        while q:
+            if len(q) &gt;= 2:
+                ans = max(q[-1][1] - q[0][1] + 1, ans)
+            new_q = []
+            while q:
+                node, pos = q.pop(0)
+                if node.left: new_q.append((node.left, 2*pos))
+                if node.right: new_q.append((node.right, 2*pos + 1))
+            q = new_q
+        return ans</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v47-tree-input" value="1,3,2,5,3,null,9" style="width:280px"></div>
+      <button onclick="v47Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — position label shown once each node is enqueued</div>
+    <div class="tree-wrap" id="v47-tree-wrap"><div id="v47-tree"></div></div>
+
+    <div class="section-label">q — deque of (node, position), front on the left</div>
+    <div class="chain-row" id="v47-queue"></div>
+
+    <div class="info-box" id="v47-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">current node</div><div class="sval" id="v47-scur">—</div></div>
+      <div class="stat"><div class="slabel">position</div><div class="sval" id="v47-spos">—</div></div>
+      <div class="stat"><div class="slabel">level width</div><div class="sval" id="v47-swidth">—</div></div>
+      <div class="stat best"><div class="slabel">ans (max width)</div><div class="sval" id="v47-sans">1</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v47Back()">← Prev</button>
+      <button onclick="v47Fwd()">Next →</button>
+      <button onclick="v47Skip()">Skip to end</button>
+      <span class="prog" id="v47-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current node</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>first / last of the level (width endpoints)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>dequeued</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet discovered</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #662 Maximum Width of Binary Tree — BFS with complete-binary-tree position indexing */
+let v47Root = null, v47Nodes = [], v47Edges = [], v47NodeById = {}, v47Steps = [], v47Idx = 0;
+
+function v47Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v47Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v47BuildTreeDOM() {
+  const cont = document.getElementById('v47-tree');
+  if (!v47Root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 60, GAP_Y = 74, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v47Nodes.map(n => n.x));
+  const maxY = Math.max(...v47Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2 + 16;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v47Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v47Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v47-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+    divs += `<div id="v47-pos-${n.id}" style="position:absolute;left:${cx(n) - 30}px;top:${cy(n) + SIZE / 2 + 3}px;width:60px;text-align:center;font-size:10px;font-family:monospace;color:var(--text-muted)"></div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v47Build(root) {
+  const steps = [];
+  if (!root) {
+    steps.push({ phase: 'empty', queue: [], ans: 0, doneIds: [], posById: {},
+      msg: `<code>not root</code> → return <code>0</code> immediately.` });
+    return steps;
+  }
+  let q = [{ node: root, pos: 1 }];
+  let ans = 1;
+  let doneIds = [];
+  let posById = { [root.id]: 1 };
+  steps.push({ phase: 'init', queue: [{ id: root.id, pos: 1 }], ans, doneIds: [], posById: { ...posById }, currentId: null,
+    msg: `Start: <code>q = [(root, 1)]</code>, <code>ans = 1</code>.` });
+
+  while (q.length) {
+    if (q.length >= 2) {
+      const first = q[0], last = q[q.length - 1];
+      const width = last.pos - first.pos + 1;
+      const newAns = Math.max(width, ans);
+      steps.push({ phase: 'width-check', firstId: first.node.id, lastId: last.node.id, width,
+        queue: q.map(x => ({ id: x.node.id, pos: x.pos })), ans: newAns, doneIds: [...doneIds], posById: { ...posById }, currentId: null,
+        msg: `Level has ${q.length} nodes → width = <code>last.pos(${last.pos}) − first.pos(${first.pos}) + 1 = ${width}</code>. <code>ans = max(${width}, ${ans}) = ${newAns}</code>.` });
+      ans = newAns;
+    } else {
+      steps.push({ phase: 'width-skip', queue: q.map(x => ({ id: x.node.id, pos: x.pos })), ans, doneIds: [...doneIds], posById: { ...posById }, currentId: null,
+        msg: `Only ${q.length} node in this level → width check skipped.` });
+    }
+
+    const newQ = [];
+    const levelSnapshot = [...q];
+    for (const { node, pos } of levelSnapshot) {
+      doneIds = [...doneIds, node.id];
+      const enq = [];
+      if (node.left) { const lp = 2 * pos; posById[node.left.id] = lp; newQ.push({ node: node.left, pos: lp }); enq.push(`left ${node.left.val}@${lp}`); }
+      if (node.right) { const rp = 2 * pos + 1; posById[node.right.id] = rp; newQ.push({ node: node.right, pos: rp }); enq.push(`right ${node.right.val}@${rp}`); }
+      let msg = `Dequeue <code>${node.val}</code> at position <code>${pos}</code>.`;
+      msg += enq.length ? ` Enqueue ${enq.join(', ')}.` : ` No children.`;
+      steps.push({ phase: 'process', currentId: node.id, pos, queue: newQ.map(x => ({ id: x.node.id, pos: x.pos })),
+        ans, doneIds: [...doneIds], posById: { ...posById }, msg });
+    }
+    q = newQ;
+  }
+
+  steps.push({ phase: 'done', currentId: null, queue: [], ans, doneIds: [...doneIds], posById: { ...posById },
+    msg: `Queue empty → <strong>max width = ${ans}</strong>.` });
+  return steps;
+}
+
+function v47Render() {
+  if (!v47Steps.length) return;
+  const s = v47Steps[v47Idx];
+
+  v47Nodes.forEach(n => {
+    const el = document.getElementById('v47-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.currentId === n.id) el.classList.add('tn-current');
+    else if ((s.phase === 'width-check') && (n.id === s.firstId || n.id === s.lastId)) el.classList.add('tn-visited');
+    else if ((s.doneIds || []).includes(n.id)) el.classList.add('tn-done');
+
+    const label = document.getElementById('v47-pos-' + n.id);
+    if (label) label.textContent = (s.posById && s.posById[n.id] != null) ? `pos ${s.posById[n.id]}` : '';
+  });
+
+  const qEl = document.getElementById('v47-queue');
+  qEl.innerHTML = '';
+  const queue = s.queue || [];
+  if (!queue.length) {
+    qEl.innerHTML = '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+  } else {
+    queue.forEach((item, idx) => {
+      const nd = document.createElement('div');
+      nd.className = 'chain-node' + (idx === 0 ? ' cur-node' : '');
+      const val = v47Nodes.find(n => n.id === item.id).val;
+      nd.innerHTML = `${val}<div class="cn-sub">pos ${item.pos}${idx === 0 ? ' · front' : ''}</div>`;
+      qEl.appendChild(nd);
+      if (idx < queue.length - 1) {
+        const ar = document.createElement('span'); ar.className = 'chain-arrow'; ar.textContent = '→';
+        qEl.appendChild(ar);
+      }
+    });
+  }
+
+  document.getElementById('v47-info').innerHTML = s.msg;
+  document.getElementById('v47-scur').textContent = s.currentId != null ? v47Nodes.find(n => n.id === s.currentId).val : '—';
+  document.getElementById('v47-spos').textContent = s.pos !== undefined ? s.pos : '—';
+  document.getElementById('v47-swidth').textContent = s.width !== undefined ? s.width : '—';
+  document.getElementById('v47-sans').textContent = s.ans;
+  document.getElementById('v47-prog').textContent = `Step ${v47Idx + 1} / ${v47Steps.length}`;
+}
+
+function v47Init() {
+  const raw = document.getElementById('v47-tree-input').value;
+  v47Root = v47Parse(raw);
+  v47NodeById = {};
+  if (v47Root) {
+    const { nodes, edges } = v47Layout(v47Root);
+    v47Nodes = nodes; v47Edges = edges;
+    nodes.forEach(n => v47NodeById[n.id] = n);
+  } else {
+    v47Nodes = []; v47Edges = [];
+  }
+  v47BuildTreeDOM();
+  v47Steps = v47Build(v47Root);
+  v47Idx = 0;
+  v47Render();
+}
+function v47Fwd()  { if (v47Idx < v47Steps.length - 1) { v47Idx++; v47Render(); } }
+function v47Back() { if (v47Idx > 0) { v47Idx--; v47Render(); } }
+function v47Skip() { v47Idx = v47Steps.length - 1; v47Render(); }
+
+v47Init();
+initPage('0662-maximum-width-of-binary-tree.html', v47Fwd, v47Back);
+</script>
+
+</body>
+</html>

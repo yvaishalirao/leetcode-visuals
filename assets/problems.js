@@ -47,4 +47,5 @@ const PROBLEMS = [
   { num: '107', title: "Binary Tree Level Order Traversal II", file: '0107-binary-tree-level-order-traversal-ii.html' },
   { num: '106', title: "Construct Binary Tree from Inorder and Postorder Traversal", file: '0106-construct-binary-tree-from-inorder-and-postorder-traversal.html' },
   { num: '235', title: "Lowest Common Ancestor of a Binary Search Tree", file: '0235-lowest-common-ancestor-of-a-binary-search-tree.html' },
+  { num: '662', title: "Maximum Width of Binary Tree", file: '0662-maximum-width-of-binary-tree.html' },
 ];
