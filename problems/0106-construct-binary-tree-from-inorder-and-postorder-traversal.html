@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#106 Construct Binary Tree from Inorder and Postorder Traversal · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-build-tree-2" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#106</div>
+      <h1>Construct Binary Tree from Inorder and Postorder Traversal</h1>
+      <a href="https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given <code>inorder</code> and <code>postorder</code> traversals of a binary tree, construct and return the tree. Each call pops the <em>last</em> value off <code>postorder</code> as the root (postorder always ends with the root), finds it in <code>inorder</code> to split into left/right ranges, then builds the <strong>right</strong> subtree before the left — because working backward through postorder, the tail belongs to the right subtree first.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def buildTree(self, inorder, postorder):
+        if not inorder:
+            return None
+
+        root_val = postorder.pop()
+        root = TreeNode(root_val)
+
+        inorder_index = inorder.index(root_val)
+
+        root.right = self.buildTree(inorder[inorder_index+1:], postorder)
+        root.left = self.buildTree(inorder[:inorder_index], postorder)
+
+        return root</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>inorder</label><input type="text" id="v45-in" value="9,3,15,20,7" style="width:200px"></div>
+      <div class="ig"><label>postorder</label><input type="text" id="v45-post" value="9,15,7,20,3" style="width:200px"></div>
+      <button onclick="v45Init()">Run</button>
+    </div>
+
+    <div class="section-label">postorder — <code>.pop()</code> consumes from the end</div>
+    <div class="array-row" id="v45-post-row"></div>
+
+    <div class="section-label">inorder — current [start, end] range and split point</div>
+    <div class="array-row" id="v45-in-row"></div>
+
+    <div class="section-label">Tree being built</div>
+    <div class="tree-wrap"><div id="v45-tree"></div></div>
+
+    <div class="info-box" id="v45-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">range [start, end]</div><div class="sval" id="v45-srange">—</div></div>
+      <div class="stat"><div class="slabel">mid (split index)</div><div class="sval" id="v45-smid">—</div></div>
+      <div class="stat"><div class="slabel">node value</div><div class="sval" id="v45-sval">—</div></div>
+      <div class="stat"><div class="slabel">postorder pointer</div><div class="sval" id="v45-spidx">—</div></div>
+      <div class="stat best"><div class="slabel">nodes created</div><div class="sval" id="v45-scount">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v45Back()">← Prev</button>
+      <button onclick="v45Fwd()">Next →</button>
+      <button onclick="v45Skip()">Skip to end</button>
+      <span class="prog" id="v45-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>postorder: already popped</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>postorder pointer / inorder split (mid)</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>inorder: current [start, end] window</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>tree: created node</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #106 Construct Binary Tree from Inorder and Postorder Traversal */
+let v45Steps = [], v45Idx = 0, v45In = [], v45Post = [], v45Nodes = [], v45Edges = [];
+
+function v45Build(inorder, postorder) {
+  const idxMap = {};
+  inorder.forEach((v, i) => idxMap[v] = i);
+  let postIdx = postorder.length - 1;
+  let idc = 0;
+  const nodesById = {};
+  const steps = [];
+  let createdIds = [], edges = [];
+
+  function helper(start, end) {
+    if (start > end) {
+      steps.push({ phase: 'base', currentId: null, start, end, postIdx, mid: null, val: null,
+        createdIds: [...createdIds], edges: edges.map(e => [...e]),
+        msg: `<code>start(${start}) &gt; end(${end})</code> → empty range → return <code>None</code> (mirrors <code>if not inorder: return None</code>).` });
+      return null;
+    }
+    const rootVal = postorder[postIdx];
+    const usedIdx = postIdx;
+    postIdx -= 1;
+    const id = idc++;
+    nodesById[id] = { id, val: rootVal, left: null, right: null };
+    createdIds = [...createdIds, id];
+    const mid = idxMap[rootVal];
+    steps.push({ phase: 'create', currentId: id, start, end, postIdx, mid, val: rootVal, usedIdx,
+      createdIds: [...createdIds], edges: edges.map(e => [...e]),
+      msg: `<code>postorder.pop() = ${rootVal}</code> (index ${usedIdx}) → create node <code>${rootVal}</code>. In <code>inorder</code>, <code>${rootVal}</code> sits at index <code>${mid}</code> inside range <code>[${start}, ${end}]</code> → left = <code>[${start}, ${mid - 1}]</code>, right = <code>[${mid + 1}, ${end}]</code>.` });
+
+    const rightId = helper(mid + 1, end);
+    if (rightId != null) { nodesById[id].right = nodesById[rightId]; edges = [...edges, [id, rightId]]; }
+    steps.push({ phase: 'attach-right', currentId: id, start, end, postIdx, mid, val: rootVal,
+      createdIds: [...createdIds], edges: edges.map(e => [...e]),
+      msg: rightId != null
+        ? `<code>${rootVal}.right</code> = node <code>${nodesById[rightId].val}</code>.`
+        : `<code>${rootVal}.right</code> = <code>None</code> (range <code>[${mid + 1}, ${end}]</code> was empty).` });
+
+    const leftId = helper(start, mid - 1);
+    if (leftId != null) { nodesById[id].left = nodesById[leftId]; edges = [...edges, [id, leftId]]; }
+    steps.push({ phase: 'attach-left', currentId: id, start, end, postIdx, mid, val: rootVal,
+      createdIds: [...createdIds], edges: edges.map(e => [...e]),
+      msg: leftId != null
+        ? `<code>${rootVal}.left</code> = node <code>${nodesById[leftId].val}</code>.`
+        : `<code>${rootVal}.left</code> = <code>None</code> (range <code>[${start}, ${mid - 1}]</code> was empty).` });
+
+    return id;
+  }
+
+  const rootId = helper(0, inorder.length - 1);
+  steps.push({ phase: 'done', currentId: null, start: null, end: null, postIdx, mid: null, val: null,
+    createdIds: [...createdIds], edges: edges.map(e => [...e]),
+    msg: `Recursion complete → tree fully built from <strong>${createdIds.length}</strong> node${createdIds.length === 1 ? '' : 's'}.` });
+
+  return { steps, root: rootId != null ? nodesById[rootId] : null };
+}
+
+function v45Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v45BuildTreeDOM(root) {
+  const cont = document.getElementById('v45-tree');
+  if (!root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v45Nodes.map(n => n.x));
+  const maxY = Math.max(...v45Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v45Edges.forEach(([p, c]) => {
+    svg += `<line id="v45-edge-${p.id}-${c.id}" x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5;stroke-opacity:0;transition:stroke-opacity .2s"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v45Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v45-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px;opacity:0;transition:opacity .2s">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v45Render() {
+  if (!v45Steps.length) return;
+  const s = v45Steps[v45Idx];
+
+  v45Nodes.forEach(n => {
+    const el = document.getElementById('v45-tn-' + n.id);
+    if (!el) return;
+    const created = (s.createdIds || []).includes(n.id);
+    el.style.opacity = created ? '1' : '0';
+    el.className = 'tree-node';
+    if (created) el.classList.add(s.currentId === n.id ? 'tn-current' : 'tn-done');
+  });
+  v45Edges.forEach(([p, c]) => {
+    const line = document.getElementById(`v45-edge-${p.id}-${c.id}`);
+    const drawn = (s.edges || []).some(e => e[0] === p.id && e[1] === c.id);
+    line.style.strokeOpacity = drawn ? '1' : '0';
+  });
+
+  const postRow = document.getElementById('v45-post-row');
+  postRow.innerHTML = '';
+  v45Post.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if (s.phase === 'create' && k === s.usedIdx) c.classList.add('cell-cur');
+    else if (k > s.postIdx) c.classList.add('cell-true');
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    postRow.appendChild(c);
+  });
+
+  const inRow = document.getElementById('v45-in-row');
+  inRow.innerHTML = '';
+  v45In.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if (s.start !== null && k >= s.start && k <= s.end) c.classList.add('in-window');
+    if (s.mid !== null && k === s.mid) c.classList.add('cell-cur');
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    inRow.appendChild(c);
+  });
+
+  document.getElementById('v45-info').innerHTML = s.msg;
+  document.getElementById('v45-srange').textContent = s.start !== null ? `[${s.start}, ${s.end}]` : '—';
+  document.getElementById('v45-smid').textContent = s.mid !== null ? s.mid : '—';
+  document.getElementById('v45-sval').textContent = s.val !== null ? s.val : '—';
+  document.getElementById('v45-spidx').textContent = s.postIdx;
+  document.getElementById('v45-scount').textContent = (s.createdIds || []).length;
+  document.getElementById('v45-prog').textContent = `Step ${v45Idx + 1} / ${v45Steps.length}`;
+}
+
+function v45Init() {
+  v45In = document.getElementById('v45-in').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  v45Post = document.getElementById('v45-post').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  if (!v45In.length || v45In.length !== v45Post.length) {
+    document.getElementById('v45-info').innerHTML = `<span style="color:var(--red-text)">inorder and postorder must be non-empty and the same length.</span>`;
+    return;
+  }
+  const { steps, root } = v45Build(v45In, v45Post);
+  if (root) {
+    const { nodes, edges } = v45Layout(root);
+    v45Nodes = nodes; v45Edges = edges;
+  } else {
+    v45Nodes = []; v45Edges = [];
+  }
+  v45BuildTreeDOM(root);
+  v45Steps = steps;
+  v45Idx = 0;
+  v45Render();
+}
+function v45Fwd()  { if (v45Idx < v45Steps.length - 1) { v45Idx++; v45Render(); } }
+function v45Back() { if (v45Idx > 0) { v45Idx--; v45Render(); } }
+function v45Skip() { v45Idx = v45Steps.length - 1; v45Render(); }
+
+v45Init();
+initPage('0106-construct-binary-tree-from-inorder-and-postorder-traversal.html', v45Fwd, v45Back);
+</script>
+
+</body>
+</html>
