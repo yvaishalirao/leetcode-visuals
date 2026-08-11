@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#326 Power of Three · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-power-of-three" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#326</div>
+      <h1>Power of Three</h1>
+      <a href="https://leetcode.com/problems/power-of-three/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an integer <code>n</code>, return <code>true</code> if it is a power of three (<code>n == 3^x</code> for some integer <code>x ≥ 0</code>). Repeatedly divide out factors of 3; if you're left with exactly <code>1</code>, every factor was a 3.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def isPowerOfThree(self, n):
+        if n &lt;= 0:
+            return False
+        while n % 3 == 0:
+            n //= 3
+        return n == 1</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>n</label><input type="number" id="v48-n" value="27" style="width:120px"></div>
+      <button onclick="v48Init()">Run</button>
+    </div>
+
+    <div class="section-label">n — shrinking by ÷3 each step</div>
+    <div class="history-list" id="v48-history"></div>
+
+    <div class="info-box" id="v48-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">current n</div><div class="sval" id="v48-sn">—</div></div>
+      <div class="stat"><div class="slabel">n % 3</div><div class="sval" id="v48-smod">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v48-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v48Back()">← Prev</button>
+      <button onclick="v48Fwd()">Next →</button>
+      <button onclick="v48Skip()">Skip to end</button>
+      <span class="prog" id="v48-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent)"></div>current n</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>divided out (n % 3 == 0)</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>guard failed (n ≤ 0)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #326 Power of Three — repeatedly divide out factors of 3 */
+let v48Steps = [], v48Idx = 0;
+
+function v48Build(n0) {
+  const steps = [];
+  if (n0 <= 0) {
+    steps.push({ phase: 'guard', n: n0, history: [n0], result: false,
+      msg: `<code>n = ${n0} ≤ 0</code> → return <strong>False</strong> immediately (0 and negatives can never be <code>3^x</code>).` });
+    return steps;
+  }
+  let n = n0;
+  const history = [n];
+  steps.push({ phase: 'start', n, history: [...history],
+    msg: `Start with <code>n = ${n0}</code>. While <code>n % 3 == 0</code>, keep dividing by 3.` });
+  while (n % 3 === 0) {
+    const next = Math.trunc(n / 3);
+    steps.push({ phase: 'divide', n, mod: 0, next, history: [...history],
+      msg: `<code>${n} % 3 == 0</code> → <code>n //= 3</code> → <code>n = ${next}</code>.` });
+    n = next;
+    history.push(n);
+  }
+  const mod = ((n % 3) + 3) % 3;
+  const result = n === 1;
+  steps.push({ phase: 'check', n, mod, history: [...history], result,
+    msg: `<code>${n} % 3 = ${mod} ≠ 0</code> → loop stops. Check <code>n == 1</code> → <code>${result}</code>.` });
+  steps.push({ phase: 'done', n, history: [...history], result,
+    msg: `<strong>Answer: ${result ? 'True' : 'False'}</strong>.` });
+  return steps;
+}
+
+function v48Render() {
+  if (!v48Steps.length) return;
+  const s = v48Steps[v48Idx];
+
+  const histEl = document.getElementById('v48-history');
+  histEl.innerHTML = '';
+  (s.history || []).forEach((v, i) => {
+    const isLast = i === s.history.length - 1;
+    const chip = document.createElement('span');
+    chip.className = 'h-chip';
+    if (s.phase === 'guard') { chip.style.background = 'var(--red-bg)'; chip.style.color = 'var(--red-text)'; chip.style.borderColor = 'var(--red-border)'; }
+    else if (isLast) { chip.style.background = 'var(--accent-bg)'; chip.style.color = 'var(--accent-text)'; chip.style.borderColor = 'var(--accent-border)'; }
+    chip.textContent = v;
+    histEl.appendChild(chip);
+    if (!isLast) {
+      const ar = document.createElement('span'); ar.style.color = 'var(--text-muted)'; ar.textContent = '÷3 →';
+      histEl.appendChild(ar);
+    }
+  });
+
+  document.getElementById('v48-info').innerHTML = s.msg;
+  document.getElementById('v48-sn').textContent = s.n;
+  document.getElementById('v48-smod').textContent = s.mod !== undefined ? s.mod : '—';
+  document.getElementById('v48-sans').textContent = (s.phase === 'done' || s.phase === 'guard') ? (s.result ? 'True' : 'False') : '…';
+  document.getElementById('v48-prog').textContent = `Step ${v48Idx + 1} / ${v48Steps.length}`;
+}
+
+function v48Init() {
+  const n = parseInt(document.getElementById('v48-n').value, 10);
+  if (isNaN(n)) {
+    document.getElementById('v48-info').innerHTML = `<span style="color:var(--red-text)">n must be an integer.</span>`;
+    return;
+  }
+  v48Steps = v48Build(n);
+  v48Idx = 0;
+  v48Render();
+}
+function v48Fwd()  { if (v48Idx < v48Steps.length - 1) { v48Idx++; v48Render(); } }
+function v48Back() { if (v48Idx > 0) { v48Idx--; v48Render(); } }
+function v48Skip() { v48Idx = v48Steps.length - 1; v48Render(); }
+
+v48Init();
+initPage('0326-power-of-three.html', v48Fwd, v48Back);
+</script>
+
+</body>
+</html>
