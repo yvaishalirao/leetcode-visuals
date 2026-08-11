@@ -49,4 +49,5 @@ const PROBLEMS = [
   { num: '235', title: "Lowest Common Ancestor of a Binary Search Tree", file: '0235-lowest-common-ancestor-of-a-binary-search-tree.html' },
   { num: '662', title: "Maximum Width of Binary Tree", file: '0662-maximum-width-of-binary-tree.html' },
   { num: '326', title: "Power of Three", file: '0326-power-of-three.html' },
+  { num: '523', title: "Continuous Subarray Sum", file: '0523-continuous-subarray-sum.html' },
 ];
