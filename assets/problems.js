@@ -51,4 +51,5 @@ const PROBLEMS = [
   { num: '326', title: "Power of Three", file: '0326-power-of-three.html' },
   { num: '523', title: "Continuous Subarray Sum", file: '0523-continuous-subarray-sum.html' },
   { num: '507', title: "Perfect Number", file: '0507-perfect-number.html' },
+  { num: '628', title: "Maximum Product of Three Numbers", file: '0628-maximum-product-of-three-numbers.html' },
 ];

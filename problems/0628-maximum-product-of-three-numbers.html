@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#628 Maximum Product of Three Numbers · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-max-product-3" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#628</div>
+      <h1>Maximum Product of Three Numbers</h1>
+      <a href="https://leetcode.com/problems/maximum-product-of-three-numbers/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Find three numbers whose product is maximum. Two candidates matter: the three largest values, or the largest value times the two smallest (which could both be very negative, making their product very positive). This solution avoids a full sort — a partial selection sort moves just the 2 smallest to the front and the 3 largest to the back.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def maximumProduct(self, A):
+        n = len(A)
+
+        for i in range(2):
+            k = i
+            for j in range(i + 1, n):
+                if A[j] &lt; A[k]:
+                    k = j
+            A[i], A[k] = A[k], A[i]
+
+        for i in range(n - 1, max(-1, n - 4), -1):
+            k = i
+            for j in range(i):
+                if A[j] &gt; A[k]:
+                    k = j
+            A[i], A[k] = A[k], A[i]
+
+        return max(
+            A[-1] * A[-2] * A[-3],
+            A[-1] * A[0] * A[1]
+        )</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v51-nums" value="1,2,3,4" style="width:220px"></div>
+      <button onclick="v51Init()">Run</button>
+    </div>
+
+    <div class="section-label">A — positions 0,1 collect the two smallest; the last 3 collect the three largest</div>
+    <div class="array-row" id="v51-array"></div>
+
+    <div class="info-box" id="v51-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v51-si">—</div></div>
+      <div class="stat"><div class="slabel">k (found extreme)</div><div class="sval" id="v51-sk">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v51-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v51Back()">← Prev</button>
+      <button onclick="v51Fwd()">Next →</button>
+      <button onclick="v51Skip()">Skip to end</button>
+      <span class="prog" id="v51-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>settled: one of the two smallest</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>settled: one of the three largest</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>positions being swapped</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #628 Maximum Product of Three Numbers — partial selection sort, then compare two candidates */
+let v51Steps = [], v51Idx = 0;
+
+function v51Build(nums) {
+  const steps = [];
+  const A = [...nums];
+  const n = A.length;
+  steps.push({ phase: 'init', arr: [...A], msg: `Start with <code>A = [${A.join(', ')}]</code>. First, settle the two smallest values into positions 0 and 1.` });
+
+  for (let i = 0; i < 2; i++) {
+    let k = i;
+    for (let j = i + 1; j < n; j++) if (A[j] < A[k]) k = j;
+    const valK = A[k];
+    if (k !== i) { const t = A[i]; A[i] = A[k]; A[k] = t; }
+    steps.push({ phase: 'phase1', i, k, low: i, arr: [...A],
+      msg: `<code>i=${i}</code>: smallest among <code>A[${i}..${n - 1}]</code> is <code>${valK}</code> at index ${k} → swap into position ${i}${k === i ? ' (already there)' : ''} → <code>A = [${A.join(', ')}]</code>.` });
+  }
+  steps.push({ phase: 'phase1-done', arr: [...A], low: 1,
+    msg: `Two smallest now sit at <code>A[0]=${A[0]}</code>, <code>A[1]=${A[1]}</code>. Now settle the three largest into the back.` });
+
+  const lowBound = Math.max(-1, n - 4);
+  for (let i = n - 1; i > lowBound; i--) {
+    let k = i;
+    for (let j = 0; j < i; j++) if (A[j] > A[k]) k = j;
+    const valK = A[k];
+    if (k !== i) { const t = A[i]; A[i] = A[k]; A[k] = t; }
+    steps.push({ phase: 'phase2', i, k, high: i, arr: [...A],
+      msg: `<code>i=${i}</code>: largest among <code>A[0..${i}]</code> is <code>${valK}</code> at index ${k} → swap into position ${i}${k === i ? ' (already there)' : ''} → <code>A = [${A.join(', ')}]</code>.` });
+  }
+  steps.push({ phase: 'phase2-done', arr: [...A], msg: `Three largest now sit at the end: <code>A[${n - 3}]=${A[n - 3]}, A[${n - 2}]=${A[n - 2]}, A[${n - 1}]=${A[n - 1]}</code>.` });
+
+  const cand1 = A[n - 1] * A[n - 2] * A[n - 3];
+  const cand2 = A[n - 1] * A[0] * A[1];
+  const ans = Math.max(cand1, cand2);
+  steps.push({ phase: 'done', arr: [...A], cand1, cand2, ans,
+    msg: `<code>max(A[-1]·A[-2]·A[-3], A[-1]·A[0]·A[1]) = max(${A[n - 1]}×${A[n - 2]}×${A[n - 3]} = ${cand1}, ${A[n - 1]}×${A[0]}×${A[1]} = ${cand2}) = <strong>${ans}</strong></code>.` });
+  return steps;
+}
+
+function v51Render() {
+  if (!v51Steps.length) return;
+  const s = v51Steps[v51Idx];
+  const n = s.arr.length;
+
+  const arrEl = document.getElementById('v51-array');
+  arrEl.innerHTML = '';
+  s.arr.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    const isPhase1Settled = (s.phase === 'phase1' && k <= s.low) || (s.phase !== 'phase1' && s.phase !== 'init' && k <= 1);
+    const isPhase2Settled = (s.phase === 'phase2' && k >= s.high) || (s.phase === 'phase2-done' || s.phase === 'done') && k >= n - 3;
+    if (isPhase2Settled) c.classList.add('is-r');
+    else if (isPhase1Settled) c.classList.add('is-l');
+    if ((s.phase === 'phase1' || s.phase === 'phase2') && (k === s.i || k === s.k)) {
+      c.style.outline = '2.5px solid var(--accent)'; c.style.outlineOffset = '-2px';
+    }
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    arrEl.appendChild(c);
+  });
+
+  document.getElementById('v51-info').innerHTML = s.msg;
+  document.getElementById('v51-si').textContent = s.i !== undefined ? s.i : '—';
+  document.getElementById('v51-sk').textContent = s.k !== undefined ? s.k : '—';
+  document.getElementById('v51-sans').textContent = s.phase === 'done' ? s.ans : '…';
+  document.getElementById('v51-prog').textContent = `Step ${v51Idx + 1} / ${v51Steps.length}`;
+}
+
+function v51Init() {
+  const nums = document.getElementById('v51-nums').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  if (nums.length < 3) {
+    document.getElementById('v51-info').innerHTML = `<span style="color:var(--red-text)">Need at least 3 numbers.</span>`;
+    return;
+  }
+  v51Steps = v51Build(nums);
+  v51Idx = 0;
+  v51Render();
+}
+function v51Fwd()  { if (v51Idx < v51Steps.length - 1) { v51Idx++; v51Render(); } }
+function v51Back() { if (v51Idx > 0) { v51Idx--; v51Render(); } }
+function v51Skip() { v51Idx = v51Steps.length - 1; v51Render(); }
+
+v51Init();
+initPage('0628-maximum-product-of-three-numbers.html', v51Fwd, v51Back);
+</script>
+
+</body>
+</html>
