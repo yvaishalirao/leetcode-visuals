@@ -50,4 +50,5 @@ const PROBLEMS = [
   { num: '662', title: "Maximum Width of Binary Tree", file: '0662-maximum-width-of-binary-tree.html' },
   { num: '326', title: "Power of Three", file: '0326-power-of-three.html' },
   { num: '523', title: "Continuous Subarray Sum", file: '0523-continuous-subarray-sum.html' },
+  { num: '507', title: "Perfect Number", file: '0507-perfect-number.html' },
 ];

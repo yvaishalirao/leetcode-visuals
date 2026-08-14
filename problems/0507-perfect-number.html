@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#507 Perfect Number · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-perfect-number" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#507</div>
+      <h1>Perfect Number</h1>
+      <a href="https://leetcode.com/problems/perfect-number/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">A perfect number equals the sum of its positive divisors, excluding itself (e.g. <code>28 = 1+2+4+7+14</code>). Only test divisors up to <code>√num</code> — each one <code>i</code> found pairs with <code>num // i</code>, so both get added at once (unless <code>i</code> is the exact square root, to avoid double-counting).</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def checkPerfectNumber(self, num):
+        if num &lt; 2: return False
+        s = 1
+        i = 2
+        while i * i &lt;= num:
+            if num % i == 0:
+                s += i
+                if i * i != num:
+                    s += num // i
+            i += 1
+        return s == num</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>num</label><input type="number" id="v50-num" value="28" style="width:120px"></div>
+      <button onclick="v50Init()">Run</button>
+    </div>
+
+    <div class="section-label">divisors found (each pair added to s together)</div>
+    <div class="history-list" id="v50-divisors"></div>
+
+    <div class="info-box" id="v50-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v50-si">—</div></div>
+      <div class="stat"><div class="slabel">i × i</div><div class="sval" id="v50-sii">—</div></div>
+      <div class="stat"><div class="slabel">num % i</div><div class="sval" id="v50-smod">—</div></div>
+      <div class="stat best"><div class="slabel">s (sum so far)</div><div class="sval" id="v50-ssum">1</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v50Back()">← Prev</button>
+      <button onclick="v50Fwd()">Next →</button>
+      <button onclick="v50Skip()">Skip to end</button>
+      <span class="prog" id="v50-prog"></span>
+    </div>
+
+    <div class="info-box" id="v50-answer" style="margin-top:1rem"><strong>Answer:</strong> <span id="v50-sans">—</span></div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>divisor found, added to s</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>guard failed (num &lt; 2)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #507 Perfect Number — sum divisor pairs up to sqrt(num) */
+let v50Steps = [], v50Idx = 0;
+
+function v50Build(num) {
+  const steps = [];
+  if (num < 2) {
+    steps.push({ phase: 'guard', num, s: null, divisors: [], result: false,
+      msg: `<code>num = ${num} &lt; 2</code> → return <strong>False</strong> immediately.` });
+    return steps;
+  }
+  let s = 1;
+  let i = 2;
+  const divisors = [1];
+  steps.push({ phase: 'start', num, i, s, divisors: [...divisors],
+    msg: `Start with <code>s = 1</code> (1 always divides <code>num</code> for <code>num ≥ 2</code>), <code>i = 2</code>.` });
+  while (i * i <= num) {
+    const ii = i * i;
+    const mod = num % i;
+    if (mod === 0) {
+      s += i;
+      divisors.push(i);
+      let msg = `<code>i=${i}</code>: <code>${i}×${i}=${ii} ≤ ${num}</code>, <code>${num} % ${i} == 0</code> → divisor! <code>s += ${i} = ${s}</code>.`;
+      if (ii !== num) {
+        const pair = Math.trunc(num / i);
+        s += pair;
+        divisors.push(pair);
+        msg += ` Since <code>${i}×${i} ≠ ${num}</code>, its pair <code>${num}//${i}=${pair}</code> is a distinct divisor too → <code>s += ${pair} = ${s}</code>.`;
+      } else {
+        msg += ` <code>${i}×${i} == ${num}</code> → <code>i</code> is the exact square root, don't double-count its pair.`;
+      }
+      steps.push({ phase: 'divisor', num, i, ii, mod, s, divisors: [...divisors], msg });
+    } else {
+      steps.push({ phase: 'skip', num, i, ii, mod, s, divisors: [...divisors],
+        msg: `<code>i=${i}</code>: <code>${i}×${i}=${ii} ≤ ${num}</code>, <code>${num} % ${i} = ${mod}</code> → not a divisor.` });
+    }
+    i += 1;
+  }
+  const result = s === num;
+  steps.push({ phase: 'done', num, s, divisors: [...divisors], result,
+    msg: `<code>i×i = ${i * i} &gt; ${num}</code> → loop stops. <code>s == num</code> → <code>${s} == ${num}</code> → <strong>${result ? 'True' : 'False'}</strong>.` });
+  return steps;
+}
+
+function v50Render() {
+  if (!v50Steps.length) return;
+  const s = v50Steps[v50Idx];
+
+  const divEl = document.getElementById('v50-divisors');
+  divEl.innerHTML = '';
+  (s.divisors || []).forEach(v => {
+    const chip = document.createElement('span'); chip.className = 'h-chip'; chip.textContent = v;
+    divEl.appendChild(chip);
+  });
+
+  document.getElementById('v50-info').innerHTML = s.msg;
+  document.getElementById('v50-si').textContent = s.i !== undefined ? s.i : '—';
+  document.getElementById('v50-sii').textContent = s.ii !== undefined ? s.ii : '—';
+  document.getElementById('v50-smod').textContent = s.mod !== undefined ? s.mod : '—';
+  document.getElementById('v50-ssum').textContent = s.s !== null && s.s !== undefined ? s.s : '—';
+  document.getElementById('v50-sans').textContent = (s.phase === 'done' || s.phase === 'guard') ? (s.result ? 'True' : 'False') : '…';
+  document.getElementById('v50-prog').textContent = `Step ${v50Idx + 1} / ${v50Steps.length}`;
+}
+
+function v50Init() {
+  const num = parseInt(document.getElementById('v50-num').value, 10);
+  if (isNaN(num)) {
+    document.getElementById('v50-info').innerHTML = `<span style="color:var(--red-text)">num must be an integer.</span>`;
+    return;
+  }
+  v50Steps = v50Build(num);
+  v50Idx = 0;
+  v50Render();
+}
+function v50Fwd()  { if (v50Idx < v50Steps.length - 1) { v50Idx++; v50Render(); } }
+function v50Back() { if (v50Idx > 0) { v50Idx--; v50Render(); } }
+function v50Skip() { v50Idx = v50Steps.length - 1; v50Render(); }
+
+v50Init();
+initPage('0507-perfect-number.html', v50Fwd, v50Back);
+</script>
+
+</body>
+</html>
