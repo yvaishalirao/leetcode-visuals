@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#958 Check Completeness of a Binary Tree · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-check-complete" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#958</div>
+      <h1>Check Completeness of a Binary Tree</h1>
+      <a href="https://leetcode.com/problems/check-completeness-of-a-binary-tree/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">A complete binary tree has every level full except possibly the last, which fills left to right with no gaps. The trick: build a flat BFS array <em>including <code>None</code> placeholders</em> for missing children, but only keep expanding while the current slot is truthy. The moment a <code>None</code> is hit, stop — then check that <em>nothing real</em> appears anywhere after it.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def isCompleteTree(self, root):
+        bfs = [root]
+        i = 0
+        while bfs[i]:
+            bfs.append(bfs[i].left)
+            bfs.append(bfs[i].right)
+            i += 1
+        return not any(bfs[i:])</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v52-tree-input" value="1,2,3,4,5,null,7" style="width:280px"></div>
+      <button onclick="v52Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — expansion path highlighted</div>
+    <div class="tree-wrap"><div id="v52-tree"></div></div>
+
+    <div class="section-label">bfs — flat array including None placeholders; i marks the front</div>
+    <div class="array-row" id="v52-bfs"></div>
+
+    <div class="info-box" id="v52-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v52-si">—</div></div>
+      <div class="stat"><div class="slabel">bfs[i]</div><div class="sval" id="v52-scur">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v52-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v52Back()">← Prev</button>
+      <button onclick="v52Fwd()">Next →</button>
+      <button onclick="v52Skip()">Skip to end</button>
+      <span class="prog" id="v52-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>node currently expanding</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>already expanded</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>real node found after the gap → not complete</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>bfs cell: None placeholder</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #958 Check Completeness of a Binary Tree — flat BFS array with None placeholders */
+let v52Root = null, v52Nodes = [], v52Edges = [], v52Steps = [], v52Idx = 0;
+
+function v52Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v52Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v52BuildTreeDOM() {
+  const cont = document.getElementById('v52-tree');
+  if (!v52Root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v52Nodes.map(n => n.x));
+  const maxY = Math.max(...v52Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v52Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v52Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v52-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v52Build(root) {
+  const steps = [];
+  const bfsRepr = arr => arr.map(n => n ? { id: n.id, val: n.val } : null);
+
+  const bfs = [root];
+  let i = 0;
+  steps.push({ phase: 'init', i: 0, currentId: root ? root.id : null, doneIds: [], bfs: bfsRepr(bfs),
+    msg: `<code>bfs = [root]</code>, <code>i = 0</code>.` });
+
+  let doneIds = [];
+  while (bfs[i]) {
+    const node = bfs[i];
+    doneIds = [...doneIds, node.id];
+    bfs.push(node.left);
+    bfs.push(node.right);
+    steps.push({ phase: 'expand', i, currentId: node.id, doneIds: [...doneIds], bfs: bfsRepr(bfs),
+      msg: `<code>bfs[${i}] = ${node.val}</code> is truthy → append its left (<code>${node.left ? node.left.val : 'None'}</code>) and right (<code>${node.right ? node.right.val : 'None'}</code>) → <code>bfs</code> grows to length ${bfs.length}.` });
+    i += 1;
+  }
+  steps.push({ phase: 'stop', i, currentId: null, doneIds: [...doneIds], bfs: bfsRepr(bfs),
+    msg: `<code>bfs[${i}]</code> is <code>None</code> → stop expanding. Now check: is everything from index ${i} onward also <code>None</code>?` });
+
+  let foundBadIdx = null, foundBadId = null;
+  for (let k = i; k < bfs.length; k++) {
+    if (bfs[k]) {
+      foundBadIdx = k; foundBadId = bfs[k].id;
+      steps.push({ phase: 'any-fail', i, checkIdx: k, currentId: bfs[k].id, doneIds: [...doneIds], bfs: bfsRepr(bfs),
+        msg: `<code>bfs[${k}] = ${bfs[k].val}</code> is truthy — it appears <strong>after</strong> the gap at index ${i} → <code>any(bfs[${i}:])</code> is True → tree is <strong>not complete</strong>.` });
+      break;
+    } else {
+      steps.push({ phase: 'any-ok', i, checkIdx: k, currentId: null, doneIds: [...doneIds], bfs: bfsRepr(bfs),
+        msg: `<code>bfs[${k}]</code> is <code>None</code> → still OK so far.` });
+    }
+  }
+  const result = foundBadIdx === null;
+  steps.push({ phase: 'done', i, currentId: null, doneIds: [...doneIds], bfs: bfsRepr(bfs), result, foundBadId,
+    msg: `<strong>Answer: ${result ? 'True' : 'False'}</strong>.` });
+  return steps;
+}
+
+function v52Render() {
+  if (!v52Steps.length) return;
+  const s = v52Steps[v52Idx];
+
+  v52Nodes.forEach(n => {
+    const el = document.getElementById('v52-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (n.id === s.foundBadId) {
+      el.classList.add('tn-pruned');
+    } else if (s.currentId === n.id) {
+      el.classList.add(s.phase === 'any-fail' ? 'tn-pruned' : 'tn-current');
+    } else if ((s.doneIds || []).includes(n.id)) {
+      el.classList.add('tn-done');
+    }
+  });
+
+  const bfsEl = document.getElementById('v52-bfs');
+  bfsEl.innerHTML = '';
+  (s.bfs || []).forEach((item, idx) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if (idx === s.i && (s.phase === 'expand' || s.phase === 'init' || s.phase === 'stop')) {
+      c.style.outline = '2.5px solid var(--accent)'; c.style.outlineOffset = '-2px';
+    }
+    if (s.checkIdx === idx) {
+      c.classList.add(item ? 'cell-false' : 'cell-true');
+    }
+    if (!item) c.classList.add('is-r');
+    c.innerHTML = `${item ? item.val : 'None'}<span class="cidx">${idx}</span>`;
+    bfsEl.appendChild(c);
+  });
+
+  document.getElementById('v52-info').innerHTML = s.msg;
+  document.getElementById('v52-si').textContent = s.i;
+  const curItem = (s.bfs || [])[s.i];
+  document.getElementById('v52-scur').textContent = curItem ? curItem.val : 'None';
+  document.getElementById('v52-sans').textContent = s.phase === 'done' ? (s.result ? 'True' : 'False') : '…';
+  document.getElementById('v52-prog').textContent = `Step ${v52Idx + 1} / ${v52Steps.length}`;
+}
+
+function v52Init() {
+  const raw = document.getElementById('v52-tree-input').value;
+  v52Root = v52Parse(raw);
+  if (v52Root) {
+    const { nodes, edges } = v52Layout(v52Root);
+    v52Nodes = nodes; v52Edges = edges;
+  } else {
+    v52Nodes = []; v52Edges = [];
+  }
+  v52BuildTreeDOM();
+  v52Steps = v52Build(v52Root);
+  v52Idx = 0;
+  v52Render();
+}
+function v52Fwd()  { if (v52Idx < v52Steps.length - 1) { v52Idx++; v52Render(); } }
+function v52Back() { if (v52Idx > 0) { v52Idx--; v52Render(); } }
+function v52Skip() { v52Idx = v52Steps.length - 1; v52Render(); }
+
+v52Init();
+initPage('0958-check-completeness-of-a-binary-tree.html', v52Fwd, v52Back);
+</script>
+
+</body>
+</html>
