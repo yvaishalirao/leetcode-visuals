@@ -56,4 +56,5 @@ const PROBLEMS = [
   { num: '738', title: "Monotone Increasing Digits", file: '0738-monotone-increasing-digits.html' },
   { num: '650', title: "2 Keys Keyboard", file: '0650-2-keys-keyboard.html' },
   { num: '1295', title: "Find Numbers with Even Number of Digits", file: '1295-find-numbers-with-even-number-of-digits.html' },
+  { num: '2348', title: "Number of Zero-Filled Subarrays", file: '2348-number-of-zero-filled-subarrays.html' },
 ];

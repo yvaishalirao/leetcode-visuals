@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#2348 Number of Zero-Filled Subarrays · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-zero-filled" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#2348</div>
+      <h1>Number of Zero-Filled Subarrays</h1>
+      <a href="https://leetcode.com/problems/number-of-zero-filled-subarrays/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Count all-zero subarrays. The trick: for a run of <code>k</code> consecutive zeros, arriving at the <code>k</code>-th zero of the run adds exactly <code>k</code> new zero-subarrays — every subarray ending here, of length 1 through k. So just track the current zero-streak and add it to the total at every zero.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def zeroFilledSubarray(self, nums):
+        cnt, streak = 0, 0
+        for num in nums:
+            if num == 0:
+                streak += 1
+                cnt += streak
+            else:
+                streak = 0
+        return cnt</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v56-nums" value="1,3,0,0,2,0,0,4" style="width:220px"></div>
+      <button onclick="v56Init()">Run</button>
+    </div>
+
+    <div class="section-label">nums — current run of zeros highlighted</div>
+    <div class="array-row" id="v56-array"></div>
+
+    <div class="info-box" id="v56-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">current num</div><div class="sval" id="v56-snum">—</div></div>
+      <div class="stat"><div class="slabel">streak</div><div class="sval" id="v56-sstreak">0</div></div>
+      <div class="stat best"><div class="slabel">cnt</div><div class="sval" id="v56-scnt">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v56Back()">← Prev</button>
+      <button onclick="v56Fwd()">Next →</button>
+      <button onclick="v56Skip()">Skip to end</button>
+      <span class="prog" id="v56-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current index</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>part of the current zero-streak</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>non-zero → streak resets</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #2348 Number of Zero-Filled Subarrays — running zero-streak added to cnt each time */
+let v56Steps = [], v56Idx = 0, v56Nums = [];
+
+function v56Build(nums) {
+  const steps = [];
+  let cnt = 0, streak = 0;
+  steps.push({ phase: 'init', i: -1, cnt: 0, streak: 0, streakStart: null, msg: `<code>cnt = 0</code>, <code>streak = 0</code>.` });
+  for (let i = 0; i < nums.length; i++) {
+    const num = nums[i];
+    let msg;
+    if (num === 0) {
+      streak += 1;
+      cnt += streak;
+      msg = `<code>nums[${i}] = 0</code> → <code>streak += 1 = ${streak}</code> → <code>cnt += ${streak} = ${cnt}</code> (this zero completes ${streak} new all-zero subarray${streak === 1 ? '' : 's'} ending here).`;
+    } else {
+      streak = 0;
+      msg = `<code>nums[${i}] = ${num} ≠ 0</code> → <code>streak</code> resets to <code>0</code>.`;
+    }
+    const streakStart = streak > 0 ? i - streak + 1 : null;
+    steps.push({ phase: 'process', i, num, cnt, streak, streakStart, msg });
+  }
+  steps.push({ phase: 'done', cnt, msg: `<strong>Answer: ${cnt}</strong>.` });
+  return steps;
+}
+
+function v56Render() {
+  if (!v56Steps.length) return;
+  const s = v56Steps[v56Idx];
+
+  const arrEl = document.getElementById('v56-array');
+  arrEl.innerHTML = '';
+  v56Nums.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if (s.streakStart !== null && k >= s.streakStart && k <= s.i) c.classList.add('is-l');
+    if (k === s.i) { c.style.outline = '2.5px solid var(--accent)'; c.style.outlineOffset = '-2px'; }
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    arrEl.appendChild(c);
+  });
+
+  document.getElementById('v56-info').innerHTML = s.msg;
+  document.getElementById('v56-snum').textContent = s.i >= 0 ? v56Nums[s.i] : '—';
+  document.getElementById('v56-sstreak').textContent = s.streak !== undefined ? s.streak : 0;
+  document.getElementById('v56-scnt').textContent = s.cnt;
+  document.getElementById('v56-prog').textContent = `Step ${v56Idx + 1} / ${v56Steps.length}`;
+}
+
+function v56Init() {
+  v56Nums = document.getElementById('v56-nums').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  if (!v56Nums.length) {
+    document.getElementById('v56-info').innerHTML = `<span style="color:var(--red-text)">nums must be non-empty.</span>`;
+    return;
+  }
+  v56Steps = v56Build(v56Nums);
+  v56Idx = 0;
+  v56Render();
+}
+function v56Fwd()  { if (v56Idx < v56Steps.length - 1) { v56Idx++; v56Render(); } }
+function v56Back() { if (v56Idx > 0) { v56Idx--; v56Render(); } }
+function v56Skip() { v56Idx = v56Steps.length - 1; v56Render(); }
+
+v56Init();
+initPage('2348-number-of-zero-filled-subarrays.html', v56Fwd, v56Back);
+</script>
+
+</body>
+</html>
