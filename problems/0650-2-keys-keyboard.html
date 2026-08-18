@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#650 2 Keys Keyboard · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-2-keys-keyboard" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#650</div>
+      <h1>2 Keys Keyboard</h1>
+      <a href="https://leetcode.com/problems/2-keys-keyboard/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Starting from one <code>'A'</code>, using only Copy-All and Paste, find the minimum operations to reach exactly <code>n</code> copies. The insight: growing from <code>k</code> to <code>k·p</code> copies (p prime) always costs exactly <code>p</code> operations (1 copy + (p−1) pastes) — so the answer is just the sum of <code>n</code>'s prime factors, found by repeated division.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def minSteps(self, n):
+        if n == 1:
+            return 0
+
+        steps = 0
+        factor = 2
+
+        while n &gt; 1:
+            while n % factor == 0:
+                steps += factor
+                n //= factor
+            factor += 1
+
+        return steps</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>n</label><input type="number" id="v54-n" value="3" style="width:120px"></div>
+      <button onclick="v54Init()">Run</button>
+    </div>
+
+    <div class="section-label">prime factors found so far</div>
+    <div class="history-list" id="v54-factors"></div>
+
+    <div class="info-box" id="v54-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">n (remaining)</div><div class="sval" id="v54-sn">—</div></div>
+      <div class="stat"><div class="slabel">factor</div><div class="sval" id="v54-sfactor">—</div></div>
+      <div class="stat best"><div class="slabel">steps (answer)</div><div class="sval" id="v54-ssteps">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v54Back()">← Prev</button>
+      <button onclick="v54Fwd()">Next →</button>
+      <button onclick="v54Skip()">Skip to end</button>
+      <span class="prog" id="v54-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent)"></div>current factor being tried</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>factor divides n → steps added</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #650 2 Keys Keyboard — minSteps(n) = sum of prime factors of n */
+let v54Steps = [], v54Idx = 0;
+
+function v54Build(n0) {
+  const steps = [];
+  if (n0 === 1) {
+    steps.push({ phase: 'guard', n: 1, factor: null, totalSteps: 0, factorsUsed: [], result: 0,
+      msg: `<code>n == 1</code> → already exactly one 'A' → return <strong>0</strong> immediately.` });
+    return steps;
+  }
+  let n = n0, totalSteps = 0, factor = 2;
+  const factorsUsed = [];
+  steps.push({ phase: 'start', n, factor, totalSteps, factorsUsed: [...factorsUsed],
+    msg: `Start with <code>n=${n0}</code>, <code>steps=0</code>, <code>factor=2</code>.` });
+
+  while (n > 1) {
+    if (n % factor === 0) {
+      while (n % factor === 0) {
+        totalSteps += factor;
+        n = Math.trunc(n / factor);
+        factorsUsed.push(factor);
+        steps.push({ phase: 'divide', factor, n, totalSteps, factorsUsed: [...factorsUsed],
+          msg: `<code>n % ${factor} == 0</code> → <code>steps += ${factor} = ${totalSteps}</code>; <code>n //= ${factor}</code> → <code>n = ${n}</code>.` });
+      }
+    } else {
+      steps.push({ phase: 'skip', factor, n, totalSteps, factorsUsed: [...factorsUsed],
+        msg: `<code>n=${n}</code> is not divisible by <code>factor=${factor}</code>.` });
+    }
+    factor += 1;
+  }
+  steps.push({ phase: 'done', n, totalSteps, factorsUsed: [...factorsUsed], result: totalSteps,
+    msg: `<code>n == 1</code> → loop ends. <strong>Answer: ${totalSteps}</strong>.` });
+  return steps;
+}
+
+function v54Render() {
+  if (!v54Steps.length) return;
+  const s = v54Steps[v54Idx];
+
+  const factorsEl = document.getElementById('v54-factors');
+  factorsEl.innerHTML = '';
+  (s.factorsUsed || []).forEach(f => {
+    const chip = document.createElement('span'); chip.className = 'h-chip'; chip.textContent = f;
+    factorsEl.appendChild(chip);
+  });
+
+  document.getElementById('v54-info').innerHTML = s.msg;
+  document.getElementById('v54-sn').textContent = s.n;
+  document.getElementById('v54-sfactor').textContent = s.factor !== null && s.factor !== undefined ? s.factor : '—';
+  document.getElementById('v54-ssteps').textContent = s.totalSteps;
+  document.getElementById('v54-prog').textContent = `Step ${v54Idx + 1} / ${v54Steps.length}`;
+}
+
+function v54Init() {
+  const n = parseInt(document.getElementById('v54-n').value, 10);
+  if (isNaN(n) || n < 1) {
+    document.getElementById('v54-info').innerHTML = `<span style="color:var(--red-text)">n must be a positive integer.</span>`;
+    return;
+  }
+  v54Steps = v54Build(n);
+  v54Idx = 0;
+  v54Render();
+}
+function v54Fwd()  { if (v54Idx < v54Steps.length - 1) { v54Idx++; v54Render(); } }
+function v54Back() { if (v54Idx > 0) { v54Idx--; v54Render(); } }
+function v54Skip() { v54Idx = v54Steps.length - 1; v54Render(); }
+
+v54Init();
+initPage('0650-2-keys-keyboard.html', v54Fwd, v54Back);
+</script>
+
+</body>
+</html>

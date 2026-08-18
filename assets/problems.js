@@ -54,4 +54,5 @@ const PROBLEMS = [
   { num: '628', title: "Maximum Product of Three Numbers", file: '0628-maximum-product-of-three-numbers.html' },
   { num: '958', title: "Check Completeness of a Binary Tree", file: '0958-check-completeness-of-a-binary-tree.html' },
   { num: '738', title: "Monotone Increasing Digits", file: '0738-monotone-increasing-digits.html' },
+  { num: '650', title: "2 Keys Keyboard", file: '0650-2-keys-keyboard.html' },
 ];
