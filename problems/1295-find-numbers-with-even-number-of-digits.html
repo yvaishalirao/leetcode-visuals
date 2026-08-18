@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1295 Find Numbers with Even Number of Digits · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-even-digits" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1295</div>
+      <h1>Find Numbers with Even Number of Digits</h1>
+      <a href="https://leetcode.com/problems/find-numbers-with-even-number-of-digits/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given an array of integers, count how many have an even number of digits — just convert each to a string and check its length.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def findNumbers(self, nums):
+        count = 0
+        for i in nums:
+            s = str(i)
+            if len(s) % 2 == 0:
+                count += 1
+        return count</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v55-nums" value="12,345,2,6,7896" style="width:220px"></div>
+      <button onclick="v55Init()">Run</button>
+    </div>
+
+    <div class="section-label">nums — current index</div>
+    <div class="array-row" id="v55-array"></div>
+
+    <div class="info-box" id="v55-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">current num</div><div class="sval" id="v55-snum">—</div></div>
+      <div class="stat"><div class="slabel">digit count</div><div class="sval" id="v55-slen">—</div></div>
+      <div class="stat best"><div class="slabel">count</div><div class="sval" id="v55-scount">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v55Back()">← Prev</button>
+      <button onclick="v55Fwd()">Next →</button>
+      <button onclick="v55Skip()">Skip to end</button>
+      <span class="prog" id="v55-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current number</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>even digit count → counted</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>odd digit count → skipped</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1295 Find Numbers with Even Number of Digits */
+let v55Steps = [], v55Idx = 0, v55Nums = [];
+
+function v55Build(nums) {
+  const steps = [];
+  let count = 0;
+  steps.push({ phase: 'init', i: -1, count: 0, counted: [], msg: `<code>count = 0</code>. Scan each number in <code>nums</code>.` });
+  const counted = [];
+  for (let i = 0; i < nums.length; i++) {
+    const s = String(nums[i]);
+    const isEven = s.length % 2 === 0;
+    if (isEven) { count += 1; counted.push(i); }
+    steps.push({ phase: 'process', i, s, len: s.length, isEven, count, counted: [...counted],
+      msg: `<code>nums[${i}] = ${nums[i]}</code> → <code>str = "${s}"</code>, length <code>${s.length}</code> → ${isEven ? `<strong>even</strong> → count += 1 = ${count}.` : `odd → skip.`}` });
+  }
+  steps.push({ phase: 'done', count, counted: [...counted], msg: `<strong>Answer: ${count}</strong>.` });
+  return steps;
+}
+
+function v55Render() {
+  if (!v55Steps.length) return;
+  const s = v55Steps[v55Idx];
+
+  const arrEl = document.getElementById('v55-array');
+  arrEl.innerHTML = '';
+  v55Nums.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if ((s.counted || []).includes(k)) c.classList.add('is-l');
+    if (k === s.i) { c.style.outline = '2.5px solid var(--accent)'; c.style.outlineOffset = '-2px'; }
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    arrEl.appendChild(c);
+  });
+
+  document.getElementById('v55-info').innerHTML = s.msg;
+  document.getElementById('v55-snum').textContent = s.i >= 0 ? v55Nums[s.i] : '—';
+  document.getElementById('v55-slen').textContent = s.len !== undefined ? s.len : '—';
+  document.getElementById('v55-scount').textContent = s.count;
+  document.getElementById('v55-prog').textContent = `Step ${v55Idx + 1} / ${v55Steps.length}`;
+}
+
+function v55Init() {
+  v55Nums = document.getElementById('v55-nums').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  if (!v55Nums.length) {
+    document.getElementById('v55-info').innerHTML = `<span style="color:var(--red-text)">nums must be non-empty.</span>`;
+    return;
+  }
+  v55Steps = v55Build(v55Nums);
+  v55Idx = 0;
+  v55Render();
+}
+function v55Fwd()  { if (v55Idx < v55Steps.length - 1) { v55Idx++; v55Render(); } }
+function v55Back() { if (v55Idx > 0) { v55Idx--; v55Render(); } }
+function v55Skip() { v55Idx = v55Steps.length - 1; v55Render(); }
+
+v55Init();
+initPage('1295-find-numbers-with-even-number-of-digits.html', v55Fwd, v55Back);
+</script>
+
+</body>
+</html>

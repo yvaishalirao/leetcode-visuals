@@ -55,4 +55,5 @@ const PROBLEMS = [
   { num: '958', title: "Check Completeness of a Binary Tree", file: '0958-check-completeness-of-a-binary-tree.html' },
   { num: '738', title: "Monotone Increasing Digits", file: '0738-monotone-increasing-digits.html' },
   { num: '650', title: "2 Keys Keyboard", file: '0650-2-keys-keyboard.html' },
+  { num: '1295', title: "Find Numbers with Even Number of Digits", file: '1295-find-numbers-with-even-number-of-digits.html' },
 ];
