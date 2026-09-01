@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#367 Valid Perfect Square · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-perfect-square" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#367</div>
+      <h1>Valid Perfect Square</h1>
+      <a href="https://leetcode.com/problems/valid-perfect-square/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Return <code>true</code> if <code>num</code> is a perfect square, without using <code>sqrt</code>. The trick: <code>k² = 1 + 3 + 5 + … + (2k−1)</code> — the sum of the first <code>k</code> odd numbers. So repeatedly subtract consecutive odd numbers; landing exactly on <code>0</code> means <code>num</code> was a perfect square.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def isPerfectSquare(self, num):
+        i = 1
+        while (num&gt;0):
+            num -= i
+            i += 2
+        return num == 0</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>num</label><input type="number" id="v57-num" value="16" style="width:140px"></div>
+      <button onclick="v57Init()">Run</button>
+    </div>
+
+    <div class="section-label">num — shrinking as consecutive odd numbers are subtracted</div>
+    <div class="history-list" id="v57-history"></div>
+
+    <div class="info-box" id="v57-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">num</div><div class="sval" id="v57-snum">—</div></div>
+      <div class="stat"><div class="slabel">i (next odd to subtract)</div><div class="sval" id="v57-si">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v57-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v57Back()">← Prev</button>
+      <button onclick="v57Fwd()">Next →</button>
+      <button onclick="v57Skip()">Skip to end</button>
+      <span class="prog" id="v57-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent)"></div>current num</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>landed exactly on 0 → perfect square</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>overshot past 0 → not a perfect square</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #367 Valid Perfect Square — subtract consecutive odd numbers until <= 0 */
+let v57Steps = [], v57Idx = 0;
+
+function v57Build(num0) {
+  // Note: each step stores only scalars (num/i/next), never a growing array copy —
+  // num up to 2^31-1 means up to ~46,000 iterations, and storing a full history
+  // snapshot per step would be O(steps^2) memory. v57History() reconstructs the
+  // display sequence on demand instead.
+  const steps = [];
+  let num = num0, i = 1;
+  steps.push({ phase: 'start', num, i,
+    msg: `Start with <code>num = ${num0}</code>, <code>i = 1</code>. While <code>num &gt; 0</code>, subtract the next odd number.` });
+  while (num > 0) {
+    const next = num - i;
+    steps.push({ phase: 'subtract', num, i, next,
+      msg: `<code>num(${num}) &gt; 0</code> → <code>num -= ${i}</code> → <code>num = ${next}</code>; <code>i += 2</code> → <code>i = ${i + 2}</code>.` });
+    num = next;
+    i += 2;
+  }
+  const result = num === 0;
+  steps.push({ phase: 'done', num, result,
+    msg: `<code>num = ${num}</code> — loop stops (<code>num</code> is no longer <code>&gt; 0</code>). <code>num == 0</code> → <strong>${result ? 'True' : 'False'}</strong>.` });
+  return steps;
+}
+
+function v57History(uptoIdx) {
+  const h = [v57Steps[0].num];
+  for (let k = 0; k <= uptoIdx; k++) {
+    if (v57Steps[k].phase === 'subtract') h.push(v57Steps[k].next);
+  }
+  return h;
+}
+
+function v57Render() {
+  if (!v57Steps.length) return;
+  const s = v57Steps[v57Idx];
+
+  const history = v57History(v57Idx);
+  const histEl = document.getElementById('v57-history');
+  histEl.innerHTML = '';
+  history.forEach((v, k) => {
+    const isLast = k === history.length - 1;
+    const chip = document.createElement('span'); chip.className = 'h-chip';
+    if (s.phase === 'done') {
+      if (s.result) { chip.style.background = 'var(--green-bg)'; chip.style.color = 'var(--green-text)'; chip.style.borderColor = 'var(--green-border)'; }
+      else if (isLast) { chip.style.background = 'var(--red-bg)'; chip.style.color = 'var(--red-text)'; chip.style.borderColor = 'var(--red-border)'; }
+    } else if (isLast) {
+      chip.style.background = 'var(--accent-bg)'; chip.style.color = 'var(--accent-text)'; chip.style.borderColor = 'var(--accent-border)';
+    }
+    chip.textContent = v;
+    histEl.appendChild(chip);
+    if (!isLast) {
+      const ar = document.createElement('span'); ar.style.color = 'var(--text-muted)'; ar.textContent = '→';
+      histEl.appendChild(ar);
+    }
+  });
+
+  document.getElementById('v57-info').innerHTML = s.msg;
+  document.getElementById('v57-snum').textContent = s.num;
+  document.getElementById('v57-si').textContent = s.i !== undefined ? s.i : '—';
+  document.getElementById('v57-sans').textContent = s.phase === 'done' ? (s.result ? 'True' : 'False') : '…';
+  document.getElementById('v57-prog').textContent = `Step ${v57Idx + 1} / ${v57Steps.length}`;
+}
+
+function v57Init() {
+  const num = parseInt(document.getElementById('v57-num').value, 10);
+  if (isNaN(num) || num < 1) {
+    document.getElementById('v57-info').innerHTML = `<span style="color:var(--red-text)">num must be a positive integer.</span>`;
+    return;
+  }
+  v57Steps = v57Build(num);
+  v57Idx = 0;
+  v57Render();
+}
+function v57Fwd()  { if (v57Idx < v57Steps.length - 1) { v57Idx++; v57Render(); } }
+function v57Back() { if (v57Idx > 0) { v57Idx--; v57Render(); } }
+function v57Skip() { v57Idx = v57Steps.length - 1; v57Render(); }
+
+v57Init();
+initPage('0367-valid-perfect-square.html', v57Fwd, v57Back);
+</script>
+
+</body>
+</html>
