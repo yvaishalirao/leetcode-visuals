@@ -59,4 +59,5 @@ const PROBLEMS = [
   { num: '2348', title: "Number of Zero-Filled Subarrays", file: '2348-number-of-zero-filled-subarrays.html' },
   { num: '367', title: "Valid Perfect Square", file: '0367-valid-perfect-square.html' },
   { num: '59', title: "Spiral Matrix II", file: '0059-spiral-matrix-ii.html' },
+  { num: '889', title: "Construct Binary Tree from Preorder and Postorder Traversal", file: '0889-construct-binary-tree-from-preorder-and-postorder-traversal.html' },
 ];

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#889 Construct Binary Tree from Preorder and Postorder Traversal · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-build-tree-3" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#889</div>
+      <h1>Construct Binary Tree from Preorder and Postorder Traversal</h1>
+      <a href="https://leetcode.com/problems/construct-binary-tree-from-preorder-and-postorder-traversal/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Unlike the recursive split approach, this solution walks <code>preorder</code> left to right while keeping a <strong>stack</strong> of the current root-to-node path. Each new preorder value attaches as the top-of-stack's left child (if empty) or right child, then gets pushed itself. A pointer into <code>postorder</code> detects when the stack's top node has no more children coming — its value will equal <code>postorder[j]</code> — and pops it off.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def constructFromPrePost(self, pre, post):
+        stack = [TreeNode(pre[0])]
+        j = 0
+        for v in pre[1:]:
+            node = TreeNode(v)
+            while stack[-1].val == post[j]:
+                stack.pop()
+                j += 1
+            if not stack[-1].left:
+                stack[-1].left = node
+            else:
+                stack[-1].right = node
+            stack.append(node)
+        return stack[0]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>preorder</label><input type="text" id="v59-pre" value="1,2,4,5,3,6,7" style="width:220px"></div>
+      <div class="ig"><label>postorder</label><input type="text" id="v59-post" value="4,5,2,6,7,3,1" style="width:220px"></div>
+      <button onclick="v59Init()">Run</button>
+    </div>
+
+    <div class="section-label">preorder — current value</div>
+    <div class="array-row" id="v59-pre-row"></div>
+
+    <div class="section-label">postorder — j marks the completion pointer</div>
+    <div class="array-row" id="v59-post-row"></div>
+
+    <div class="section-label">stack — root-to-current-node path</div>
+    <div class="chain-row" id="v59-stack"></div>
+
+    <div class="section-label">Tree being built</div>
+    <div class="tree-wrap"><div id="v59-tree"></div></div>
+
+    <div class="info-box" id="v59-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">j</div><div class="sval" id="v59-sj">0</div></div>
+      <div class="stat"><div class="slabel">stack size</div><div class="sval" id="v59-ssize">1</div></div>
+      <div class="stat best"><div class="slabel">nodes created</div><div class="sval" id="v59-scount">1</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v59Back()">← Prev</button>
+      <button onclick="v59Fwd()">Next →</button>
+      <button onclick="v59Skip()">Skip to end</button>
+      <span class="prog" id="v59-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>preorder: current value</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>postorder pointer j</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>node about to be popped (subtree complete)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #889 Construct Binary Tree from Preorder and Postorder Traversal — stack + completion pointer */
+let v59Steps = [], v59Idx = 0, v59Pre = [], v59Post = [], v59Nodes = [], v59Edges = [], v59NodeById = {};
+
+function v59Build(pre, post) {
+  const steps = [];
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: v, left: null, right: null });
+  const root = mk(pre[0]);
+  let stack = [root];
+  let j = 0;
+  let createdIds = [root.id];
+  let edges = [];
+
+  steps.push({ phase: 'init', stackIds: [root.id], preIdx: 0, j, createdIds: [...createdIds], edges: edges.map(e => [...e]),
+    msg: `<code>stack = [TreeNode(${pre[0]})]</code>, <code>j = 0</code>.` });
+
+  for (let pi = 1; pi < pre.length; pi++) {
+    const v = pre[pi];
+    const node = mk(v);
+    createdIds = [...createdIds, node.id];
+    steps.push({ phase: 'new-node', stackIds: stack.map(n => n.id), preIdx: pi, j, createdIds: [...createdIds], edges: edges.map(e => [...e]),
+      msg: `<code>v = pre[${pi}] = ${v}</code> → create a new node <code>${v}</code>.` });
+
+    while (stack[stack.length - 1].val === post[j]) {
+      const popped = stack.pop();
+      j += 1;
+      steps.push({ phase: 'pop', stackIds: stack.map(n => n.id), preIdx: pi, j, poppedId: popped.id, poppedVal: popped.val,
+        createdIds: [...createdIds], edges: edges.map(e => [...e]),
+        msg: `<code>stack[-1].val(${popped.val}) == post[${j - 1}](${post[j - 1]})</code> → the subtree rooted at <code>${popped.val}</code> is complete → pop it, <code>j → ${j}</code>.` });
+    }
+
+    const parent = stack[stack.length - 1];
+    let side;
+    if (!parent.left) { parent.left = node; side = 'left'; } else { parent.right = node; side = 'right'; }
+    edges = [...edges, [parent.id, node.id]];
+    steps.push({ phase: 'attach', stackIds: stack.map(n => n.id), preIdx: pi, j, parentVal: parent.val, side, nodeVal: node.val,
+      createdIds: [...createdIds], edges: edges.map(e => [...e]),
+      msg: `<code>stack[-1] = ${parent.val}</code> has no ${side} child yet → attach <code>${node.val}</code> as its <strong>${side}</strong> child.` });
+
+    stack.push(node);
+    steps.push({ phase: 'push', stackIds: stack.map(n => n.id), preIdx: pi, j, createdIds: [...createdIds], edges: edges.map(e => [...e]),
+      msg: `Push <code>${node.val}</code> onto the stack.` });
+  }
+
+  steps.push({ phase: 'done', stackIds: stack.map(n => n.id), createdIds: [...createdIds], edges: edges.map(e => [...e]),
+    msg: `All of <code>preorder</code> processed → return <code>stack[0]</code> — the root, with <strong>${createdIds.length}</strong> nodes total.` });
+  return { steps, root };
+}
+
+function v59Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v59BuildTreeDOM() {
+  const cont = document.getElementById('v59-tree');
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v59Nodes.map(n => n.x));
+  const maxY = Math.max(...v59Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v59Edges.forEach(([p, c]) => {
+    svg += `<line id="v59-edge-${p.id}-${c.id}" x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5;stroke-opacity:0;transition:stroke-opacity .2s"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v59Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v59-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px;opacity:0;transition:opacity .2s">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v59Render() {
+  if (!v59Steps.length) return;
+  const s = v59Steps[v59Idx];
+
+  v59Nodes.forEach(n => {
+    const el = document.getElementById('v59-tn-' + n.id);
+    if (!el) return;
+    const created = (s.createdIds || []).includes(n.id);
+    el.style.opacity = created ? '1' : '0';
+    el.className = 'tree-node';
+    if (created) {
+      if (s.phase === 'pop' && n.id === s.poppedId) el.classList.add('tn-visited');
+      else if ((s.stackIds || []).includes(n.id)) el.classList.add('tn-current');
+      else el.classList.add('tn-done');
+    }
+  });
+  v59Edges.forEach(([p, c]) => {
+    const line = document.getElementById(`v59-edge-${p.id}-${c.id}`);
+    const drawn = (s.edges || []).some(e => e[0] === p.id && e[1] === c.id);
+    line.style.strokeOpacity = drawn ? '1' : '0';
+  });
+
+  const preEl = document.getElementById('v59-pre-row');
+  preEl.innerHTML = '';
+  v59Pre.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if (k === s.preIdx) c.classList.add('is-l');
+    else if (k < s.preIdx) c.classList.add('cell-true');
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    preEl.appendChild(c);
+  });
+
+  const postEl = document.getElementById('v59-post-row');
+  postEl.innerHTML = '';
+  v59Post.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if (k === s.j) { c.style.outline = '2.5px solid var(--accent)'; c.style.outlineOffset = '-2px'; }
+    if (s.phase === 'pop' && k === s.j - 1) c.classList.add('is-r');
+    else if (k < s.j) c.classList.add('cell-true');
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    postEl.appendChild(c);
+  });
+
+  const stackEl = document.getElementById('v59-stack');
+  stackEl.innerHTML = '';
+  (s.stackIds || []).forEach((id, idx) => {
+    const nd = document.createElement('div');
+    nd.className = 'chain-node' + (idx === (s.stackIds.length - 1) ? ' cur-node' : '');
+    nd.innerHTML = `${v59NodeById[id].val}${idx === s.stackIds.length - 1 ? '<div class="cn-sub">top</div>' : ''}`;
+    stackEl.appendChild(nd);
+    if (idx < s.stackIds.length - 1) {
+      const ar = document.createElement('span'); ar.className = 'chain-arrow'; ar.textContent = '→';
+      stackEl.appendChild(ar);
+    }
+  });
+
+  document.getElementById('v59-info').innerHTML = s.msg;
+  document.getElementById('v59-sj').textContent = s.j;
+  document.getElementById('v59-ssize').textContent = (s.stackIds || []).length;
+  document.getElementById('v59-scount').textContent = (s.createdIds || []).length;
+  document.getElementById('v59-prog').textContent = `Step ${v59Idx + 1} / ${v59Steps.length}`;
+}
+
+function v59Init() {
+  v59Pre = document.getElementById('v59-pre').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  v59Post = document.getElementById('v59-post').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  if (!v59Pre.length || v59Pre.length !== v59Post.length) {
+    document.getElementById('v59-info').innerHTML = `<span style="color:var(--red-text)">preorder and postorder must be non-empty and the same length.</span>`;
+    return;
+  }
+  const { steps, root } = v59Build(v59Pre, v59Post);
+  const { nodes, edges } = v59Layout(root);
+  v59Nodes = nodes; v59Edges = edges;
+  v59NodeById = {}; nodes.forEach(n => v59NodeById[n.id] = n);
+  v59BuildTreeDOM();
+  v59Steps = steps;
+  v59Idx = 0;
+  v59Render();
+}
+function v59Fwd()  { if (v59Idx < v59Steps.length - 1) { v59Idx++; v59Render(); } }
+function v59Back() { if (v59Idx > 0) { v59Idx--; v59Render(); } }
+function v59Skip() { v59Idx = v59Steps.length - 1; v59Render(); }
+
+v59Init();
+initPage('0889-construct-binary-tree-from-preorder-and-postorder-traversal.html', v59Fwd, v59Back);
+</script>
+
+</body>
+</html>
