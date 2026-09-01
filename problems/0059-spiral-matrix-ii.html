@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#59 Spiral Matrix II · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-spiral-matrix-2" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#59</div>
+      <h1>Spiral Matrix II</h1>
+      <a href="https://leetcode.com/problems/spiral-matrix-ii/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Fill an <code>n×n</code> matrix with <code>1..n²</code> in spiral order. Rather than tracking explicit boundaries, this solution just walks in the current direction and turns <em>right</em> the moment the next cell (wrapping with <code>%n</code>) is already filled.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def generateMatrix(self, n):
+        A = [[0] * n for _ in range(n)]
+        i, j, di, dj = 0, 0, 0, 1
+        for k in xrange(n*n):
+            A[i][j] = k + 1
+            if A[(i+di)%n][(j+dj)%n]:
+                di, dj = dj, -di
+            i += di
+            j += dj
+        return A</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>n</label><input type="number" id="v58-n" value="3" style="width:100px" min="1" max="10"></div>
+      <button onclick="v58Init()">Run</button>
+    </div>
+
+    <div class="table-wrap"><div id="v58-grid"></div></div>
+
+    <div class="info-box" id="v58-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">k</div><div class="sval" id="v58-sk">—</div></div>
+      <div class="stat"><div class="slabel">(i, j)</div><div class="sval" id="v58-spos">—</div></div>
+      <div class="stat"><div class="slabel">direction (di, dj)</div><div class="sval" id="v58-sdir">—</div></div>
+      <div class="stat best"><div class="slabel">turned?</div><div class="sval" id="v58-sturn">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v58Back()">← Prev</button>
+      <button onclick="v58Fwd()">Next →</button>
+      <button onclick="v58Skip()">Skip to end</button>
+      <span class="prog" id="v58-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current cell</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>filled</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>peeked cell that triggered a turn</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #59 Spiral Matrix II — walk forward, turn right when the next cell is already filled */
+let v58Steps = [], v58Idx = 0, v58N = 3;
+
+function v58Build(n) {
+  const steps = [];
+  const A = Array.from({ length: n }, () => new Array(n).fill(0));
+  let i = 0, j = 0, di = 0, dj = 1;
+  for (let k = 0; k < n * n; k++) {
+    A[i][j] = k + 1;
+    const pi = (i + di + n) % n, pj = (j + dj + n) % n;
+    const blocked = A[pi][pj] !== 0;
+    let turned = false;
+    if (blocked) { const t = di; di = dj; dj = -t; turned = true; }
+    steps.push({ k, i, j, di, dj, peekI: pi, peekJ: pj, turned, grid: A.map(row => [...row]),
+      msg: `<code>k=${k}</code>: <code>A[${i}][${j}] = ${k + 1}</code>.` +
+        (turned
+          ? ` Peeking ahead to <code>(${pi},${pj})</code> (wrapping with <code>%${n}</code>) finds it already filled → turn right.`
+          : ` Peeking ahead to <code>(${pi},${pj})</code> — still empty → keep going straight.`) });
+    i += di; j += dj;
+  }
+  steps.push({ k: n * n, i: null, j: null, di, dj, grid: A.map(row => [...row]), done: true,
+    msg: `All <strong>${n * n}</strong> cells filled → return the matrix.` });
+  return steps;
+}
+
+function v58Render() {
+  if (!v58Steps.length) return;
+  const s = v58Steps[v58Idx];
+  const n = v58N;
+
+  const cont = document.getElementById('v58-grid');
+  let h = '<table class="dp-table"><tbody>';
+  for (let r = 0; r < n; r++) {
+    h += '<tr>';
+    for (let c = 0; c < n; c++) {
+      const v = s.grid[r][c];
+      let cls = v ? 'cell-true' : 'cell-empty';
+      if (!s.done && r === s.i && c === s.j) cls = 'cell-cur';
+      else if (!s.done && s.turned && r === s.peekI && c === s.peekJ) cls = 'cell-amber';
+      h += `<td class="${cls}" style="min-width:44px">${v || ''}</td>`;
+    }
+    h += '</tr>';
+  }
+  h += '</tbody></table>';
+  cont.innerHTML = h;
+
+  document.getElementById('v58-info').innerHTML = s.msg;
+  document.getElementById('v58-sk').textContent = s.k;
+  document.getElementById('v58-spos').textContent = s.i !== null ? `(${s.i}, ${s.j})` : '—';
+  document.getElementById('v58-sdir').textContent = `(${s.di}, ${s.dj})`;
+  document.getElementById('v58-sturn').textContent = s.done ? '—' : (s.turned ? 'Yes' : 'No');
+  document.getElementById('v58-prog').textContent = `Step ${v58Idx + 1} / ${v58Steps.length}`;
+}
+
+function v58Init() {
+  const n = parseInt(document.getElementById('v58-n').value, 10);
+  if (isNaN(n) || n < 1 || n > 10) {
+    document.getElementById('v58-info').innerHTML = `<span style="color:var(--red-text)">n must be between 1 and 10 (kept small so the grid stays readable).</span>`;
+    return;
+  }
+  v58N = n;
+  v58Steps = v58Build(n);
+  v58Idx = 0;
+  v58Render();
+}
+function v58Fwd()  { if (v58Idx < v58Steps.length - 1) { v58Idx++; v58Render(); } }
+function v58Back() { if (v58Idx > 0) { v58Idx--; v58Render(); } }
+function v58Skip() { v58Idx = v58Steps.length - 1; v58Render(); }
+
+v58Init();
+initPage('0059-spiral-matrix-ii.html', v58Fwd, v58Back);
+</script>
+
+</body>
+</html>

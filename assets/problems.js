@@ -58,4 +58,5 @@ const PROBLEMS = [
   { num: '1295', title: "Find Numbers with Even Number of Digits", file: '1295-find-numbers-with-even-number-of-digits.html' },
   { num: '2348', title: "Number of Zero-Filled Subarrays", file: '2348-number-of-zero-filled-subarrays.html' },
   { num: '367', title: "Valid Perfect Square", file: '0367-valid-perfect-square.html' },
+  { num: '59', title: "Spiral Matrix II", file: '0059-spiral-matrix-ii.html' },
 ];
