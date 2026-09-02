@@ -60,4 +60,5 @@ const PROBLEMS = [
   { num: '367', title: "Valid Perfect Square", file: '0367-valid-perfect-square.html' },
   { num: '59', title: "Spiral Matrix II", file: '0059-spiral-matrix-ii.html' },
   { num: '889', title: "Construct Binary Tree from Preorder and Postorder Traversal", file: '0889-construct-binary-tree-from-preorder-and-postorder-traversal.html' },
+  { num: '404', title: "Sum of Left Leaves", file: '0404-sum-of-left-leaves.html' },
 ];

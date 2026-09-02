@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#404 Sum of Left Leaves · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-sum-left-leaves" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#404</div>
+      <h1>Sum of Left Leaves</h1>
+      <a href="https://leetcode.com/problems/sum-of-left-leaves/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Sum every leaf that is a <em>left</em> child. The check happens at the parent: if <code>node.left</code> exists and is itself a leaf, add its value directly; otherwise recurse into it. The right side is always recursed into unconditionally — right children are never summed themselves, only searched for left leaves inside them.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution:
+    def sumOfLeftLeaves(self, root):
+        if root is None:
+            return 0
+
+        ans = 0
+
+        if root.left is not None:
+            if root.left.left is None and root.left.right is None:
+                ans += root.left.val
+            else:
+                ans += self.sumOfLeftLeaves(root.left)
+
+        ans += self.sumOfLeftLeaves(root.right)
+
+        return ans</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>tree (level-order, null for gaps)</label><input type="text" id="v60-tree-input" value="3,9,20,null,null,15,7" style="width:280px"></div>
+      <button onclick="v60Init()">Run</button>
+    </div>
+
+    <div class="section-label">Tree — left leaves get counted</div>
+    <div class="tree-wrap"><div id="v60-tree"></div></div>
+
+    <div class="info-box" id="v60-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">current node</div><div class="sval" id="v60-scur">—</div></div>
+      <div class="stat best"><div class="slabel">running sum</div><div class="sval" id="v60-ssum">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v60Back()">← Prev</button>
+      <button onclick="v60Fwd()">Next →</button>
+      <button onclick="v60Skip()">Skip to end</button>
+      <span class="prog" id="v60-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current node</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>counted (left leaf)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>visited, not counted</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>not yet visited</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #404 Sum of Left Leaves — DFS, sum only left children that are leaves */
+let v60Nodes = [], v60Edges = [], v60Steps = [], v60Idx = 0;
+
+function v60Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v60Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v60BuildTreeDOM(root) {
+  const cont = document.getElementById('v60-tree');
+  if (!root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 56, GAP_Y = 64, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v60Nodes.map(n => n.x));
+  const maxY = Math.max(...v60Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v60Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v60Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v60-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v60Build(root) {
+  const steps = [];
+  if (!root) {
+    steps.push({ phase: 'empty', currentId: null, sum: 0, visitedIds: [], countedIds: [],
+      msg: `<code>root is None</code> → return <code>0</code>.` });
+    return steps;
+  }
+  let sum = 0;
+  let visitedIds = [], countedIds = [];
+
+  function dfs(node) {
+    if (!node) {
+      steps.push({ phase: 'null', currentId: null, sum, visitedIds: [...visitedIds], countedIds: [...countedIds],
+        msg: `Node is <code>None</code> → return <code>0</code>.` });
+      return;
+    }
+    visitedIds = [...visitedIds, node.id];
+    steps.push({ phase: 'enter', currentId: node.id, sum, visitedIds: [...visitedIds], countedIds: [...countedIds],
+      msg: `Visit node <code>${node.val}</code>.` });
+
+    if (node.left) {
+      const leftIsLeaf = !node.left.left && !node.left.right;
+      if (leftIsLeaf) {
+        sum += node.left.val;
+        countedIds = [...countedIds, node.left.id];
+        visitedIds = [...visitedIds, node.left.id];
+        steps.push({ phase: 'left-leaf', currentId: node.id, sum, visitedIds: [...visitedIds], countedIds: [...countedIds],
+          msg: `<code>${node.val}</code>'s left child <code>${node.left.val}</code> has no children → it's a leaf → add <code>${node.left.val}</code> → running sum = <code>${sum}</code>.` });
+      } else {
+        steps.push({ phase: 'left-recurse', currentId: node.id, sum, visitedIds: [...visitedIds], countedIds: [...countedIds],
+          msg: `<code>${node.val}</code>'s left child <code>${node.left.val}</code> is not a leaf → recurse into it.` });
+        dfs(node.left);
+      }
+    } else {
+      steps.push({ phase: 'no-left', currentId: node.id, sum, visitedIds: [...visitedIds], countedIds: [...countedIds],
+        msg: `<code>${node.val}</code> has no left child.` });
+    }
+
+    steps.push({ phase: 'go-right', currentId: node.id, sum, visitedIds: [...visitedIds], countedIds: [...countedIds],
+      msg: `Recurse into <code>${node.val}</code>'s right subtree unconditionally — right children are searched for left leaves, never summed themselves.` });
+    dfs(node.right);
+  }
+
+  dfs(root);
+  steps.push({ phase: 'done', currentId: null, sum, visitedIds: [...visitedIds], countedIds: [...countedIds], result: sum,
+    msg: `Recursion complete → <strong>sum of left leaves = ${sum}</strong>.` });
+  return steps;
+}
+
+function v60Render() {
+  if (!v60Steps.length) return;
+  const s = v60Steps[v60Idx];
+
+  v60Nodes.forEach(n => {
+    const el = document.getElementById('v60-tn-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    if (s.currentId === n.id) el.classList.add('tn-current');
+    else if ((s.countedIds || []).includes(n.id)) el.classList.add('tn-visible');
+    else if ((s.visitedIds || []).includes(n.id)) el.classList.add('tn-visited');
+  });
+
+  document.getElementById('v60-info').innerHTML = s.msg;
+  document.getElementById('v60-scur').textContent = s.currentId != null ? v60Nodes.find(n => n.id === s.currentId).val : '—';
+  document.getElementById('v60-ssum').textContent = s.sum;
+  document.getElementById('v60-prog').textContent = `Step ${v60Idx + 1} / ${v60Steps.length}`;
+}
+
+function v60Init() {
+  const raw = document.getElementById('v60-tree-input').value;
+  const root = v60Parse(raw);
+  if (root) {
+    const { nodes, edges } = v60Layout(root);
+    v60Nodes = nodes; v60Edges = edges;
+  } else {
+    v60Nodes = []; v60Edges = [];
+  }
+  v60BuildTreeDOM(root);
+  v60Steps = v60Build(root);
+  v60Idx = 0;
+  v60Render();
+}
+function v60Fwd()  { if (v60Idx < v60Steps.length - 1) { v60Idx++; v60Render(); } }
+function v60Back() { if (v60Idx > 0) { v60Idx--; v60Render(); } }
+function v60Skip() { v60Idx = v60Steps.length - 1; v60Render(); }
+
+v60Init();
+initPage('0404-sum-of-left-leaves.html', v60Fwd, v60Back);
+</script>
+
+</body>
+</html>
