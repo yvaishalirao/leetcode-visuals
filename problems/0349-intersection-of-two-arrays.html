@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#349 Intersection of Two Arrays · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-intersection-arrays" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#349</div>
+      <h1>Intersection of Two Arrays</h1>
+      <a href="https://leetcode.com/problems/intersection-of-two-arrays/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Return the unique values common to both arrays. Put <code>nums1</code> into a set, then scan <code>nums2</code>: any value found in the set gets added to the result and immediately removed from the set — which is what keeps duplicates in <code>nums2</code> from producing duplicate matches.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution:
+    def intersection(self, nums1, nums2):
+        s1 = set(nums1)
+        result = []
+
+        for num in nums2:
+            if num in s1:
+                result.append(num)
+                s1.remove(num)
+
+        return result</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums1</label><input type="text" id="v63-nums1" value="4,9,5" style="width:160px"></div>
+      <div class="ig"><label>nums2</label><input type="text" id="v63-nums2" value="9,4,9,8,4" style="width:180px"></div>
+      <button onclick="v63Init()">Run</button>
+    </div>
+
+    <div class="section-label">s1 — set built from nums1, shrinks as matches are consumed</div>
+    <div class="history-list" id="v63-s1"></div>
+
+    <div class="section-label">nums2 — current index</div>
+    <div class="array-row" id="v63-nums2row"></div>
+
+    <div class="info-box" id="v63-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">num</div><div class="sval" id="v63-snum">—</div></div>
+      <div class="stat"><div class="slabel">in s1?</div><div class="sval" id="v63-sin">—</div></div>
+      <div class="stat best"><div class="slabel">result</div><div class="sval" id="v63-sres">[]</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v63Back()">← Prev</button>
+      <button onclick="v63Fwd()">Next →</button>
+      <button onclick="v63Skip()">Skip to end</button>
+      <span class="prog" id="v63-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current index</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>match → added to result, removed from s1</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>no match / already consumed</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #349 Intersection of Two Arrays — set membership with removal on match */
+let v63Steps = [], v63Idx = 0, v63Nums2 = [];
+
+function v63Build(nums1, nums2) {
+  const steps = [];
+  let s1 = [...new Set(nums1)];
+  const result = [];
+  steps.push({ phase: 'init', s1: [...s1], i: -1, result: [...result],
+    msg: `<code>s1 = set(nums1) = {${s1.join(', ')}}</code>.` });
+  for (let i = 0; i < nums2.length; i++) {
+    const num = nums2[i];
+    const inS1 = s1.includes(num);
+    if (inS1) {
+      result.push(num);
+      s1 = s1.filter(x => x !== num);
+      steps.push({ phase: 'match', i, num, s1: [...s1], result: [...result],
+        msg: `<code>nums2[${i}] = ${num}</code> is in <code>s1</code> → append to result, remove from <code>s1</code> → <code>s1 = {${s1.join(', ')}}</code>.` });
+    } else {
+      steps.push({ phase: 'no-match', i, num, s1: [...s1], result: [...result],
+        msg: `<code>nums2[${i}] = ${num}</code> is not in <code>s1</code> (never present, or already matched) → skip.` });
+    }
+  }
+  steps.push({ phase: 'done', s1: [...s1], result: [...result], msg: `<strong>Result: [${result.join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v63Render() {
+  if (!v63Steps.length) return;
+  const s = v63Steps[v63Idx];
+
+  const s1El = document.getElementById('v63-s1');
+  s1El.innerHTML = '';
+  (s.s1 || []).forEach(v => {
+    const chip = document.createElement('span'); chip.className = 'h-chip'; chip.textContent = v;
+    s1El.appendChild(chip);
+  });
+  if (s.s1 && !s.s1.length) s1El.innerHTML = '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+
+  const arrEl = document.getElementById('v63-nums2row');
+  arrEl.innerHTML = '';
+  v63Nums2.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if (s.phase === 'match' && k === s.i) c.classList.add('is-l');
+    if (k === s.i) { c.style.outline = '2.5px solid var(--accent)'; c.style.outlineOffset = '-2px'; }
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    arrEl.appendChild(c);
+  });
+
+  document.getElementById('v63-info').innerHTML = s.msg;
+  document.getElementById('v63-snum').textContent = s.num !== undefined ? s.num : '—';
+  document.getElementById('v63-sin').textContent = s.phase === 'match' ? 'Yes' : s.phase === 'no-match' ? 'No' : '—';
+  document.getElementById('v63-sres').textContent = `[${(s.result || []).join(', ')}]`;
+  document.getElementById('v63-prog').textContent = `Step ${v63Idx + 1} / ${v63Steps.length}`;
+}
+
+function v63Init() {
+  const nums1 = document.getElementById('v63-nums1').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  v63Nums2 = document.getElementById('v63-nums2').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  if (!nums1.length || !v63Nums2.length) {
+    document.getElementById('v63-info').innerHTML = `<span style="color:var(--red-text)">Both arrays must be non-empty.</span>`;
+    return;
+  }
+  v63Steps = v63Build(nums1, v63Nums2);
+  v63Idx = 0;
+  v63Render();
+}
+function v63Fwd()  { if (v63Idx < v63Steps.length - 1) { v63Idx++; v63Render(); } }
+function v63Back() { if (v63Idx > 0) { v63Idx--; v63Render(); } }
+function v63Skip() { v63Idx = v63Steps.length - 1; v63Render(); }
+
+v63Init();
+initPage('0349-intersection-of-two-arrays.html', v63Fwd, v63Back);
+</script>
+
+</body>
+</html>
