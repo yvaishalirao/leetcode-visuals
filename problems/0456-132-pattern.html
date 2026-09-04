@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#456 132 Pattern · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-132-pattern" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#456</div>
+      <h1>132 Pattern</h1>
+      <a href="https://leetcode.com/problems/132-pattern/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Find <code>i &lt; j &lt; k</code> with <code>nums[i] &lt; nums[k] &lt; nums[j]</code>. Scan <em>right to left</em> with a monotonic stack. Whenever a bigger value pops smaller ones off the stack, the last popped value becomes <code>m</code> — the best candidate for the pattern's middle-sized "2" element. If a later (further-left) value is smaller than <code>m</code>, it can be the "1" — pattern found.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def find132pattern(self, nums):
+        if len(nums) &lt; 3:
+            return False
+        m = float('-inf')
+        stack = []
+        for i in range(len(nums)-1, -1, -1):
+            if nums[i] &lt; m:
+                return True
+            else:
+                while stack and stack[-1] &lt; nums[i]:
+                    m = stack.pop()
+            stack.append(nums[i])
+        return False</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v62-nums" value="3,1,4,2" style="width:200px"></div>
+      <button onclick="v62Init()">Run</button>
+    </div>
+
+    <div class="section-label">nums — scanned right to left</div>
+    <div class="array-row" id="v62-array"></div>
+
+    <div class="section-label">stack — monotonic decreasing (bottom → top, left → right)</div>
+    <div class="chain-row" id="v62-stack"></div>
+
+    <div class="info-box" id="v62-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v62-si">—</div></div>
+      <div class="stat"><div class="slabel">nums[i]</div><div class="sval" id="v62-sval">—</div></div>
+      <div class="stat best"><div class="slabel">m</div><div class="sval" id="v62-sm">-∞</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v62-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v62Back()">← Prev</button>
+      <button onclick="v62Fwd()">Next →</button>
+      <button onclick="v62Skip()">Skip to end</button>
+      <span class="prog" id="v62-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current index i</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>the "1" — pattern found here</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #456 132 Pattern — right-to-left monotonic stack tracking the best middle candidate m */
+let v62Steps = [], v62Idx = 0, v62Nums = [];
+
+function v62Build(nums) {
+  const steps = [];
+  if (nums.length < 3) {
+    steps.push({ phase: 'done', stack: [], m: -Infinity, result: false, foundIdx: null,
+      msg: `Array has fewer than 3 elements → return <strong>False</strong> immediately.` });
+    return steps;
+  }
+  let m = -Infinity;
+  const stack = [];
+  steps.push({ phase: 'start', i: null, m, stack: [...stack], foundIdx: null,
+    msg: `Start scanning right to left. <code>m = -∞</code>, <code>stack = []</code>.` });
+
+  let result = false, foundIdx = null;
+  for (let i = nums.length - 1; i >= 0 && !result; i--) {
+    if (nums[i] < m) {
+      result = true; foundIdx = i;
+      steps.push({ phase: 'found', i, val: nums[i], m, stack: [...stack], foundIdx: i,
+        msg: `<code>nums[${i}] = ${nums[i]} &lt; m(${m})</code> → this can be the pattern's "1" (with <code>m</code>'s original position as "2" and the value that produced it as "3") → <strong>132 pattern found, return True</strong>.` });
+      break;
+    }
+    while (stack.length && stack[stack.length - 1] < nums[i]) {
+      const popped = stack.pop();
+      m = popped;
+      steps.push({ phase: 'pop', i, val: nums[i], m, stack: [...stack], poppedVal: popped, foundIdx: null,
+        msg: `<code>nums[${i}] = ${nums[i]}</code> ≥ stack top <code>${popped}</code> → pop it; it becomes the new best "2" candidate → <code>m = ${popped}</code>.` });
+    }
+    stack.push(nums[i]);
+    steps.push({ phase: 'push', i, val: nums[i], m, stack: [...stack], foundIdx: null,
+      msg: `Push <code>nums[${i}] = ${nums[i]}</code> onto the stack (a candidate "3").` });
+  }
+
+  steps.push({ phase: 'done', stack: [...stack], m, result, foundIdx,
+    msg: result ? `<strong>Answer: True</strong>.` : `Scan finished with no pattern found → <strong>Answer: False</strong>.` });
+  return steps;
+}
+
+function v62Render() {
+  if (!v62Steps.length) return;
+  const s = v62Steps[v62Idx];
+
+  const arrEl = document.getElementById('v62-array');
+  arrEl.innerHTML = '';
+  v62Nums.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if (k === s.foundIdx) {
+      c.classList.add('is-l');
+      c.style.outline = '2px solid var(--green-border)'; c.style.outlineOffset = '-2px';
+    } else if (k === s.i) {
+      c.style.outline = '2.5px solid var(--accent)'; c.style.outlineOffset = '-2px';
+    }
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    arrEl.appendChild(c);
+  });
+
+  const stackEl = document.getElementById('v62-stack');
+  stackEl.innerHTML = '';
+  if (!s.stack.length) {
+    stackEl.innerHTML = '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+  } else {
+    s.stack.forEach((v, idx) => {
+      const nd = document.createElement('div');
+      nd.className = 'chain-node' + (idx === s.stack.length - 1 ? ' cur-node' : '');
+      nd.innerHTML = `${v}${idx === s.stack.length - 1 ? '<div class="cn-sub">top</div>' : ''}`;
+      stackEl.appendChild(nd);
+      if (idx < s.stack.length - 1) {
+        const ar = document.createElement('span'); ar.className = 'chain-arrow'; ar.textContent = '→';
+        stackEl.appendChild(ar);
+      }
+    });
+  }
+
+  document.getElementById('v62-info').innerHTML = s.msg;
+  document.getElementById('v62-si').textContent = s.i !== null && s.i !== undefined ? s.i : '—';
+  document.getElementById('v62-sval').textContent = s.val !== undefined ? s.val : '—';
+  document.getElementById('v62-sm').textContent = s.m === -Infinity ? '-∞' : s.m;
+  document.getElementById('v62-sans').textContent = s.phase === 'done' ? (s.result ? 'True' : 'False') : '…';
+  document.getElementById('v62-prog').textContent = `Step ${v62Idx + 1} / ${v62Steps.length}`;
+}
+
+function v62Init() {
+  v62Nums = document.getElementById('v62-nums').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  if (!v62Nums.length) {
+    document.getElementById('v62-info').innerHTML = `<span style="color:var(--red-text)">nums must be non-empty.</span>`;
+    return;
+  }
+  v62Steps = v62Build(v62Nums);
+  v62Idx = 0;
+  v62Render();
+}
+function v62Fwd()  { if (v62Idx < v62Steps.length - 1) { v62Idx++; v62Render(); } }
+function v62Back() { if (v62Idx > 0) { v62Idx--; v62Render(); } }
+function v62Skip() { v62Idx = v62Steps.length - 1; v62Render(); }
+
+v62Init();
+initPage('0456-132-pattern.html', v62Fwd, v62Back);
+</script>
+
+</body>
+</html>

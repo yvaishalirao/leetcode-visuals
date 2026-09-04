@@ -62,4 +62,5 @@ const PROBLEMS = [
   { num: '889', title: "Construct Binary Tree from Preorder and Postorder Traversal", file: '0889-construct-binary-tree-from-preorder-and-postorder-traversal.html' },
   { num: '404', title: "Sum of Left Leaves", file: '0404-sum-of-left-leaves.html' },
   { num: '722', title: "Remove Comments", file: '0722-remove-comments.html' },
+  { num: '456', title: "132 Pattern", file: '0456-132-pattern.html' },
 ];
