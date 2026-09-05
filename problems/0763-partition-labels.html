@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#763 Partition Labels · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-partition-labels" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#763</div>
+      <h1>Partition Labels</h1>
+      <a href="https://leetcode.com/problems/partition-labels/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Split <code>s</code> into the most parts possible so each letter appears in only one part. First record every letter's last occurrence. Then greedily grow the current window's <code>end</code> to the last occurrence of every letter seen so far — the moment the scan pointer <code>i</code> catches up to <code>end</code>, no letter inside can appear later, so it's safe to cut.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def partitionLabels(self, s):
+        last_occurrence = {}
+
+        for i, char in enumerate(s):
+            last_occurrence[char] = i
+
+        result = []
+        start = 0
+        end = 0
+
+        for i, char in enumerate(s):
+            end = max(end, last_occurrence[char])
+
+            if i == end:
+                result.append(end - start + 1)
+                start = i + 1
+
+        return result</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s</label><input type="text" id="v66-s" value="ababcbacadefegdehijhklij" style="width:320px"></div>
+      <button onclick="v66Init()">Run</button>
+    </div>
+
+    <div class="section-label">s — current window [start, end]</div>
+    <div id="v66-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v66-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v66-si">—</div></div>
+      <div class="stat"><div class="slabel">start</div><div class="sval" id="v66-sstart">0</div></div>
+      <div class="stat"><div class="slabel">end</div><div class="sval" id="v66-send">0</div></div>
+      <div class="stat best"><div class="slabel">result</div><div class="sval" id="v66-sres">[]</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v66Back()">← Prev</button>
+      <button onclick="v66Fwd()">Next →</button>
+      <button onclick="v66Skip()">Skip to end</button>
+      <span class="prog" id="v66-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>current window [start, end]</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current index i</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>partition cut here (i == end)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #763 Partition Labels — greedily extend the window to the farthest last-occurrence seen */
+let v66Steps = [], v66Idx = 0, v66Str = '';
+
+function v66Build(s) {
+  const steps = [];
+  const lastOcc = {};
+  for (let i = 0; i < s.length; i++) lastOcc[s[i]] = i;
+  steps.push({ phase: 'pass1', i: -1, start: 0, end: 0, cutIdx: null, result: [],
+    msg: `Pass 1 complete → every letter's last occurrence recorded. Now scan left to right, growing the window.` });
+
+  const result = [];
+  let start = 0, end = 0, cutIdx = null;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    const grew = lastOcc[ch] > end;
+    end = Math.max(end, lastOcc[ch]);
+    let msg = `<code>i=${i}, char='${ch}'</code> → <code>end = max(end, last_occurrence['${ch}']=${lastOcc[ch]}) = ${end}</code>${grew ? ' (window extended)' : ''}.`;
+    if (i === end) {
+      const size = end - start + 1;
+      result.push(size);
+      cutIdx = i;
+      msg += ` <code>i == end</code> → partition complete: size <code>${end}-${start}+1 = ${size}</code> → <code>result.append(${size})</code>.`;
+      steps.push({ phase: 'cut', i, start, end, cutIdx, result: [...result], msg });
+      start = i + 1;
+    } else {
+      steps.push({ phase: 'extend', i, start, end, cutIdx: null, result: [...result], msg });
+    }
+  }
+
+  steps.push({ phase: 'done', i: null, start, end, cutIdx: null, result: [...result],
+    msg: `<strong>Answer: [${result.join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v66Render() {
+  if (!v66Steps.length) return;
+  const s = v66Steps[v66Idx];
+
+  const stripEl = document.getElementById('v66-strip');
+  stripEl.innerHTML = '';
+  for (let k = 0; k < v66Str.length; k++) {
+    const box = document.createElement('div');
+    box.className = 'char-box';
+    if (k >= s.start && k <= s.end) box.classList.add('s-match');
+    if (k === s.i) { box.style.outline = '2.5px solid var(--accent)'; box.style.outlineOffset = '-2px'; }
+    if (s.phase === 'cut' && k === s.cutIdx) { box.style.outline = '2px solid var(--green-border)'; box.style.outlineOffset = '-2px'; }
+    box.innerHTML = `${v66Str[k]}<span class="ci">${k}</span>`;
+    stripEl.appendChild(box);
+  }
+
+  document.getElementById('v66-info').innerHTML = s.msg;
+  document.getElementById('v66-si').textContent = s.i !== null && s.i !== -1 ? s.i : '—';
+  document.getElementById('v66-sstart').textContent = s.start;
+  document.getElementById('v66-send').textContent = s.end;
+  document.getElementById('v66-sres').textContent = `[${(s.result || []).join(', ')}]`;
+  document.getElementById('v66-prog').textContent = `Step ${v66Idx + 1} / ${v66Steps.length}`;
+}
+
+function v66Init() {
+  v66Str = document.getElementById('v66-s').value.trim();
+  if (!v66Str) {
+    document.getElementById('v66-info').innerHTML = `<span style="color:var(--red-text)">s must be non-empty.</span>`;
+    return;
+  }
+  v66Steps = v66Build(v66Str);
+  v66Idx = 0;
+  v66Render();
+}
+function v66Fwd()  { if (v66Idx < v66Steps.length - 1) { v66Idx++; v66Render(); } }
+function v66Back() { if (v66Idx > 0) { v66Idx--; v66Render(); } }
+function v66Skip() { v66Idx = v66Steps.length - 1; v66Render(); }
+
+v66Init();
+initPage('0763-partition-labels.html', v66Fwd, v66Back);
+</script>
+
+</body>
+</html>
