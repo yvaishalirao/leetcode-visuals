@@ -65,4 +65,5 @@ const PROBLEMS = [
   { num: '456', title: "132 Pattern", file: '0456-132-pattern.html' },
   { num: '349', title: "Intersection of Two Arrays", file: '0349-intersection-of-two-arrays.html' },
   { num: '1169', title: "Invalid Transactions", file: '1169-invalid-transactions.html' },
+  { num: '525', title: "Contiguous Array", file: '0525-contiguous-array.html' },
 ];

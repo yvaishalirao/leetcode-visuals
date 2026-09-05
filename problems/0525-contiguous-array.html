@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#525 Contiguous Array · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-contiguous-array" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#525</div>
+      <h1>Contiguous Array</h1>
+      <a href="https://leetcode.com/problems/contiguous-array/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Find the longest subarray with an equal number of 0s and 1s. Treat each 0 as −1 and each 1 as +1, tracking a running <code>count</code>. If the same <code>count</code> value is seen at two different indices, everything between them sums to zero — an equal number of 0s and 1s.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def findMaxLength(self, nums):
+        count = 0
+        max_length=0
+        table = {0: 0}
+        for index, num in enumerate(nums, 1):
+            if num == 0:
+                count -= 1
+            else:
+                count += 1
+
+            if count in table:
+                max_length = max(max_length, index - table[count])
+            else:
+                table[count] = index
+
+        return max_length</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v65-nums" value="0,1,1,1,1,1,0,0,0" style="width:260px"></div>
+      <button onclick="v65Init()">Run</button>
+    </div>
+
+    <div class="section-label">nums — current index</div>
+    <div class="array-row" id="v65-array"></div>
+
+    <div class="section-label">table — first index each running count was seen at</div>
+    <div id="v65-table" style="display:flex;flex-wrap:wrap;gap:6px;min-height:48px;margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v65-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">index</div><div class="sval" id="v65-si">—</div></div>
+      <div class="stat"><div class="slabel">count</div><div class="sval" id="v65-scount">0</div></div>
+      <div class="stat best"><div class="slabel">max_length</div><div class="sval" id="v65-smax">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v65Back()">← Prev</button>
+      <button onclick="v65Fwd()">Next →</button>
+      <button onclick="v65Skip()">Skip to end</button>
+      <span class="prog" id="v65-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current index</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>new count, recorded</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border);outline:2px solid var(--green-border);outline-offset:-2px"></div>count repeated → new max_length</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #525 Contiguous Array — running +1/-1 count, first-seen-index table */
+let v65Steps = [], v65Idx = 0, v65Nums = [];
+
+function v65Build(nums) {
+  const steps = [];
+  let count = 0, maxLength = 0;
+  const table = { 0: 0 };
+  steps.push({ phase: 'init', i: -1, count: 0, maxLength: 0, table: { ...table },
+    msg: `<code>table = {0: 0}</code> — an empty prefix (before any elements) has running count 0 at index 0.` });
+
+  for (let idx = 0; idx < nums.length; idx++) {
+    const num = nums[idx];
+    const index = idx + 1;
+    count += (num === 0) ? -1 : 1;
+    let msg = `<code>nums[${idx}] = ${num}</code> → <code>count ${num === 0 ? '-= 1' : '+= 1'} = ${count}</code> (index = ${index}).`;
+    if (Object.prototype.hasOwnProperty.call(table, count)) {
+      const newLen = index - table[count];
+      const improved = newLen > maxLength;
+      const matchIdx = table[count];
+      if (improved) maxLength = newLen;
+      msg += ` <code>count=${count}</code> was already seen at index <code>${matchIdx}</code> → subarray length <code>${index} - ${matchIdx} = ${newLen}</code>` +
+        (improved ? ` → new <code>max_length = ${maxLength}</code>.` : ` (not better than current max ${maxLength}).`);
+      steps.push({ phase: 'match', i: idx, count, maxLength, table: { ...table }, matchIdx, newLen, improved, msg });
+    } else {
+      table[count] = index;
+      msg += ` <code>count=${count}</code> is new → <code>table[${count}] = ${index}</code>.`;
+      steps.push({ phase: 'new', i: idx, count, maxLength, table: { ...table }, msg });
+    }
+  }
+
+  steps.push({ phase: 'done', maxLength, table: { ...table }, result: maxLength,
+    msg: `<strong>Answer: ${maxLength}</strong>.` });
+  return steps;
+}
+
+function v65Render() {
+  if (!v65Steps.length) return;
+  const s = v65Steps[v65Idx];
+
+  const arrEl = document.getElementById('v65-array');
+  arrEl.innerHTML = '';
+  v65Nums.forEach((v, k) => {
+    const c = document.createElement('div'); c.className = 'arr-cell';
+    if (k === s.i) { c.style.outline = '2.5px solid var(--accent)'; c.style.outlineOffset = '-2px'; }
+    c.innerHTML = `${v}<span class="cidx">${k}</span>`;
+    arrEl.appendChild(c);
+  });
+
+  const tableEl = document.getElementById('v65-table');
+  tableEl.innerHTML = '';
+  Object.entries(s.table || {}).forEach(([cnt, idx]) => {
+    const card = document.createElement('div');
+    let cls = 'sum-card';
+    if (s.count !== undefined && +cnt === s.count) {
+      cls += (s.phase === 'match' && s.improved) ? ' sc-best' : ' sc-filled';
+    }
+    card.className = cls;
+    card.innerHTML = `<span class="sc-sum">count ${cnt}</span><span class="sc-cnt">idx ${idx}</span>`;
+    tableEl.appendChild(card);
+  });
+
+  document.getElementById('v65-info').innerHTML = s.msg;
+  document.getElementById('v65-si').textContent = s.i !== undefined && s.i !== -1 ? s.i : '—';
+  document.getElementById('v65-scount').textContent = s.count;
+  document.getElementById('v65-smax').textContent = s.maxLength;
+  document.getElementById('v65-prog').textContent = `Step ${v65Idx + 1} / ${v65Steps.length}`;
+}
+
+function v65Init() {
+  v65Nums = document.getElementById('v65-nums').value.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+  if (!v65Nums.length) {
+    document.getElementById('v65-info').innerHTML = `<span style="color:var(--red-text)">nums must be non-empty.</span>`;
+    return;
+  }
+  v65Steps = v65Build(v65Nums);
+  v65Idx = 0;
+  v65Render();
+}
+function v65Fwd()  { if (v65Idx < v65Steps.length - 1) { v65Idx++; v65Render(); } }
+function v65Back() { if (v65Idx > 0) { v65Idx--; v65Render(); } }
+function v65Skip() { v65Idx = v65Steps.length - 1; v65Render(); }
+
+v65Init();
+initPage('0525-contiguous-array.html', v65Fwd, v65Back);
+</script>
+
+</body>
+</html>
