@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1169 Invalid Transactions · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-invalid-transactions" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1169</div>
+      <h1>Invalid Transactions</h1>
+      <a href="https://leetcode.com/problems/invalid-transactions/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">A transaction is invalid if its amount exceeds $1000, or if the same name has another transaction in a <em>different</em> city within 60 minutes. Pass 1 pre-builds a lookup: for every (time, name), which cities transacted. Pass 2 checks each transaction's amount, then scans every minute in <code>[time−60, time+60]</code> for a same-name entry in a different city.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>from collections import defaultdict
+
+class Solution(object):
+    def invalidTransactions(self, transactions):
+        invalid = []
+        transaction_time = defaultdict(dict)
+        for transaction in transactions:
+            name, str_time, amount, city = transaction.split(",")
+            time = int(str_time)
+            if name not in transaction_time[time]:
+                transaction_time[time][name] = {city, }
+            else:
+                transaction_time[time][name].add(city)
+
+        for transaction in transactions:
+            name, str_time, amount, city = transaction.split(",")
+            time = int(str_time)
+            if int(amount) &gt; 1000:
+                invalid.append(transaction)
+                continue
+            for inv_time in range(time-60, time+61):
+                if inv_time not in transaction_time:
+                    continue
+                if name not in transaction_time[inv_time]:
+                    continue
+                trans_by_name_at_time = transaction_time[inv_time][name]
+                if city not in trans_by_name_at_time or len(trans_by_name_at_time) &gt; 1:
+                    invalid.append(transaction)
+                    break
+        return invalid</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>transactions (one per line)</label><textarea id="v64-input" rows="3" style="width:100%;font-family:monospace;font-size:13px;padding:8px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:var(--surface);color:var(--text)">alice,20,800,mtv
+alice,50,100,beijing</textarea></div>
+    </div>
+    <div class="row"><button onclick="v64Init()">Run</button></div>
+
+    <div class="section-label">transaction_time — built in pass 1 (time → name → cities)</div>
+    <div id="v64-map" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem"></div>
+
+    <div class="section-label">transactions — pass 2, checked one at a time</div>
+    <div id="v64-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v64-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat best"><div class="slabel">invalid count</div><div class="sval" id="v64-scount">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v64Back()">← Prev</button>
+      <button onclick="v64Fwd()">Next →</button>
+      <button onclick="v64Skip()">Skip to end</button>
+      <span class="prog" id="v64-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current transaction</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>invalid</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>valid</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1169 Invalid Transactions — pre-built time/name/city map, then per-transaction validity check */
+let v64Steps = [], v64Idx = 0, v64Transactions = [];
+
+function v64Build(transactions) {
+  const steps = [];
+  const parsed = transactions.map(t => {
+    const [name, timeStr, amount, city] = t.split(',');
+    return { raw: t, name, time: +timeStr, amount: +amount, city };
+  });
+
+  const transTime = {};
+  parsed.forEach(tx => {
+    if (!transTime[tx.time]) transTime[tx.time] = {};
+    if (!transTime[tx.time][tx.name]) transTime[tx.time][tx.name] = new Set();
+    transTime[tx.time][tx.name].add(tx.city);
+  });
+  const mapSnapshot = Object.keys(transTime).sort((a, b) => a - b).map(time => ({
+    time,
+    names: Object.keys(transTime[time]).map(name => ({ name, cities: [...transTime[time][name]] }))
+  }));
+
+  steps.push({ phase: 'pass1', map: mapSnapshot, cur: -1, statuses: [], invalid: [],
+    msg: `Pass 1 complete → <code>transaction_time</code> built from all ${parsed.length} transactions. Now check each one (pass 2).` });
+
+  const invalid = [];
+  const statuses = [];
+  parsed.forEach((tx, idx) => {
+    if (tx.amount > 1000) {
+      invalid.push(tx.raw);
+      statuses.push('invalid');
+      steps.push({ phase: 'check', map: mapSnapshot, cur: idx, statuses: [...statuses], invalid: [...invalid],
+        msg: `<code>${tx.raw}</code>: amount <code>${tx.amount} &gt; 1000</code> → <strong>invalid</strong> (never mind the time window).` });
+      return;
+    }
+    let culprit = null;
+    for (let invTime = tx.time - 60; invTime <= tx.time + 60 && !culprit; invTime++) {
+      if (!transTime[invTime] || !transTime[invTime][tx.name]) continue;
+      const cities = transTime[invTime][tx.name];
+      if (!cities.has(tx.city) || cities.size > 1) culprit = { invTime, cities: [...cities] };
+    }
+    if (culprit) {
+      invalid.push(tx.raw);
+      statuses.push('invalid');
+      steps.push({ phase: 'check', map: mapSnapshot, cur: idx, statuses: [...statuses], invalid: [...invalid], culprit,
+        msg: `<code>${tx.raw}</code>: amount is fine, but at time <code>${culprit.invTime}</code> (within 60 min of ${tx.time}) "${tx.name}" also transacted in {${culprit.cities.join(', ')}} — a different city → <strong>invalid</strong>.` });
+    } else {
+      statuses.push('valid');
+      steps.push({ phase: 'check', map: mapSnapshot, cur: idx, statuses: [...statuses], invalid: [...invalid],
+        msg: `<code>${tx.raw}</code>: amount is fine, and no same-name transaction in a different city within 60 minutes → <strong>valid</strong>.` });
+    }
+  });
+
+  steps.push({ phase: 'done', map: mapSnapshot, cur: -1, statuses: [...statuses], invalid: [...invalid],
+    msg: `<strong>Invalid transactions:</strong> [${invalid.map(x => '"' + x + '"').join(', ')}]` });
+  return steps;
+}
+
+function v64Render() {
+  if (!v64Steps.length) return;
+  const s = v64Steps[v64Idx];
+
+  const mapEl = document.getElementById('v64-map');
+  mapEl.innerHTML = '';
+  s.map.forEach(entry => {
+    entry.names.forEach(n => {
+      const card = document.createElement('div');
+      card.className = 'sum-card';
+      card.innerHTML = `<span class="sc-sum">t=${entry.time}</span><span class="sc-cnt">${n.name}: {${n.cities.join(', ')}}</span>`;
+      mapEl.appendChild(card);
+    });
+  });
+
+  const listEl = document.getElementById('v64-list');
+  listEl.innerHTML = '';
+  v64Transactions.forEach((raw, idx) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border-strong);font-family:monospace;font-size:13px;background:var(--surface)';
+    const status = s.statuses[idx];
+    if (status === 'invalid') { row.style.background = 'var(--red-bg)'; row.style.borderColor = 'var(--red-border)'; row.style.color = 'var(--red-text)'; }
+    else if (status === 'valid') { row.style.background = 'var(--green-bg)'; row.style.borderColor = 'var(--green-border)'; row.style.color = 'var(--green-text)'; }
+    if (idx === s.cur) { row.style.outline = '2.5px solid var(--accent)'; row.style.outlineOffset = '-2px'; }
+    row.textContent = raw;
+    listEl.appendChild(row);
+  });
+
+  document.getElementById('v64-info').innerHTML = s.msg;
+  document.getElementById('v64-scount').textContent = s.invalid.length;
+  document.getElementById('v64-prog').textContent = `Step ${v64Idx + 1} / ${v64Steps.length}`;
+}
+
+function v64Init() {
+  v64Transactions = document.getElementById('v64-input').value.split('\n').map(s => s.trim()).filter(Boolean);
+  if (!v64Transactions.length) {
+    document.getElementById('v64-info').innerHTML = `<span style="color:var(--red-text)">Need at least one transaction.</span>`;
+    return;
+  }
+  v64Steps = v64Build(v64Transactions);
+  v64Idx = 0;
+  v64Render();
+}
+function v64Fwd()  { if (v64Idx < v64Steps.length - 1) { v64Idx++; v64Render(); } }
+function v64Back() { if (v64Idx > 0) { v64Idx--; v64Render(); } }
+function v64Skip() { v64Idx = v64Steps.length - 1; v64Render(); }
+
+v64Init();
+initPage('1169-invalid-transactions.html', v64Fwd, v64Back);
+</script>
+
+</body>
+</html>
