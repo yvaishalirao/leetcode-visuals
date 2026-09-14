@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1352 Product of the Last K Numbers · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-product-of-the-last-k-numbers" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1352</div>
+      <h1>Product of the Last K Numbers</h1>
+      <a href="https://leetcode.com/problems/product-of-the-last-k-numbers/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Design a stream that supports <code>add(num)</code> and <code>getProduct(k)</code> (product of the last <code>k</code> numbers). Keep <strong>prefix products</strong> starting from <code>[1]</code>, so the last <code>k</code> numbers multiply to <code>prefix[-1] // prefix[-k-1]</code>. A <code>0</code> would break division, so on <code>add(0)</code> reset to <code>[1]</code> — and if <code>k</code> reaches back past that reset, the product must include the 0, so return <code>0</code>. Both operations are O(1).</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class ProductOfNumbers(object):
+    def __init__(self):
+        self.prefix = [1]
+
+    def add(self, num):
+        if num == 0:
+            self.prefix = [1]
+        else:
+            self.prefix.append(self.prefix[-1] * num)
+
+    def getProduct(self, k):
+        if k >= len(self.prefix):
+            return 0
+        return self.prefix[-1] // self.prefix[-k - 1]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>operations (add n / get k, comma-separated)</label><input type="text" id="v68-in" value="add 3, add 0, add 2, add 5, add 4, get 2, get 3, get 4, add 8, get 2" style="width:420px"></div>
+      <button onclick="v68Init()">Run</button>
+    </div>
+
+    <div class="section-label">stream of added numbers</div>
+    <div class="array-row" id="v68-stream" style="min-height:48px"></div>
+
+    <div class="section-label">prefix (products since the last 0)</div>
+    <div class="array-row" id="v68-prefix"></div>
+
+    <div class="info-box" id="v68-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">operation</div><div class="sval" id="v68-sop">—</div></div>
+      <div class="stat"><div class="slabel">len(prefix)</div><div class="sval" id="v68-slen">1</div></div>
+      <div class="stat best"><div class="slabel">last output</div><div class="sval" id="v68-sout">—</div></div>
+    </div>
+
+    <div class="section-label">getProduct outputs</div>
+    <div class="history-list" id="v68-hist" style="margin-bottom:1rem"></div>
+
+    <div class="controls">
+      <button onclick="v68Back()">← Prev</button>
+      <button onclick="v68Fwd()">Next →</button>
+      <button onclick="v68Skip()">Skip to end</button>
+      <span class="prog" id="v68-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>last k numbers</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>prefix[-1] (numerator)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>prefix[-k-1] (divisor)</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>0 that reset the prefix</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1352 Product of the Last K Numbers — prefix products, reset to [1] whenever a 0 arrives */
+let v68Steps = [], v68Idx = 0;
+
+function v68Parse(text) {
+  const ops = [];
+  for (const raw of text.split(',').map(t => t.trim()).filter(t => t)) {
+    const m = raw.match(/^(add|get)\s+(\d+)$/i);
+    if (!m) return { error: `Can't read "${raw}" — use "add n" or "get k".` };
+    ops.push({ type: m[1].toLowerCase(), val: parseInt(m[2], 10) });
+  }
+  if (!ops.length) return { error: 'Enter at least one operation.' };
+  let size = 0;
+  for (const op of ops) {
+    if (op.type === 'add') {
+      if (op.val > 100) return { error: 'add n needs 0 ≤ n ≤ 100.' };
+      size++;
+    } else if (op.val < 1 || op.val > size) {
+      return { error: `get ${op.val}: k must be between 1 and the number of values added so far (${size}).` };
+    }
+  }
+  return { ops };
+}
+
+function v68Build(ops) {
+  const steps = [];
+  let prefix = [1n];
+  const stream = [];
+  const outputs = [];
+  let zeroAt = -1;
+  steps.push({ op: 'init', stream: [], prefix: [...prefix], zeroAt, outputs: [], hl: null, out: null,
+    msg: `<code>ProductOfNumbers()</code> → <code>prefix = [1]</code>. The leading 1 lets <code>prefix[-1] // prefix[-k-1]</code> work even when k covers every number.` });
+
+  for (const op of ops) {
+    if (op.type === 'add') {
+      stream.push(op.val);
+      let msg;
+      if (op.val === 0) {
+        prefix = [1n];
+        zeroAt = stream.length - 1;
+        msg = `<code>add(0)</code> → every product that includes this 0 is 0, so the history is useless: reset <code>prefix = [1]</code>.`;
+      } else {
+        const prev = prefix[prefix.length - 1];
+        const p = prev * BigInt(op.val);
+        prefix.push(p);
+        msg = `<code>add(${op.val})</code> → append <code>prefix[-1] × ${op.val} = ${prev} × ${op.val} = ${p}</code>.`;
+      }
+      steps.push({ op: `add(${op.val})`, stream: [...stream], prefix: [...prefix], zeroAt, outputs: [...outputs],
+        hl: { kind: op.val === 0 ? 'reset' : 'add' }, out: outputs.length ? outputs[outputs.length - 1].out : null, msg });
+    } else {
+      const k = op.val;
+      let out, msg, kind;
+      if (k >= prefix.length) {
+        out = 0n; kind = 'zero';
+        msg = `<code>getProduct(${k})</code> → <code>k=${k} ≥ len(prefix)=${prefix.length}</code>: the last ${k} numbers reach back to the 0 → return <code>0</code>.`;
+      } else {
+        const a = prefix[prefix.length - 1], b = prefix[prefix.length - 1 - k];
+        out = a / b; kind = 'get';
+        msg = `<code>getProduct(${k})</code> → <code>prefix[-1] // prefix[-${k + 1}] = ${a} // ${b} = ${out}</code>.`;
+      }
+      outputs.push({ k, out });
+      steps.push({ op: `getProduct(${k})`, stream: [...stream], prefix: [...prefix], zeroAt, outputs: [...outputs],
+        hl: { kind, k }, out, msg });
+    }
+  }
+
+  steps.push({ op: 'done', stream: [...stream], prefix: [...prefix], zeroAt, outputs: [...outputs], hl: null,
+    out: outputs.length ? outputs[outputs.length - 1].out : null,
+    msg: `<strong>Outputs: [${outputs.map(o => o.out).join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v68Cell(val, idx, cls) {
+  const c = document.createElement('div');
+  c.className = 'arr-cell' + (cls ? ' ' + cls : '');
+  c.style.cssText = 'width:auto;min-width:48px;padding:0 8px';
+  c.innerHTML = `${val}<span class="cidx">${idx}</span>`;
+  return c;
+}
+
+function v68Render() {
+  if (!v68Steps.length) return;
+  const s = v68Steps[v68Idx];
+  const hl = s.hl;
+  const n = s.stream.length;
+
+  const st = document.getElementById('v68-stream');
+  st.innerHTML = '';
+  s.stream.forEach((v, i) => {
+    let cls = '';
+    if (hl && (hl.kind === 'get' || hl.kind === 'zero') && i >= n - hl.k) cls = 'in-window';
+    const c = v68Cell(v, i, cls);
+    if (i === s.zeroAt) {
+      c.style.background = 'var(--red-bg)'; c.style.borderColor = 'var(--red-border)'; c.style.color = 'var(--red-text)';
+      if (hl && hl.kind === 'zero') c.classList.add('is-target');
+    } else if (i < s.zeroAt) {
+      c.style.opacity = '0.45';
+    }
+    if (hl && (hl.kind === 'add' || hl.kind === 'reset') && i === n - 1) c.classList.add('cell-current');
+    st.appendChild(c);
+  });
+
+  const pf = document.getElementById('v68-prefix');
+  pf.innerHTML = '';
+  const m = s.prefix.length;
+  s.prefix.forEach((v, i) => {
+    let cls = '';
+    if (hl && (hl.kind === 'add' || hl.kind === 'get') && i === m - 1) cls = 'is-r';
+    if (hl && hl.kind === 'get' && i === m - 1 - hl.k) cls = 'is-l';
+    pf.appendChild(v68Cell(v.toString(), i, cls));
+  });
+
+  const hist = document.getElementById('v68-hist');
+  hist.innerHTML = '';
+  s.outputs.forEach(o => {
+    const chip = document.createElement('span');
+    chip.className = 'h-chip';
+    chip.textContent = `k=${o.k} → ${o.out}`;
+    hist.appendChild(chip);
+  });
+
+  document.getElementById('v68-info').innerHTML = s.msg;
+  document.getElementById('v68-sop').textContent = s.op === 'init' || s.op === 'done' ? '—' : s.op;
+  document.getElementById('v68-slen').textContent = m;
+  document.getElementById('v68-sout').textContent = s.out !== null ? s.out.toString() : '—';
+  document.getElementById('v68-prog').textContent = `Step ${v68Idx + 1} / ${v68Steps.length}`;
+}
+
+function v68Init() {
+  const parsed = v68Parse(document.getElementById('v68-in').value);
+  if (parsed.error) {
+    document.getElementById('v68-info').innerHTML = `<span style="color:var(--red-text)">${parsed.error}</span>`;
+    return;
+  }
+  v68Steps = v68Build(parsed.ops);
+  v68Idx = 0;
+  v68Render();
+}
+function v68Fwd()  { if (v68Idx < v68Steps.length - 1) { v68Idx++; v68Render(); } }
+function v68Back() { if (v68Idx > 0) { v68Idx--; v68Render(); } }
+function v68Skip() { v68Idx = v68Steps.length - 1; v68Render(); }
+
+v68Init();
+initPage('1352-product-of-the-last-k-numbers.html', v68Fwd, v68Back);
+</script>
+
+</body>
+</html>

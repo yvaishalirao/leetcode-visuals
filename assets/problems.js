@@ -68,4 +68,5 @@ const PROBLEMS = [
   { num: '525', title: "Contiguous Array", file: '0525-contiguous-array.html' },
   { num: '763', title: "Partition Labels", file: '0763-partition-labels.html' },
   { num: '500', title: "Keyboard Row", file: '0500-keyboard-row.html' },
+  { num: '1352', title: "Product of the Last K Numbers", file: '1352-product-of-the-last-k-numbers.html' },
 ];
