@@ -67,4 +67,5 @@ const PROBLEMS = [
   { num: '1169', title: "Invalid Transactions", file: '1169-invalid-transactions.html' },
   { num: '525', title: "Contiguous Array", file: '0525-contiguous-array.html' },
   { num: '763', title: "Partition Labels", file: '0763-partition-labels.html' },
+  { num: '500', title: "Keyboard Row", file: '0500-keyboard-row.html' },
 ];

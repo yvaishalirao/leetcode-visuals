@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#500 Keyboard Row · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-keyboard-row" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#500</div>
+      <h1>Keyboard Row</h1>
+      <a href="https://leetcode.com/problems/keyboard-row/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Return the words that can be typed using letters from only one row of an American keyboard. Build a lookup <code>row_of[letter]</code> once. For each word, the first letter fixes the <code>target</code> row — then every other letter must map to that same row. <code>all()</code> stops at the first letter on a different row. O(total letters) time, O(1) extra space (26-entry map).</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def findWords(self, words):
+        rows = ["qwertyuiop", "asdfghjkl", "zxcvbnm"]
+        row_of = {}
+        for r, keys in enumerate(rows):
+            for ch in keys:
+                row_of[ch] = r
+
+        result = []
+        for word in words:
+            w = word.lower()
+            target = row_of[w[0]]
+            if all(row_of[ch] == target for ch in w):
+                result.append(word)
+
+        return result</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>words (comma-separated)</label><input type="text" id="v67-in" value="Hello, Alaska, Dad, Peace, typewriter" style="width:320px"></div>
+      <button onclick="v67Init()">Run</button>
+    </div>
+
+    <div class="section-label">words</div>
+    <div id="v67-words" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem"></div>
+
+    <div class="section-label">keyboard — target row highlighted</div>
+    <div id="v67-kb" style="margin-bottom:1rem"></div>
+
+    <div class="section-label">current word (small number = row)</div>
+    <div id="v67-word" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem;min-height:36px"></div>
+
+    <div class="info-box" id="v67-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">word</div><div class="sval" id="v67-sword">—</div></div>
+      <div class="stat"><div class="slabel">target row</div><div class="sval" id="v67-starget">—</div></div>
+      <div class="stat best"><div class="slabel">result</div><div class="sval" id="v67-sres">[]</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v67Back()">← Prev</button>
+      <button onclick="v67Fwd()">Next →</button>
+      <button onclick="v67Skip()">Skip to end</button>
+      <span class="prog" id="v67-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>target row / letter being checked</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>letter on target row / word kept</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>letter on another row / word rejected</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #500 Keyboard Row — map letters to rows, then every letter must match the first letter's row */
+const v67Rows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+const v67RowOf = {};
+v67Rows.forEach((keys, r) => { for (const ch of keys) v67RowOf[ch] = r; });
+let v67Steps = [], v67Idx = 0, v67Words = [];
+
+function v67Build(words) {
+  const steps = [];
+  const status = words.map(() => 'pending');
+  const result = [];
+  steps.push({ wi: -1, ci: -1, target: null, bad: false, pass: false, status: [...status], result: [],
+    msg: `<code>row_of</code> built: row 0 = <code>qwertyuiop</code>, row 1 = <code>asdfghjkl</code>, row 2 = <code>zxcvbnm</code>. Now check each word.` });
+
+  words.forEach((word, wi) => {
+    const w = word.toLowerCase();
+    const target = v67RowOf[w[0]];
+    status[wi] = 'active';
+    steps.push({ wi, ci: 0, target, bad: false, pass: false, status: [...status], result: [...result],
+      msg: `Word <code>"${word}"</code> → first letter <code>'${w[0]}'</code> is on row ${target} → <code>target = ${target}</code>.` });
+
+    let ok = true;
+    for (let ci = 1; ci < w.length; ci++) {
+      const r = v67RowOf[w[ci]];
+      if (r !== target) {
+        ok = false;
+        status[wi] = 'failed';
+        steps.push({ wi, ci, target, bad: true, pass: false, status: [...status], result: [...result],
+          msg: `<code>'${w[ci]}'</code> is on row ${r} ≠ ${target} → <code>all()</code> stops early. <code>"${word}"</code> is skipped.` });
+        break;
+      }
+      steps.push({ wi, ci, target, bad: false, pass: false, status: [...status], result: [...result],
+        msg: `<code>'${w[ci]}'</code> is on row ${r} == target ✓` });
+    }
+
+    if (ok) {
+      result.push(word);
+      status[wi] = 'matched';
+      steps.push({ wi, ci: w.length - 1, target, bad: false, pass: true, status: [...status], result: [...result],
+        msg: `All ${w.length} letters are on row ${target} → <code>result.append("${word}")</code>.` });
+    }
+  });
+
+  steps.push({ wi: -1, ci: -1, target: null, bad: false, pass: false, status: [...status], result: [...result],
+    msg: `<strong>Answer: [${result.map(w => `"${w}"`).join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v67Render() {
+  if (!v67Steps.length) return;
+  const s = v67Steps[v67Idx];
+  const word = s.wi >= 0 ? v67Words[s.wi] : '';
+  const lower = word.toLowerCase();
+  const curCh = s.wi >= 0 ? lower[s.ci] : null;
+
+  const wl = document.getElementById('v67-words');
+  wl.innerHTML = '';
+  v67Words.forEach((w, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'word-chip' + (s.status[i] === 'pending' ? '' : ' ' + s.status[i]);
+    chip.textContent = w;
+    wl.appendChild(chip);
+  });
+
+  const kb = document.getElementById('v67-kb');
+  kb.innerHTML = '';
+  v67Rows.forEach((keys, r) => {
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex;gap:4px;margin-bottom:4px;padding-left:${r * 18}px`;
+    for (const ch of keys) {
+      const box = document.createElement('div');
+      box.className = 'char-box';
+      if (ch === curCh) box.classList.add(s.bad ? 's-fail' : 's-cur');
+      else if (r === s.target) {
+        box.style.background = 'var(--accent-bg)';
+        box.style.borderColor = 'var(--accent-border)';
+        box.style.color = 'var(--accent-text)';
+      }
+      box.textContent = ch;
+      row.appendChild(box);
+    }
+    kb.appendChild(row);
+  });
+
+  const ws = document.getElementById('v67-word');
+  ws.innerHTML = '';
+  for (let k = 0; k < word.length; k++) {
+    const box = document.createElement('div');
+    box.className = 'char-box';
+    if (s.pass || k < s.ci) box.classList.add('s-match');
+    else if (k === s.ci) box.classList.add(s.bad ? 's-fail' : 's-cur');
+    box.innerHTML = `${word[k]}<span class="ci">${k <= s.ci || s.pass ? v67RowOf[lower[k]] : ''}</span>`;
+    ws.appendChild(box);
+  }
+
+  document.getElementById('v67-info').innerHTML = s.msg;
+  document.getElementById('v67-sword').textContent = s.wi >= 0 ? `"${word}"` : '—';
+  document.getElementById('v67-starget').textContent = s.target !== null ? s.target : '—';
+  document.getElementById('v67-sres').textContent = `[${s.result.join(', ')}]`;
+  document.getElementById('v67-prog').textContent = `Step ${v67Idx + 1} / ${v67Steps.length}`;
+}
+
+function v67Init() {
+  const words = document.getElementById('v67-in').value.split(',').map(w => w.trim()).filter(w => w);
+  if (!words.length || words.some(w => !/^[A-Za-z]+$/.test(w))) {
+    document.getElementById('v67-info').innerHTML = `<span style="color:var(--red-text)">Enter comma-separated words using only English letters.</span>`;
+    return;
+  }
+  v67Words = words;
+  v67Steps = v67Build(words);
+  v67Idx = 0;
+  v67Render();
+}
+function v67Fwd()  { if (v67Idx < v67Steps.length - 1) { v67Idx++; v67Render(); } }
+function v67Back() { if (v67Idx > 0) { v67Idx--; v67Render(); } }
+function v67Skip() { v67Idx = v67Steps.length - 1; v67Render(); }
+
+v67Init();
+initPage('0500-keyboard-row.html', v67Fwd, v67Back);
+</script>
+
+</body>
+</html>
