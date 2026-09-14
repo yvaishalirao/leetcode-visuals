@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#395 Longest Substring with At Least K Repeating Characters · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-longest-substring-with-at-least-k-repeating-characters" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#395</div>
+      <h1>Longest Substring with At Least K Repeating Characters</h1>
+      <a href="https://leetcode.com/problems/longest-substring-with-at-least-k-repeating-characters/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Find the longest substring where every character appears at least <code>k</code> times. <strong>Divide and conquer:</strong> count the characters in <code>s</code>. If some character appears fewer than <code>k</code> times in the whole string, no valid substring can contain it — so split <code>s</code> around it and solve each piece separately. If no character is short, the whole string is valid. Each level of recursion removes at least one distinct letter, so the depth is at most 26 → O(26·n) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>from collections import Counter
+
+class Solution(object):
+    def longestSubstring(self, s, k):
+        if len(s) &lt; k:
+            return 0
+
+        count = Counter(s)
+        for ch in s:
+            if count[ch] &lt; k:
+                return max(self.longestSubstring(part, k) for part in s.split(ch))
+
+        return len(s)</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s</label><input type="text" id="v69-s" value="bbaaacbd" style="width:240px"></div>
+      <div class="ig"><label>k</label><input type="number" id="v69-k" value="3" min="1" style="width:70px"></div>
+      <button onclick="v69Init()">Run</button>
+    </div>
+
+    <div class="section-label">s — current segment</div>
+    <div id="v69-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem"></div>
+
+    <div class="section-label">character counts in this segment</div>
+    <div class="freq-row" id="v69-freq" style="min-height:56px"></div>
+
+    <div class="section-label">call stack</div>
+    <div class="chain-row" id="v69-stack"></div>
+
+    <div class="info-box" id="v69-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">depth</div><div class="sval" id="v69-sdepth">—</div></div>
+      <div class="stat"><div class="slabel">segment</div><div class="sval" id="v69-sseg">—</div></div>
+      <div class="stat best"><div class="slabel">longest found</div><div class="sval" id="v69-sbest">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v69Back()">← Prev</button>
+      <button onclick="v69Fwd()">Next →</button>
+      <button onclick="v69Skip()">Skip to end</button>
+      <span class="prog" id="v69-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>current segment</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>char with count &lt; k → split here</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>segment is valid (all counts ≥ k)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #395 Longest Substring with At Least K Repeating Characters — split around chars that appear < k times */
+let v69Steps = [], v69Idx = 0, v69Str = '', v69K = 1;
+
+function v69Build(s, k) {
+  const steps = [];
+  const stack = [];
+  let best = 0;
+  const q = (lo, hi) => `"${s.slice(lo, hi)}"`;
+  const push = (o) => steps.push({ ...o, stack: stack.map(x => [...x]), best });
+
+  function rec(lo, hi) {
+    stack.push([lo, hi]);
+    const len = hi - lo;
+    if (len < k) {
+      push({ lo, hi, kind: 'short', counts: null, bad: null,
+        msg: `<code>${q(lo, hi)}</code> has length ${len} &lt; k=${k} → return <code>0</code>.` });
+      stack.pop();
+      return 0;
+    }
+
+    const counts = {};
+    for (let i = lo; i < hi; i++) counts[s[i]] = (counts[s[i]] || 0) + 1;
+    let bad = null;
+    for (let i = lo; i < hi; i++) if (counts[s[i]] < k) { bad = s[i]; break; }
+
+    if (bad === null) {
+      best = Math.max(best, len);
+      push({ lo, hi, kind: 'valid', counts, bad: null,
+        msg: `Every character in <code>${q(lo, hi)}</code> appears ≥ ${k} times → the whole segment is valid: return <code>${len}</code>.` });
+      stack.pop();
+      return len;
+    }
+
+    const parts = [];
+    let start = lo;
+    for (let i = lo; i <= hi; i++) {
+      if (i === hi || s[i] === bad) { parts.push([start, i]); start = i + 1; }
+    }
+    push({ lo, hi, kind: 'split', counts, bad,
+      msg: `<code>count['${bad}'] = ${counts[bad]} &lt; ${k}</code> → no valid substring can contain <code>'${bad}'</code>. <code>split('${bad}')</code> → ${parts.map(([a, b]) => `<code>${q(a, b)}</code>`).join(', ')}.` });
+
+    let res = 0;
+    for (const [a, b] of parts) res = Math.max(res, rec(a, b));
+    push({ lo, hi, kind: 'return', counts, bad,
+      msg: `Back in <code>${q(lo, hi)}</code>: max over its ${parts.length} parts = ${res} → return <code>${res}</code>.` });
+    stack.pop();
+    return res;
+  }
+
+  const ans = rec(0, s.length);
+  steps.push({ lo: 0, hi: s.length, kind: 'done', counts: null, bad: null, stack: [], best: ans,
+    msg: `<strong>Answer: ${ans}</strong>.` });
+  return steps;
+}
+
+function v69Render() {
+  if (!v69Steps.length) return;
+  const s = v69Steps[v69Idx];
+
+  const strip = document.getElementById('v69-strip');
+  strip.innerHTML = '';
+  for (let i = 0; i < v69Str.length; i++) {
+    const box = document.createElement('div');
+    box.className = 'char-box';
+    const inside = i >= s.lo && i < s.hi;
+    if (s.kind === 'done') {
+      // leave plain
+    } else if (!inside) {
+      box.style.opacity = '0.35';
+    } else if (s.kind === 'valid') {
+      box.classList.add('s-match');
+    } else if (s.bad !== null && v69Str[i] === s.bad) {
+      box.classList.add('s-fail');
+    } else {
+      box.style.background = 'var(--accent-bg)';
+      box.style.borderColor = 'var(--accent-border)';
+      box.style.color = 'var(--accent-text)';
+    }
+    box.innerHTML = `${v69Str[i]}<span class="ci">${i}</span>`;
+    strip.appendChild(box);
+  }
+
+  const freq = document.getElementById('v69-freq');
+  freq.innerHTML = '';
+  if (s.counts) {
+    Object.keys(s.counts).forEach(ch => {
+      const c = document.createElement('div');
+      c.className = 'freq-cell ' + (s.counts[ch] < v69K ? 'fc-break' : 'fc-chain');
+      c.innerHTML = `<span class="fval">${ch}</span><span class="fcnt">×${s.counts[ch]}</span>`;
+      freq.appendChild(c);
+    });
+  }
+
+  const stk = document.getElementById('v69-stack');
+  stk.innerHTML = '';
+  s.stack.forEach(([a, b], i) => {
+    if (i) {
+      const arr = document.createElement('span');
+      arr.className = 'chain-arrow'; arr.textContent = '→';
+      stk.appendChild(arr);
+    }
+    const node = document.createElement('div');
+    const last = i === s.stack.length - 1;
+    node.className = 'chain-node' + (last ? (s.kind === 'valid' ? ' done-node' : ' cur-node') : '');
+    node.innerHTML = `"${v69Str.slice(a, b)}"<span class="cn-sub">[${a}, ${b})</span>`;
+    stk.appendChild(node);
+  });
+
+  document.getElementById('v69-info').innerHTML = s.msg;
+  document.getElementById('v69-sdepth').textContent = s.stack.length ? s.stack.length - 1 : '—';
+  document.getElementById('v69-sseg').textContent = s.kind === 'done' ? '—' : `"${v69Str.slice(s.lo, s.hi)}"`;
+  document.getElementById('v69-sbest').textContent = s.best;
+  document.getElementById('v69-prog').textContent = `Step ${v69Idx + 1} / ${v69Steps.length}`;
+}
+
+function v69Init() {
+  const str = document.getElementById('v69-s').value.trim();
+  const k = parseInt(document.getElementById('v69-k').value, 10);
+  if (!/^[a-z]{1,40}$/.test(str) || !(k >= 1)) {
+    document.getElementById('v69-info').innerHTML = `<span style="color:var(--red-text)">s must be 1–40 lowercase letters and k ≥ 1.</span>`;
+    return;
+  }
+  v69Str = str; v69K = k;
+  v69Steps = v69Build(str, k);
+  v69Idx = 0;
+  v69Render();
+}
+function v69Fwd()  { if (v69Idx < v69Steps.length - 1) { v69Idx++; v69Render(); } }
+function v69Back() { if (v69Idx > 0) { v69Idx--; v69Render(); } }
+function v69Skip() { v69Idx = v69Steps.length - 1; v69Render(); }
+
+v69Init();
+initPage('0395-longest-substring-with-at-least-k-repeating-characters.html', v69Fwd, v69Back);
+</script>
+
+</body>
+</html>

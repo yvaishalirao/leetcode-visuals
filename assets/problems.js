@@ -69,4 +69,5 @@ const PROBLEMS = [
   { num: '763', title: "Partition Labels", file: '0763-partition-labels.html' },
   { num: '500', title: "Keyboard Row", file: '0500-keyboard-row.html' },
   { num: '1352', title: "Product of the Last K Numbers", file: '1352-product-of-the-last-k-numbers.html' },
+  { num: '395', title: "Longest Substring with At Least K Repeating Characters", file: '0395-longest-substring-with-at-least-k-repeating-characters.html' },
 ];
