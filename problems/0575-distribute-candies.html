@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#575 Distribute Candies · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-distribute-candies" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#575</div>
+      <h1>Distribute Candies</h1>
+      <a href="https://leetcode.com/problems/distribute-candies/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Alice has <code>n</code> candies (n is even) but may eat only <code>n / 2</code>. Return the most <strong>different types</strong> she can eat. Two limits apply at once: she can't eat more types than exist (<code>len(set(candyType))</code>), and she can't eat more than <code>n / 2</code> candies total. The answer is the smaller of the two. O(n) time, O(n) space.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def distributeCandies(self, candyType):
+        return min(len(set(candyType)), len(candyType) // 2)</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>candyType</label><input type="text" id="v70-in" value="1,1,2,2,3,3,3,4" style="width:260px"></div>
+      <button onclick="v70Init()">Run</button>
+    </div>
+
+    <div class="section-label">candyType</div>
+    <div class="array-row" id="v70-arr"></div>
+
+    <div class="section-label">set of distinct types</div>
+    <div class="history-list" id="v70-set" style="margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v70-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">distinct types</div><div class="sval" id="v70-sdist">0</div></div>
+      <div class="stat"><div class="slabel">n // 2</div><div class="sval" id="v70-shalf">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v70-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v70Back()">← Prev</button>
+      <button onclick="v70Fwd()">Next →</button>
+      <button onclick="v70Skip()">Skip to end</button>
+      <span class="prog" id="v70-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>new type → added to set</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>type already in set</div>
+      <div class="leg"><div class="lb" style="outline:2px solid var(--accent);outline-offset:-2px"></div>current candy</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #575 Distribute Candies — answer is min(distinct types, n / 2) */
+let v70Steps = [], v70Idx = 0, v70Arr = [];
+
+function v70Build(arr) {
+  const steps = [];
+  const seen = [];
+  const state = arr.map(() => '');
+  const half = Math.floor(arr.length / 2);
+  steps.push({ i: -1, state: [...state], seen: [], ans: null,
+    msg: `n = ${arr.length}, so Alice may eat <code>n // 2 = ${half}</code> candies. First, collect the distinct types with <code>set(candyType)</code>.` });
+
+  arr.forEach((v, i) => {
+    let msg;
+    if (seen.includes(v)) {
+      state[i] = 'is-r';
+      msg = `<code>candyType[${i}] = ${v}</code> → type ${v} is already in the set, nothing new.`;
+    } else {
+      seen.push(v);
+      state[i] = 'is-l';
+      msg = `<code>candyType[${i}] = ${v}</code> → new type, add it. Set size = ${seen.length}.`;
+    }
+    steps.push({ i, state: [...state], seen: [...seen], ans: null, msg });
+  });
+
+  const ans = Math.min(seen.length, half);
+  const why = seen.length <= half
+    ? `there are only ${seen.length} types, so she can try every one`
+    : `she can eat only ${half} candies, so at most ${half} types`;
+  steps.push({ i: -1, state: [...state], seen: [...seen], ans,
+    msg: `<code>min(${seen.length}, ${half}) = ${ans}</code> — ${why}. <strong>Answer: ${ans}</strong>.` });
+  return steps;
+}
+
+function v70Render() {
+  if (!v70Steps.length) return;
+  const s = v70Steps[v70Idx];
+
+  const arrEl = document.getElementById('v70-arr');
+  arrEl.innerHTML = '';
+  v70Arr.forEach((v, i) => {
+    const c = document.createElement('div');
+    c.className = 'arr-cell' + (s.state[i] ? ' ' + s.state[i] : '') + (i === s.i ? ' cell-current' : '');
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    arrEl.appendChild(c);
+  });
+
+  const setEl = document.getElementById('v70-set');
+  setEl.innerHTML = '';
+  s.seen.forEach(v => {
+    const chip = document.createElement('span');
+    chip.className = 'h-chip';
+    chip.textContent = v;
+    setEl.appendChild(chip);
+  });
+
+  document.getElementById('v70-info').innerHTML = s.msg;
+  document.getElementById('v70-sdist').textContent = s.seen.length;
+  document.getElementById('v70-shalf').textContent = Math.floor(v70Arr.length / 2);
+  document.getElementById('v70-sans').textContent = s.ans !== null ? s.ans : '—';
+  document.getElementById('v70-prog').textContent = `Step ${v70Idx + 1} / ${v70Steps.length}`;
+}
+
+function v70Init() {
+  const parts = document.getElementById('v70-in').value.split(',').map(x => x.trim()).filter(x => x !== '');
+  const arr = parts.map(Number);
+  if (!arr.length || arr.length % 2 || arr.some(x => !Number.isInteger(x))) {
+    document.getElementById('v70-info').innerHTML = `<span style="color:var(--red-text)">Enter an even number of comma-separated integers.</span>`;
+    return;
+  }
+  v70Arr = arr;
+  v70Steps = v70Build(arr);
+  v70Idx = 0;
+  v70Render();
+}
+function v70Fwd()  { if (v70Idx < v70Steps.length - 1) { v70Idx++; v70Render(); } }
+function v70Back() { if (v70Idx > 0) { v70Idx--; v70Render(); } }
+function v70Skip() { v70Idx = v70Steps.length - 1; v70Render(); }
+
+v70Init();
+initPage('0575-distribute-candies.html', v70Fwd, v70Back);
+</script>
+
+</body>
+</html>
