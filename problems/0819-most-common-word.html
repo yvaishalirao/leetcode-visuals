@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#819 Most Common Word · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-most-common-word" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#819</div>
+      <h1>Most Common Word</h1>
+      <a href="https://leetcode.com/problems/most-common-word/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Return the most frequent word in <code>paragraph</code> that isn't in <code>banned</code> (case-insensitive, punctuation ignored). Lowercase the text and pull out the words with the regex <code>\w+</code> — this drops punctuation in one step. Count every word that isn't banned (a <code>set</code> makes the banned check O(1)), then take the top count. O(n) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>import re
+from collections import Counter
+
+class Solution(object):
+    def mostCommonWord(self, paragraph, banned):
+        banned = set(banned)
+        words = re.findall(r"\w+", paragraph.lower())
+        count = Counter(w for w in words if w not in banned)
+        return count.most_common(1)[0][0]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>paragraph</label><input type="text" id="v71-p" value="Bob hit a ball, the hit BALL flew far after it was hit." style="width:380px"></div>
+      <div class="ig"><label>banned (comma-separated)</label><input type="text" id="v71-b" value="hit" style="width:140px"></div>
+      <button onclick="v71Init()">Run</button>
+    </div>
+
+    <div class="section-label">words = re.findall(r"\w+", paragraph.lower())</div>
+    <div id="v71-words" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem"></div>
+
+    <div class="section-label">count</div>
+    <div class="freq-row" id="v71-freq" style="min-height:56px"></div>
+
+    <div class="info-box" id="v71-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">word</div><div class="sval" id="v71-sword">—</div></div>
+      <div class="stat"><div class="slabel">banned</div><div class="sval" id="v71-sban">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v71-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v71Back()">← Prev</button>
+      <button onclick="v71Fwd()">Next →</button>
+      <button onclick="v71Skip()">Skip to end</button>
+      <span class="prog" id="v71-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>current word / its count</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>counted / most common</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>banned → skipped</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #819 Most Common Word — tokenize with \w+, count non-banned words, take the max */
+let v71Steps = [], v71Idx = 0, v71Words = [];
+
+function v71Build(words, banned) {
+  const steps = [];
+  const status = words.map(() => '');
+  const count = {};
+  steps.push({ i: -1, status: [...status], count: {}, cur: null, ans: null,
+    msg: `Lowercased and split into ${words.length} words. <code>banned = {${[...banned].map(b => `'${b}'`).join(', ')}}</code>. Now count.` });
+
+  words.forEach((w, i) => {
+    let msg;
+    if (banned.has(w)) {
+      status[i] = 'failed';
+      msg = `<code>'${w}'</code> is banned → skip.`;
+    } else {
+      count[w] = (count[w] || 0) + 1;
+      status[i] = 'matched';
+      msg = `<code>'${w}'</code> → <code>count['${w}'] = ${count[w]}</code>.`;
+    }
+    steps.push({ i, status: [...status], count: { ...count }, cur: banned.has(w) ? null : w, ans: null, msg });
+  });
+
+  let ans = null;
+  for (const w in count) if (ans === null || count[w] > count[ans]) ans = w;
+  steps.push({ i: -1, status: [...status], count: { ...count }, cur: null, ans,
+    msg: ans === null
+      ? `Every word was banned — no answer.`
+      : `<code>most_common(1)</code> → <code>'${ans}'</code> with ${count[ans]} occurrence${count[ans] > 1 ? 's' : ''}. <strong>Answer: "${ans}"</strong>.` });
+  return steps;
+}
+
+function v71Render() {
+  if (!v71Steps.length) return;
+  const s = v71Steps[v71Idx];
+
+  const wl = document.getElementById('v71-words');
+  wl.innerHTML = '';
+  v71Words.forEach((w, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'word-chip' + (i === s.i ? (s.status[i] === 'failed' ? ' failed' : ' active') : (s.status[i] ? ' ' + s.status[i] : ''));
+    chip.textContent = w;
+    wl.appendChild(chip);
+  });
+
+  const freq = document.getElementById('v71-freq');
+  freq.innerHTML = '';
+  Object.keys(s.count).forEach(w => {
+    const c = document.createElement('div');
+    c.className = 'freq-cell' + (w === s.ans ? ' fc-chain' : w === s.cur ? ' fc-active' : '');
+    c.style.width = 'auto'; c.style.padding = '4px 12px';
+    c.innerHTML = `<span class="fval">${w}</span><span class="fcnt">×${s.count[w]}</span>`;
+    freq.appendChild(c);
+  });
+
+  const w = s.i >= 0 ? v71Words[s.i] : null;
+  document.getElementById('v71-info').innerHTML = s.msg;
+  document.getElementById('v71-sword').textContent = w ? `'${w}'` : '—';
+  document.getElementById('v71-sban').textContent = w ? (s.status[s.i] === 'failed' ? 'yes' : 'no') : '—';
+  document.getElementById('v71-sans').textContent = s.ans !== null ? `"${s.ans}"` : '—';
+  document.getElementById('v71-prog').textContent = `Step ${v71Idx + 1} / ${v71Steps.length}`;
+}
+
+function v71Init() {
+  const words = document.getElementById('v71-p').value.toLowerCase().match(/\w+/g) || [];
+  const banned = new Set(document.getElementById('v71-b').value.toLowerCase().split(',').map(x => x.trim()).filter(x => x));
+  if (!words.length) {
+    document.getElementById('v71-info').innerHTML = `<span style="color:var(--red-text)">paragraph must contain at least one word.</span>`;
+    return;
+  }
+  v71Words = words;
+  v71Steps = v71Build(words, banned);
+  v71Idx = 0;
+  v71Render();
+}
+function v71Fwd()  { if (v71Idx < v71Steps.length - 1) { v71Idx++; v71Render(); } }
+function v71Back() { if (v71Idx > 0) { v71Idx--; v71Render(); } }
+function v71Skip() { v71Idx = v71Steps.length - 1; v71Render(); }
+
+v71Init();
+initPage('0819-most-common-word.html', v71Fwd, v71Back);
+</script>
+
+</body>
+</html>

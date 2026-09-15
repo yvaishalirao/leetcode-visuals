@@ -71,4 +71,5 @@ const PROBLEMS = [
   { num: '1352', title: "Product of the Last K Numbers", file: '1352-product-of-the-last-k-numbers.html' },
   { num: '395', title: "Longest Substring with At Least K Repeating Characters", file: '0395-longest-substring-with-at-least-k-repeating-characters.html' },
   { num: '575', title: "Distribute Candies", file: '0575-distribute-candies.html' },
+  { num: '819', title: "Most Common Word", file: '0819-most-common-word.html' },
 ];
