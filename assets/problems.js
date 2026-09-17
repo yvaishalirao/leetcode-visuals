@@ -72,4 +72,5 @@ const PROBLEMS = [
   { num: '395', title: "Longest Substring with At Least K Repeating Characters", file: '0395-longest-substring-with-at-least-k-repeating-characters.html' },
   { num: '575', title: "Distribute Candies", file: '0575-distribute-candies.html' },
   { num: '819', title: "Most Common Word", file: '0819-most-common-word.html' },
+  { num: '740', title: "Delete and Earn", file: '0740-delete-and-earn.html' },
 ];
