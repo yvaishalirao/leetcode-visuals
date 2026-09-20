@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#890 Find and Replace Pattern · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-find-and-replace-pattern" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#890</div>
+      <h1>Find and Replace Pattern</h1>
+      <a href="https://leetcode.com/problems/find-and-replace-pattern/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Return the words that match <code>pattern</code> through a <strong>one-to-one</strong> letter mapping. Walk the word and pattern together with two maps: <code>w_to_p</code> (word letter → pattern letter) and <code>p_to_w</code> (the reverse). <code>setdefault</code> records a mapping the first time a letter appears; if a letter is ever paired with something different from what's stored, the mapping breaks. Both directions are needed — <code>w_to_p</code> alone would let two word letters map to the same pattern letter. O(total letters) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def findAndReplacePattern(self, words, pattern):
+        def matches(word):
+            w_to_p, p_to_w = {}, {}
+            for w, p in zip(word, pattern):
+                if w_to_p.setdefault(w, p) != p or p_to_w.setdefault(p, w) != w:
+                    return False
+            return True
+
+        return [w for w in words if matches(w)]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>words (comma-separated)</label><input type="text" id="v73-w" value="abc, deq, mee, aqq, dkd, ccc" style="width:280px"></div>
+      <div class="ig"><label>pattern</label><input type="text" id="v73-p" value="abb" style="width:100px"></div>
+      <button onclick="v73Init()">Run</button>
+    </div>
+
+    <div class="section-label">words</div>
+    <div id="v73-words" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem"></div>
+
+    <div class="section-label">word vs pattern</div>
+    <div id="v73-pair" style="margin-bottom:1rem"></div>
+
+    <div class="section-label">w_to_p &nbsp;/&nbsp; p_to_w</div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:1rem">
+      <div class="chain-row" id="v73-wp" style="min-height:40px;margin:0"></div>
+      <div class="chain-row" id="v73-pw" style="min-height:40px;margin:0"></div>
+    </div>
+
+    <div class="info-box" id="v73-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">word</div><div class="sval" id="v73-sword">—</div></div>
+      <div class="stat"><div class="slabel">pair</div><div class="sval" id="v73-spair">—</div></div>
+      <div class="stat best"><div class="slabel">result</div><div class="sval" id="v73-sres">[]</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v73Back()">← Prev</button>
+      <button onclick="v73Fwd()">Next →</button>
+      <button onclick="v73Skip()">Skip to end</button>
+      <span class="prog" id="v73-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>current pair / mapping just used</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>consistent / word kept</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>conflict / word rejected</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #890 Find and Replace Pattern — two maps enforce a one-to-one letter mapping */
+let v73Steps = [], v73Idx = 0, v73Words = [], v73Pat = '';
+
+function v73Build(words, pattern) {
+  const steps = [];
+  const status = words.map(() => '');
+  const result = [];
+  steps.push({ wi: -1, ci: -1, bad: false, pass: false, wp: {}, pw: {}, conflict: null, status: [...status], result: [],
+    msg: `Check each word against <code>pattern = "${pattern}"</code> with a fresh pair of maps.` });
+
+  words.forEach((word, wi) => {
+    const wp = {}, pw = {};
+    status[wi] = 'active';
+    let ok = true;
+    for (let ci = 0; ci < word.length; ci++) {
+      const w = word[ci], p = pattern[ci];
+      const newW = !(w in wp), newP = !(p in pw);
+      if (newW) wp[w] = p;
+      if (wp[w] !== p) {
+        ok = false; status[wi] = 'failed';
+        steps.push({ wi, ci, bad: true, pass: false, wp: { ...wp }, pw: { ...pw }, conflict: 'wp:' + w, status: [...status], result: [...result],
+          msg: `Pair <code>('${w}', '${p}')</code>: <code>w_to_p['${w}']</code> is already <code>'${wp[w]}'</code> ≠ <code>'${p}'</code> → '${w}' can't map to two letters. <code>"${word}"</code> fails.` });
+        break;
+      }
+      if (newP) pw[p] = w;
+      if (pw[p] !== w) {
+        ok = false; status[wi] = 'failed';
+        steps.push({ wi, ci, bad: true, pass: false, wp: { ...wp }, pw: { ...pw }, conflict: 'pw:' + p, status: [...status], result: [...result],
+          msg: `Pair <code>('${w}', '${p}')</code>: <code>p_to_w['${p}']</code> is already <code>'${pw[p]}'</code> ≠ <code>'${w}'</code> → two word letters would share '${p}'. <code>"${word}"</code> fails.` });
+        break;
+      }
+      const note = newW && newP ? `new mapping <code>'${w}' ↔ '${p}'</code> recorded` : `matches the stored mapping <code>'${w}' ↔ '${p}'</code> ✓`;
+      steps.push({ wi, ci, bad: false, pass: false, wp: { ...wp }, pw: { ...pw }, conflict: null, cur: [w, p], status: [...status], result: [...result],
+        msg: `Pair <code>('${w}', '${p}')</code> → ${note}.` });
+    }
+    if (ok) {
+      result.push(word); status[wi] = 'matched';
+      steps.push({ wi, ci: word.length - 1, bad: false, pass: true, wp: { ...wp }, pw: { ...pw }, conflict: null, status: [...status], result: [...result],
+        msg: `Every pair is consistent → <code>"${word}"</code> matches the pattern.` });
+    }
+  });
+
+  steps.push({ wi: -1, ci: -1, bad: false, pass: false, wp: {}, pw: {}, conflict: null, status: [...status], result: [...result],
+    msg: `<strong>Answer: [${result.map(w => `"${w}"`).join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v73Render() {
+  if (!v73Steps.length) return;
+  const s = v73Steps[v73Idx];
+  const word = s.wi >= 0 ? v73Words[s.wi] : '';
+
+  const wl = document.getElementById('v73-words');
+  wl.innerHTML = '';
+  v73Words.forEach((w, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'word-chip' + (s.status[i] ? ' ' + s.status[i] : '');
+    chip.textContent = w;
+    wl.appendChild(chip);
+  });
+
+  const pair = document.getElementById('v73-pair');
+  pair.innerHTML = '';
+  if (word) {
+    [word, v73Pat].forEach((str, r) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:4px;margin-bottom:4px;align-items:center';
+      row.innerHTML = `<span class="sv-label" style="min-width:56px">${r ? 'pattern' : 'word'}</span>`;
+      for (let k = 0; k < str.length; k++) {
+        const box = document.createElement('div');
+        box.className = 'char-box';
+        if (s.pass || k < s.ci) box.classList.add('s-match');
+        else if (k === s.ci) box.classList.add(s.bad ? 's-fail' : 's-cur');
+        box.innerHTML = `${str[k]}<span class="ci">${k}</span>`;
+        row.appendChild(box);
+      }
+      pair.appendChild(row);
+    });
+  }
+
+  const drawMap = (elId, map, label, key) => {
+    const el = document.getElementById(elId);
+    el.innerHTML = `<span class="sv-label" style="min-width:auto">${label}</span>`;
+    Object.keys(map).forEach(a => {
+      const node = document.createElement('div');
+      let cls = 'chain-node';
+      if (s.conflict === key + ':' + a) cls += ' break-node';
+      else if (s.cur && s.cur[key === 'wp' ? 0 : 1] === a) cls += ' cur-node';
+      else if (s.pass) cls += ' done-node';
+      node.className = cls;
+      node.textContent = `${a} → ${map[a]}`;
+      el.appendChild(node);
+    });
+  };
+  drawMap('v73-wp', s.wp, 'w_to_p', 'wp');
+  drawMap('v73-pw', s.pw, 'p_to_w', 'pw');
+
+  document.getElementById('v73-info').innerHTML = s.msg;
+  document.getElementById('v73-sword').textContent = word ? `"${word}"` : '—';
+  document.getElementById('v73-spair').textContent = word && s.ci >= 0 && !s.pass ? `${word[s.ci]}, ${v73Pat[s.ci]}` : '—';
+  document.getElementById('v73-sres').textContent = `[${s.result.join(', ')}]`;
+  document.getElementById('v73-prog').textContent = `Step ${v73Idx + 1} / ${v73Steps.length}`;
+}
+
+function v73Init() {
+  const pattern = document.getElementById('v73-p').value.trim();
+  const words = document.getElementById('v73-w').value.split(',').map(w => w.trim()).filter(w => w);
+  if (!/^[a-z]+$/.test(pattern) || !words.length || words.some(w => !/^[a-z]+$/.test(w) || w.length !== pattern.length)) {
+    document.getElementById('v73-info').innerHTML = `<span style="color:var(--red-text)">Use lowercase letters; every word must be the same length as pattern.</span>`;
+    return;
+  }
+  v73Words = words; v73Pat = pattern;
+  v73Steps = v73Build(words, pattern);
+  v73Idx = 0;
+  v73Render();
+}
+function v73Fwd()  { if (v73Idx < v73Steps.length - 1) { v73Idx++; v73Render(); } }
+function v73Back() { if (v73Idx > 0) { v73Idx--; v73Render(); } }
+function v73Skip() { v73Idx = v73Steps.length - 1; v73Render(); }
+
+v73Init();
+initPage('0890-find-and-replace-pattern.html', v73Fwd, v73Back);
+</script>
+
+</body>
+</html>

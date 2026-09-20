@@ -73,4 +73,5 @@ const PROBLEMS = [
   { num: '575', title: "Distribute Candies", file: '0575-distribute-candies.html' },
   { num: '819', title: "Most Common Word", file: '0819-most-common-word.html' },
   { num: '740', title: "Delete and Earn", file: '0740-delete-and-earn.html' },
+  { num: '890', title: "Find and Replace Pattern", file: '0890-find-and-replace-pattern.html' },
 ];
