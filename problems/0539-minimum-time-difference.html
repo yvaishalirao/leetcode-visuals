@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#539 Minimum Time Difference · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-minimum-time-difference" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#539</div>
+      <h1>Minimum Time Difference</h1>
+      <a href="https://leetcode.com/problems/minimum-time-difference/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Given 24-hour <code>"HH:MM"</code> times, return the smallest gap in minutes between any two. Convert each time to minutes since midnight and sort. After sorting, the closest pair must be <strong>neighbours</strong> — except across midnight, so also check the wrap-around gap from the last time to the first: <code>1440 + first − last</code>. O(n log n) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def findMinDifference(self, timePoints):
+        minutes = sorted(int(t[:2]) * 60 + int(t[3:]) for t in timePoints)
+
+        best = 1440 + minutes[0] - minutes[-1]
+        for i in range(1, len(minutes)):
+            best = min(best, minutes[i] - minutes[i - 1])
+
+        return best</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>timePoints (comma-separated)</label><input type="text" id="v75-in" value="23:59, 08:30, 00:05, 12:00, 08:10" style="width:320px"></div>
+      <button onclick="v75Init()">Run</button>
+    </div>
+
+    <div class="section-label">sorted minutes</div>
+    <div class="array-row" id="v75-arr"></div>
+
+    <div class="section-label">24-hour timeline</div>
+    <div id="v75-line" style="position:relative;height:56px;margin:0 12px 1.2rem;max-width:640px"></div>
+
+    <div class="info-box" id="v75-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">pair</div><div class="sval" id="v75-spair">—</div></div>
+      <div class="stat"><div class="slabel">gap</div><div class="sval" id="v75-sgap">—</div></div>
+      <div class="stat best"><div class="slabel">best</div><div class="sval" id="v75-sbest">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v75Back()">← Prev</button>
+      <button onclick="v75Fwd()">Next →</button>
+      <button onclick="v75Skip()">Skip to end</button>
+      <span class="prog" id="v75-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>minutes[i-1] (earlier)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>minutes[i] (later)</div>
+      <div class="leg"><div class="lb" style="outline:2px solid var(--red-border);outline-offset:-2px"></div>pair holding the best gap</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #539 Minimum Time Difference — sort minutes, check neighbours plus the wrap past midnight */
+let v75Steps = [], v75Idx = 0;
+
+const v75Fmt = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+
+function v75Build(times) {
+  const steps = [];
+  const minutes = times.map(t => parseInt(t.slice(0, 2), 10) * 60 + parseInt(t.slice(3), 10)).sort((a, b) => a - b);
+  const n = minutes.length;
+  steps.push({ minutes, a: -1, b: -1, gap: null, best: null, bestPair: null,
+    msg: `Converted to minutes and sorted: <code>[${minutes.join(', ')}]</code>. Closest times are now next to each other.` });
+
+  let best = 1440 + minutes[0] - minutes[n - 1];
+  let bestPair = [n - 1, 0];
+  steps.push({ minutes, a: n - 1, b: 0, gap: best, best, bestPair: [...bestPair],
+    msg: `Wrap-around past midnight: <code>1440 + ${minutes[0]} − ${minutes[n - 1]} = ${best}</code> (${v75Fmt(minutes[n - 1])} → ${v75Fmt(minutes[0])}). <code>best = ${best}</code>.` });
+
+  for (let i = 1; i < n; i++) {
+    const gap = minutes[i] - minutes[i - 1];
+    const better = gap < best;
+    if (better) { best = gap; bestPair = [i - 1, i]; }
+    steps.push({ minutes, a: i - 1, b: i, gap, best, bestPair: [...bestPair],
+      msg: `i=${i}: <code>${minutes[i]} − ${minutes[i - 1]} = ${gap}</code> (${v75Fmt(minutes[i - 1])} → ${v75Fmt(minutes[i])})${better ? ` &lt; previous best → <code>best = ${gap}</code>` : ` — not smaller, best stays ${best}`}.` });
+  }
+
+  steps.push({ minutes, a: -1, b: -1, gap: null, best, bestPair: [...bestPair],
+    msg: `<strong>Answer: ${best}</strong> minute${best === 1 ? '' : 's'}.` });
+  return steps;
+}
+
+function v75Render() {
+  if (!v75Steps.length) return;
+  const s = v75Steps[v75Idx];
+  const isBest = (i) => s.bestPair && s.bestPair.includes(i);
+
+  const arr = document.getElementById('v75-arr');
+  arr.innerHTML = '';
+  s.minutes.forEach((m, i) => {
+    const c = document.createElement('div');
+    c.className = 'arr-cell' + (i === s.a ? ' is-l' : i === s.b ? ' is-r' : '') + (isBest(i) ? ' is-target' : '');
+    c.style.cssText = 'width:auto;min-width:56px;padding:0 8px';
+    c.innerHTML = `${m}<span class="cidx">${v75Fmt(m)}</span>`;
+    arr.appendChild(c);
+  });
+
+  const line = document.getElementById('v75-line');
+  line.innerHTML = '';
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:absolute;left:0;right:0;top:22px;height:4px;border-radius:2px;background:var(--border-strong)';
+  line.appendChild(bar);
+  ['00:00', '06:00', '12:00', '18:00', '24:00'].forEach((label, q) => {
+    const tick = document.createElement('span');
+    tick.style.cssText = `position:absolute;top:34px;left:${q * 25}%;transform:translateX(-50%);font-size:10px;color:var(--text-muted);font-family:monospace`;
+    tick.textContent = label;
+    line.appendChild(tick);
+  });
+  s.minutes.forEach((m, i) => {
+    const dot = document.createElement('div');
+    let bg = 'var(--accent)';
+    if (i === s.a) bg = 'var(--green-border)';
+    else if (i === s.b) bg = 'var(--amber-border)';
+    dot.style.cssText = `position:absolute;top:16px;left:${m / 14.4}%;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:${bg};border:2px solid var(--surface)` +
+      (isBest(i) ? ';outline:2px solid var(--red-border)' : '');
+    dot.title = v75Fmt(m);
+    line.appendChild(dot);
+  });
+
+  document.getElementById('v75-info').innerHTML = s.msg;
+  document.getElementById('v75-spair').textContent = s.a >= 0 ? `${v75Fmt(s.minutes[s.a])} → ${v75Fmt(s.minutes[s.b])}` : '—';
+  document.getElementById('v75-sgap').textContent = s.gap !== null ? s.gap : '—';
+  document.getElementById('v75-sbest').textContent = s.best !== null ? s.best : '—';
+  document.getElementById('v75-prog').textContent = `Step ${v75Idx + 1} / ${v75Steps.length}`;
+}
+
+function v75Init() {
+  const times = document.getElementById('v75-in').value.split(',').map(t => t.trim()).filter(t => t);
+  const ok = times.length >= 2 && times.every(t => /^([01]\d|2[0-3]):[0-5]\d$/.test(t));
+  if (!ok) {
+    document.getElementById('v75-info').innerHTML = `<span style="color:var(--red-text)">Enter at least two comma-separated times in HH:MM (00:00–23:59).</span>`;
+    return;
+  }
+  v75Steps = v75Build(times);
+  v75Idx = 0;
+  v75Render();
+}
+function v75Fwd()  { if (v75Idx < v75Steps.length - 1) { v75Idx++; v75Render(); } }
+function v75Back() { if (v75Idx > 0) { v75Idx--; v75Render(); } }
+function v75Skip() { v75Idx = v75Steps.length - 1; v75Render(); }
+
+v75Init();
+initPage('0539-minimum-time-difference.html', v75Fwd, v75Back);
+</script>
+
+</body>
+</html>

@@ -75,4 +75,5 @@ const PROBLEMS = [
   { num: '740', title: "Delete and Earn", file: '0740-delete-and-earn.html' },
   { num: '890', title: "Find and Replace Pattern", file: '0890-find-and-replace-pattern.html' },
   { num: '389', title: "Find the Difference", file: '0389-find-the-difference.html' },
+  { num: '539', title: "Minimum Time Difference", file: '0539-minimum-time-difference.html' },
 ];
