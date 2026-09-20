@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#389 Find the Difference · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-find-the-difference" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#389</div>
+      <h1>Find the Difference</h1>
+      <a href="https://leetcode.com/problems/find-the-difference/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc"><code>t</code> is <code>s</code> shuffled with one extra letter added. Find that letter. <strong>XOR trick:</strong> <code>x ^ x = 0</code> and <code>x ^ 0 = x</code>, and order doesn't matter. XOR the character codes of every letter in <code>s + t</code> — each letter that appears in both strings cancels itself out, leaving only the extra one. O(n) time, O(1) space.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def findTheDifference(self, s, t):
+        diff = 0
+        for ch in s + t:
+            diff ^= ord(ch)
+        return chr(diff)</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s</label><input type="text" id="v74-s" value="abcd" style="width:160px"></div>
+      <div class="ig"><label>t</label><input type="text" id="v74-t" value="abecd" style="width:160px"></div>
+      <button onclick="v74Init()">Run</button>
+    </div>
+
+    <div class="section-label">s + t</div>
+    <div id="v74-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem"></div>
+
+    <div class="section-label">diff ^= ord(ch)</div>
+    <div class="table-wrap" style="margin-bottom:1rem"><table class="dp-table" id="v74-xor"></table></div>
+
+    <div class="info-box" id="v74-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">ch</div><div class="sval" id="v74-sch">—</div></div>
+      <div class="stat"><div class="slabel">diff</div><div class="sval" id="v74-sdiff">0</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v74-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v74Back()">← Prev</button>
+      <button onclick="v74Fwd()">Next →</button>
+      <button onclick="v74Skip()">Skip to end</button>
+      <span class="prog" id="v74-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>current character</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>letter seen an odd number of times (still in diff)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>letter cancelled out / the answer</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #389 Find the Difference — XOR every char code of s + t; matching pairs cancel */
+let v74Steps = [], v74Idx = 0, v74All = '', v74SLen = 0;
+
+const v74Bin = (n) => n.toString(2).padStart(8, '0');
+
+function v74Build(s, t) {
+  const steps = [];
+  const all = s + t;
+  const seen = {};
+  let diff = 0;
+  steps.push({ i: -1, diff, prev: 0, seen: {}, ans: null,
+    msg: `<code>diff = 0</code>. XOR in every character of <code>s + t = "${all}"</code>.` });
+
+  for (let i = 0; i < all.length; i++) {
+    const ch = all[i], code = ch.charCodeAt(0);
+    const prev = diff;
+    diff ^= code;
+    seen[ch] = (seen[ch] || 0) + 1;
+    const note = seen[ch] % 2 === 0
+      ? ` That's the 2nd <code>'${ch}'</code> → its bits cancel out.`
+      : (seen[ch] > 1 ? ` <code>'${ch}'</code> is unpaired again.` : '');
+    steps.push({ i, diff, prev, code, seen: { ...seen }, ans: null,
+      msg: `<code>'${ch}'</code> (ord ${code}) → <code>diff = ${prev} ^ ${code} = ${diff}</code>.${note}` });
+  }
+
+  const ans = String.fromCharCode(diff);
+  steps.push({ i: -1, diff, prev: diff, seen: { ...seen }, ans,
+    msg: `Every paired letter cancelled; <code>diff = ${diff}</code> → <code>chr(${diff}) = '${ans}'</code>. <strong>Answer: "${ans}"</strong>.` });
+  return steps;
+}
+
+function v74Render() {
+  if (!v74Steps.length) return;
+  const s = v74Steps[v74Idx];
+
+  const strip = document.getElementById('v74-strip');
+  strip.innerHTML = '';
+  for (let k = 0; k < v74All.length; k++) {
+    if (k === v74SLen) {
+      const sep = document.createElement('span');
+      sep.className = 'chain-arrow'; sep.textContent = '|';
+      strip.appendChild(sep);
+    }
+    const ch = v74All[k];
+    const box = document.createElement('div');
+    box.className = 'char-box';
+    const processed = s.i === -1 ? s.ans !== null : k <= s.i;
+    if (k === s.i) box.classList.add('s-cur');
+    else if (processed) {
+      if (s.ans !== null && ch === s.ans && (s.seen[ch] % 2 === 1)) box.classList.add('s-match');
+      else if (s.seen[ch] % 2 === 0) { box.classList.add('s-match'); box.style.opacity = '0.55'; }
+      else { box.style.background = 'var(--amber-bg)'; box.style.borderColor = 'var(--amber-border)'; box.style.color = 'var(--amber-text)'; }
+    }
+    box.innerHTML = `${ch}<span class="ci">${k < v74SLen ? 's' : 't'}</span>`;
+    strip.appendChild(box);
+  }
+
+  const table = document.getElementById('v74-xor');
+  table.innerHTML = '';
+  const rows = s.i >= 0
+    ? [[`diff (before)`, s.prev], [`ord('${v74All[s.i]}')`, s.code], ['diff (after)', s.diff]]
+    : [['diff', s.diff]];
+  rows.forEach(([label, val], r) => {
+    const tr = table.insertRow();
+    tr.innerHTML = `<th class="row-header">${label}</th>`;
+    for (const bit of v74Bin(val)) {
+      const td = tr.insertCell();
+      td.textContent = bit;
+      td.style.width = '32px';
+      if (r === rows.length - 1 && bit === '1') td.className = s.ans !== null ? 'cell-best' : 'cell-filled';
+      else if (r === 1 && bit === '1') td.className = 'cell-amber';
+    }
+    const tdv = tr.insertCell();
+    tdv.textContent = `= ${val}`;
+    tdv.style.cssText = 'width:auto;padding:0 10px;color:var(--text-sec)';
+  });
+
+  document.getElementById('v74-info').innerHTML = s.msg;
+  document.getElementById('v74-sch').textContent = s.i >= 0 ? `'${v74All[s.i]}'` : '—';
+  document.getElementById('v74-sdiff').textContent = s.diff;
+  document.getElementById('v74-sans').textContent = s.ans !== null ? `"${s.ans}"` : '—';
+  document.getElementById('v74-prog').textContent = `Step ${v74Idx + 1} / ${v74Steps.length}`;
+}
+
+function v74Init() {
+  const s = document.getElementById('v74-s').value.trim();
+  const t = document.getElementById('v74-t').value.trim();
+  const sorted = (x) => [...x].sort().join('');
+  const valid = /^[a-z]*$/.test(s) && /^[a-z]+$/.test(t) && t.length === s.length + 1 &&
+    [...t].some((_, i) => sorted(t.slice(0, i) + t.slice(i + 1)) === sorted(s));
+  if (!valid) {
+    document.getElementById('v74-info').innerHTML = `<span style="color:var(--red-text)">t must be s shuffled plus exactly one extra lowercase letter.</span>`;
+    return;
+  }
+  v74All = s + t; v74SLen = s.length;
+  v74Steps = v74Build(s, t);
+  v74Idx = 0;
+  v74Render();
+}
+function v74Fwd()  { if (v74Idx < v74Steps.length - 1) { v74Idx++; v74Render(); } }
+function v74Back() { if (v74Idx > 0) { v74Idx--; v74Render(); } }
+function v74Skip() { v74Idx = v74Steps.length - 1; v74Render(); }
+
+v74Init();
+initPage('0389-find-the-difference.html', v74Fwd, v74Back);
+</script>
+
+</body>
+</html>
