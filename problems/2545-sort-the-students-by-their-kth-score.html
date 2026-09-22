@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#2545 Sort the Students by Their Kth Score · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-sort-the-students-by-their-kth-score" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#2545</div>
+      <h1>Sort the Students by Their Kth Score</h1>
+      <a href="https://leetcode.com/problems/sort-the-students-by-their-kth-score/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Each row of <code>score</code> is one student; column <code>k</code> is one exam. Reorder the rows so the student with the highest score in exam <code>k</code> comes first. Sort whole rows using <code>row[k]</code> as the key, largest first — the other columns just travel along with their row. O(m log m) time for m students.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def sortTheStudents(self, score, k):
+        return sorted(score, key=lambda row: row[k], reverse=True)</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>score (rows separated by ;)</label><input type="text" id="v76-in" value="10,6,9,1; 7,5,11,2; 4,8,3,15; 2,12,7,6" style="width:300px"></div>
+      <div class="ig"><label>k</label><input type="number" id="v76-k" value="2" min="0" style="width:70px"></div>
+      <button onclick="v76Init()">Run</button>
+    </div>
+
+    <div style="display:flex;gap:28px;flex-wrap:wrap">
+      <div>
+        <div class="section-label">score (original)</div>
+        <div class="table-wrap"><table class="dp-table" id="v76-orig"></table></div>
+      </div>
+      <div>
+        <div class="section-label">sorted by column k, highest first</div>
+        <div class="table-wrap"><table class="dp-table" id="v76-out"></table></div>
+      </div>
+    </div>
+
+    <div class="info-box" id="v76-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">rank</div><div class="sval" id="v76-srank">—</div></div>
+      <div class="stat"><div class="slabel">student</div><div class="sval" id="v76-sstu">—</div></div>
+      <div class="stat best"><div class="slabel">row[k]</div><div class="sval" id="v76-skey">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v76Back()">← Prev</button>
+      <button onclick="v76Fwd()">Next →</button>
+      <button onclick="v76Skip()">Skip to end</button>
+      <span class="prog" id="v76-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>sort key column k</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>row being placed</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>already placed</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #2545 Sort the Students by Their Kth Score — sort rows by row[k], descending */
+let v76Steps = [], v76Idx = 0, v76Score = [], v76K = 0;
+
+function v76Build(score, k) {
+  const steps = [];
+  const order = score.map((_, i) => i).sort((a, b) => score[b][k] - score[a][k]);
+  steps.push({ placed: [], cur: null, rank: null,
+    msg: `Sort key = column <code>k=${k}</code>: <code>[${score.map(r => r[k]).join(', ')}]</code>. Sort rows by it in descending order — each step places the next row.` });
+  order.forEach((i, r) => {
+    steps.push({ placed: order.slice(0, r + 1), cur: i, rank: r,
+      msg: r === 0
+        ? `Highest <code>row[${k}]</code> is <code>${score[i][k]}</code> (student ${i}) → whole row <code>[${score[i].join(', ')}]</code> goes first.`
+        : `Next highest is <code>${score[i][k]}</code> (student ${i}) → row <code>[${score[i].join(', ')}]</code> goes at position ${r}.` });
+  });
+  steps.push({ placed: order, cur: null, rank: null,
+    msg: `<strong>Answer: [${order.map(i => `[${score[i].join(',')}]`).join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v76Table(el, rows, k, rowClass, label) {
+  el.innerHTML = '';
+  const head = el.insertRow();
+  head.innerHTML = `<th class="row-header">${label}</th>` + v76Score[0].map((_, j) => `<th>${j === k ? 'k=' + j : j}</th>`).join('');
+  rows.forEach(({ i, tag }) => {
+    const tr = el.insertRow();
+    tr.innerHTML = `<th class="row-header">${tag}</th>`;
+    v76Score[i].forEach((v, j) => {
+      const td = tr.insertCell();
+      td.textContent = v;
+      const rc = rowClass(i);
+      if (rc) td.className = rc;
+      else if (j === k) td.className = 'cell-amber';
+      if (rc === 'faded') { td.className = ''; td.style.opacity = '0.35'; }
+    });
+  });
+}
+
+function v76Render() {
+  if (!v76Steps.length) return;
+  const s = v76Steps[v76Idx];
+  const done = v76Idx === v76Steps.length - 1;
+
+  v76Table(document.getElementById('v76-orig'), v76Score.map((_, i) => ({ i, tag: 'student ' + i })), v76K,
+    i => i === s.cur ? 'cell-cur' : s.placed.includes(i) ? 'faded' : '', 'row');
+  v76Table(document.getElementById('v76-out'), s.placed.map((i, r) => ({ i, tag: `#${r} (s${i})` })), v76K,
+    i => i === s.cur ? 'cell-cur' : (done ? 'cell-zero' : 'cell-filled'), 'rank');
+
+  document.getElementById('v76-info').innerHTML = s.msg;
+  document.getElementById('v76-srank').textContent = s.rank !== null ? s.rank : '—';
+  document.getElementById('v76-sstu').textContent = s.cur !== null ? s.cur : '—';
+  document.getElementById('v76-skey').textContent = s.cur !== null ? v76Score[s.cur][v76K] : '—';
+  document.getElementById('v76-prog').textContent = `Step ${v76Idx + 1} / ${v76Steps.length}`;
+}
+
+function v76Init() {
+  const rows = document.getElementById('v76-in').value.split(';').map(r => r.split(',').map(x => x.trim()).filter(x => x !== '').map(Number)).filter(r => r.length);
+  const k = parseInt(document.getElementById('v76-k').value, 10);
+  const n = rows.length ? rows[0].length : 0;
+  const keys = rows.map(r => r[k]);
+  const ok = rows.length && rows.every(r => r.length === n && r.every(Number.isInteger)) &&
+    k >= 0 && k < n && new Set(keys).size === keys.length;
+  if (!ok) {
+    document.getElementById('v76-info').innerHTML = `<span style="color:var(--red-text)">Rows must be the same length, 0 ≤ k &lt; columns, and column k must have distinct values.</span>`;
+    return;
+  }
+  v76Score = rows; v76K = k;
+  v76Steps = v76Build(rows, k);
+  v76Idx = 0;
+  v76Render();
+}
+function v76Fwd()  { if (v76Idx < v76Steps.length - 1) { v76Idx++; v76Render(); } }
+function v76Back() { if (v76Idx > 0) { v76Idx--; v76Render(); } }
+function v76Skip() { v76Idx = v76Steps.length - 1; v76Render(); }
+
+v76Init();
+initPage('2545-sort-the-students-by-their-kth-score.html', v76Fwd, v76Back);
+</script>
+
+</body>
+</html>

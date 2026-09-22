@@ -76,4 +76,5 @@ const PROBLEMS = [
   { num: '890', title: "Find and Replace Pattern", file: '0890-find-and-replace-pattern.html' },
   { num: '389', title: "Find the Difference", file: '0389-find-the-difference.html' },
   { num: '539', title: "Minimum Time Difference", file: '0539-minimum-time-difference.html' },
+  { num: '2545', title: "Sort the Students by Their Kth Score", file: '2545-sort-the-students-by-their-kth-score.html' },
 ];
