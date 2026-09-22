@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#807 Max Increase to Keep City Skyline · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-max-increase-to-keep-city-skyline" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#807</div>
+      <h1>Max Increase to Keep City Skyline</h1>
+      <a href="https://leetcode.com/problems/max-increase-to-keep-city-skyline/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Raise buildings as much as possible without changing the skyline seen from any side. The skyline from the left/right is each <strong>row's max</strong>; from the top/bottom it's each <strong>column's max</strong>. Building <code>(i, j)</code> can rise to <code>min(row_max[i], col_max[j])</code> — any taller and it would poke above one of the two skylines. Sum those gains. O(n²) time, O(n) space.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def maxIncreaseKeepingSkyline(self, grid):
+        row_max = [max(row) for row in grid]
+        col_max = [max(col) for col in zip(*grid)]
+
+        total = 0
+        for i, row in enumerate(grid):
+            for j, h in enumerate(row):
+                total += min(row_max[i], col_max[j]) - h
+
+        return total</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>grid (rows separated by ;)</label><input type="text" id="v77-in" value="3,0,8,4; 2,4,5,7; 9,2,6,3; 0,3,1,0" style="width:300px"></div>
+      <button onclick="v77Init()">Run</button>
+    </div>
+
+    <div class="section-label">grid — row_max on the right, col_max along the bottom</div>
+    <div class="table-wrap"><table class="dp-table" id="v77-grid"></table></div>
+
+    <div class="info-box" id="v77-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">cell</div><div class="sval" id="v77-scell">—</div></div>
+      <div class="stat"><div class="slabel">limit − height</div><div class="sval" id="v77-sgain">—</div></div>
+      <div class="stat best"><div class="slabel">total</div><div class="sval" id="v77-stotal">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v77Back()">← Prev</button>
+      <button onclick="v77Fwd()">Next →</button>
+      <button onclick="v77Skip()">Skip to end</button>
+      <span class="prog" id="v77-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>current building</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>its row_max and col_max</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>raised to new height (old → new)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #807 Max Increase to Keep City Skyline — each cell can rise to min(row max, col max) */
+let v77Steps = [], v77Idx = 0, v77Grid = [], v77RowMax = [], v77ColMax = [];
+
+function v77Build(grid) {
+  const steps = [];
+  const n = grid.length, m = grid[0].length;
+  const rowMax = grid.map(r => Math.max(...r));
+  const colMax = grid[0].map((_, j) => Math.max(...grid.map(r => r[j])));
+  v77RowMax = rowMax; v77ColMax = colMax;
+  const done = {};
+  let total = 0;
+  steps.push({ i: -1, j: -1, total, done: {}, showMax: false,
+    msg: `Start with the grid of building heights.` });
+  steps.push({ i: -1, j: -1, total, done: {}, showMax: true,
+    msg: `<code>row_max = [${rowMax.join(', ')}]</code> (skyline from the side), <code>col_max = [${colMax.join(', ')}]</code> (skyline from the top).` });
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < m; j++) {
+      const h = grid[i][j];
+      const lim = Math.min(rowMax[i], colMax[j]);
+      total += lim - h;
+      done[i + ',' + j] = lim;
+      steps.push({ i, j, total, done: { ...done }, showMax: true, gain: lim - h, lim,
+        msg: `(${i},${j}) height ${h}: <code>min(row_max[${i}]=${rowMax[i]}, col_max[${j}]=${colMax[j]}) = ${lim}</code> → gain <code>${lim} − ${h} = ${lim - h}</code>. total = ${total}.` });
+    }
+  }
+
+  steps.push({ i: -1, j: -1, total, done: { ...done }, showMax: true,
+    msg: `Every building raised to its limit; the skylines are unchanged. <strong>Answer: ${total}</strong>.` });
+  return steps;
+}
+
+function v77Render() {
+  if (!v77Steps.length) return;
+  const s = v77Steps[v77Idx];
+  const table = document.getElementById('v77-grid');
+  table.innerHTML = '';
+
+  const head = table.insertRow();
+  head.innerHTML = '<th></th>' + v77Grid[0].map((_, j) => `<th>${j}</th>`).join('') + '<th>row_max</th>';
+  v77Grid.forEach((row, i) => {
+    const tr = table.insertRow();
+    tr.innerHTML = `<th>${i}</th>`;
+    row.forEach((h, j) => {
+      const td = tr.insertCell();
+      const key = i + ',' + j;
+      if (key in s.done) {
+        const lim = s.done[key];
+        td.innerHTML = lim > h ? `<span style="font-size:11px;opacity:.7">${h}→</span>${lim}` : `${h}`;
+        td.className = 'cell-zero';
+      } else {
+        td.textContent = h;
+      }
+      if (i === s.i && j === s.j) td.className = 'cell-cur';
+    });
+    const rm = tr.insertCell();
+    rm.textContent = s.showMax ? v77RowMax[i] : '';
+    rm.className = s.showMax && i === s.i ? 'cell-amber' : 'cell-empty';
+  });
+  const foot = table.insertRow();
+  foot.innerHTML = '<th>col_max</th>';
+  v77ColMax.forEach((c, j) => {
+    const td = foot.insertCell();
+    td.textContent = s.showMax ? c : '';
+    td.className = s.showMax && j === s.j ? 'cell-amber' : 'cell-empty';
+  });
+  foot.insertCell().className = 'cell-empty';
+
+  document.getElementById('v77-info').innerHTML = s.msg;
+  document.getElementById('v77-scell').textContent = s.i >= 0 ? `(${s.i},${s.j})` : '—';
+  document.getElementById('v77-sgain').textContent = s.i >= 0 ? `${s.lim} − ${v77Grid[s.i][s.j]} = ${s.gain}` : '—';
+  document.getElementById('v77-stotal').textContent = s.total;
+  document.getElementById('v77-prog').textContent = `Step ${v77Idx + 1} / ${v77Steps.length}`;
+}
+
+function v77Init() {
+  const rows = document.getElementById('v77-in').value.split(';').map(r => r.split(',').map(x => x.trim()).filter(x => x !== '').map(Number)).filter(r => r.length);
+  const n = rows.length;
+  if (!n || n > 8 || rows.some(r => r.length !== n || r.some(x => !Number.isInteger(x) || x < 0))) {
+    document.getElementById('v77-info').innerHTML = `<span style="color:var(--red-text)">Enter an n×n grid (n ≤ 8) of non-negative integers, rows separated by ;</span>`;
+    return;
+  }
+  v77Grid = rows;
+  v77Steps = v77Build(rows);
+  v77Idx = 0;
+  v77Render();
+}
+function v77Fwd()  { if (v77Idx < v77Steps.length - 1) { v77Idx++; v77Render(); } }
+function v77Back() { if (v77Idx > 0) { v77Idx--; v77Render(); } }
+function v77Skip() { v77Idx = v77Steps.length - 1; v77Render(); }
+
+v77Init();
+initPage('0807-max-increase-to-keep-city-skyline.html', v77Fwd, v77Back);
+</script>
+
+</body>
+</html>

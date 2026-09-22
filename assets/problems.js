@@ -77,4 +77,5 @@ const PROBLEMS = [
   { num: '389', title: "Find the Difference", file: '0389-find-the-difference.html' },
   { num: '539', title: "Minimum Time Difference", file: '0539-minimum-time-difference.html' },
   { num: '2545', title: "Sort the Students by Their Kth Score", file: '2545-sort-the-students-by-their-kth-score.html' },
+  { num: '807', title: "Max Increase to Keep City Skyline", file: '0807-max-increase-to-keep-city-skyline.html' },
 ];
