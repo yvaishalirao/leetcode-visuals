@@ -78,4 +78,5 @@ const PROBLEMS = [
   { num: '539', title: "Minimum Time Difference", file: '0539-minimum-time-difference.html' },
   { num: '2545', title: "Sort the Students by Their Kth Score", file: '2545-sort-the-students-by-their-kth-score.html' },
   { num: '807', title: "Max Increase to Keep City Skyline", file: '0807-max-increase-to-keep-city-skyline.html' },
+  { num: '4014', title: "Minimum Total Price After Applying Discounts", file: '4014-minimum-total-price-after-applying-discounts.html' },
 ];

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#4014 Minimum Total Price After Applying Discounts · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-minimum-total-price-after-applying-discounts" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#4014</div>
+      <h1>Minimum Total Price After Applying Discounts</h1>
+      <a href="https://leetcode.com/problems/minimum-total-price-after-applying-discounts/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Each discount (a percentage) can go on at most one item and each item takes at most one discount. Putting <code>d%</code> on price <code>p</code> saves <code>p × d / 100</code>, and every saving is positive, so use as many discounts as possible. To maximise the total saving, <strong>pair the biggest discount with the biggest price</strong>, the second biggest with the second biggest, and so on — swapping any two pairs can only save less. Sort both lists in descending order and zip them. O(n log n + m log m) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def minPrice(self, prices, discounts):
+        prices = sorted(prices, reverse=True)
+        discounts = sorted(discounts, reverse=True)
+
+        total = float(sum(prices))
+        for p, d in zip(prices, discounts):
+            total -= p * d / 100.0
+
+        return total</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>prices</label><input type="text" id="v78-p" value="10,30,21" style="width:200px"></div>
+      <div class="ig"><label>discounts (%)</label><input type="text" id="v78-d" value="50,60" style="width:160px"></div>
+      <button onclick="v78Init()">Run</button>
+    </div>
+
+    <div class="section-label">prices (sorted ↓)</div>
+    <div class="array-row" id="v78-prices"></div>
+
+    <div class="section-label">discounts (sorted ↓)</div>
+    <div class="array-row" id="v78-disc"></div>
+
+    <div class="section-label">pairs applied</div>
+    <div class="history-list" id="v78-hist" style="margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v78-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">pair</div><div class="sval" id="v78-spair">—</div></div>
+      <div class="stat"><div class="slabel">saving</div><div class="sval" id="v78-ssave">—</div></div>
+      <div class="stat best"><div class="slabel">total</div><div class="sval" id="v78-stotal">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v78Back()">← Prev</button>
+      <button onclick="v78Fwd()">Next →</button>
+      <button onclick="v78Skip()">Skip to end</button>
+      <span class="prog" id="v78-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>current price</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>current discount</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>already paired</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #4014 Minimum Total Price After Applying Discounts — biggest discount on biggest price */
+let v78Steps = [], v78Idx = 0, v78P = [], v78D = [];
+
+const v78Fmt = (x) => String(+x.toFixed(5));
+
+function v78Build(prices, discounts) {
+  const steps = [];
+  const P = [...prices].sort((a, b) => b - a);
+  const D = [...discounts].sort((a, b) => b - a);
+  v78P = P; v78D = D;
+  let total = P.reduce((a, b) => a + b, 0);
+  const pairs = [];
+  steps.push({ i: -1, total, pairs: [], save: null,
+    msg: `Sorted both lists largest first. Before any discount, <code>total = sum(prices) = ${v78Fmt(total)}</code>.` });
+
+  const n = Math.min(P.length, D.length);
+  for (let i = 0; i < n; i++) {
+    const save = P[i] * D[i] / 100;
+    total -= save;
+    pairs.push(`${P[i]} @ ${D[i]}% → ${v78Fmt(P[i] - save)}`);
+    steps.push({ i, total, pairs: [...pairs], save,
+      msg: `Pair #${i}: biggest remaining discount <code>${D[i]}%</code> on biggest remaining price <code>${P[i]}</code> → saves <code>${P[i]} × ${D[i]} / 100 = ${v78Fmt(save)}</code>. total = ${v78Fmt(total)}.` });
+  }
+
+  const leftover = P.length > n
+    ? ` Prices <code>[${P.slice(n).join(', ')}]</code> get no discount (none left).`
+    : (D.length > n ? ` Discounts <code>[${D.slice(n).join(', ')}]</code> go unused (no items left).` : '');
+  steps.push({ i: -1, total, pairs: [...pairs], save: null, done: true,
+    msg: `All ${n} useful pairs applied.${leftover} <strong>Answer: ${v78Fmt(total)}</strong>.` });
+  return steps;
+}
+
+function v78Row(elId, vals, i, curCls, suffix) {
+  const el = document.getElementById(elId);
+  el.innerHTML = '';
+  vals.forEach((v, k) => {
+    const c = document.createElement('div');
+    c.className = 'arr-cell' + (k === i ? ' ' + curCls : k < i || (i === -1 && v78Steps[v78Idx].done && k < Math.min(v78P.length, v78D.length)) ? ' in-window' : '');
+    c.style.cssText = 'width:auto;min-width:48px;padding:0 8px';
+    c.innerHTML = `${v}${suffix}<span class="cidx">${k}</span>`;
+    el.appendChild(c);
+  });
+}
+
+function v78Render() {
+  if (!v78Steps.length) return;
+  const s = v78Steps[v78Idx];
+
+  v78Row('v78-prices', v78P, s.i, 'is-l', '');
+  v78Row('v78-disc', v78D, s.i, 'is-r', '%');
+
+  const hist = document.getElementById('v78-hist');
+  hist.innerHTML = '';
+  s.pairs.forEach(p => {
+    const chip = document.createElement('span');
+    chip.className = 'h-chip';
+    chip.textContent = p;
+    hist.appendChild(chip);
+  });
+
+  document.getElementById('v78-info').innerHTML = s.msg;
+  document.getElementById('v78-spair').textContent = s.i >= 0 ? `${v78P[s.i]} @ ${v78D[s.i]}%` : '—';
+  document.getElementById('v78-ssave').textContent = s.save !== null ? v78Fmt(s.save) : '—';
+  document.getElementById('v78-stotal').textContent = v78Fmt(s.total);
+  document.getElementById('v78-prog').textContent = `Step ${v78Idx + 1} / ${v78Steps.length}`;
+}
+
+function v78Init() {
+  const parse = (id) => document.getElementById(id).value.split(',').map(x => x.trim()).filter(x => x !== '').map(Number);
+  const prices = parse('v78-p'), discounts = parse('v78-d');
+  const ok = prices.length && discounts.length &&
+    prices.every(x => Number.isInteger(x) && x >= 1) && discounts.every(x => Number.isInteger(x) && x >= 1 && x <= 100);
+  if (!ok) {
+    document.getElementById('v78-info').innerHTML = `<span style="color:var(--red-text)">prices must be positive integers; discounts must be integers from 1 to 100.</span>`;
+    return;
+  }
+  v78Steps = v78Build(prices, discounts);
+  v78Idx = 0;
+  v78Render();
+}
+function v78Fwd()  { if (v78Idx < v78Steps.length - 1) { v78Idx++; v78Render(); } }
+function v78Back() { if (v78Idx > 0) { v78Idx--; v78Render(); } }
+function v78Skip() { v78Idx = v78Steps.length - 1; v78Render(); }
+
+v78Init();
+initPage('4014-minimum-total-price-after-applying-discounts.html', v78Fwd, v78Back);
+</script>
+
+</body>
+</html>
