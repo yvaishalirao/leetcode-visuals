@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#611 Valid Triangle Number · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-valid-triangle-number" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#611</div>
+      <h1>Valid Triangle Number</h1>
+      <a href="https://leetcode.com/problems/valid-triangle-number/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Count triplets that can be triangle sides. With sides sorted <code>a ≤ b ≤ c</code>, the only check needed is <code>a + b &gt; c</code>. Sort, then fix the largest side <code>c</code> from the right and run two pointers <code>lo</code>, <code>hi</code> on the values before it. If <code>nums[lo] + nums[hi] &gt; nums[c]</code>, then <em>every</em> index from <code>lo</code> to <code>hi−1</code> also works with <code>hi</code> (they're even bigger) → add <code>hi − lo</code> at once and move <code>hi</code> left. Otherwise <code>nums[lo]</code> is too small → move <code>lo</code> right. O(n²) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def triangleNumber(self, nums):
+        nums.sort()
+        count = 0
+
+        for c in range(len(nums) - 1, 1, -1):
+            lo, hi = 0, c - 1
+            while lo &lt; hi:
+                if nums[lo] + nums[hi] &gt; nums[c]:
+                    count += hi - lo
+                    hi -= 1
+                else:
+                    lo += 1
+
+        return count</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v79-in" value="4,2,3,4,6,2" style="width:240px"></div>
+      <button onclick="v79Init()">Run</button>
+    </div>
+
+    <div class="section-label">nums (sorted)</div>
+    <div class="array-row" id="v79-arr"></div>
+
+    <div class="section-label">triangles found with the current hi</div>
+    <div class="history-list" id="v79-hist" style="margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v79-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">c</div><div class="sval" id="v79-sc">—</div></div>
+      <div class="stat"><div class="slabel">lo, hi</div><div class="sval" id="v79-slh">—</div></div>
+      <div class="stat"><div class="slabel">nums[lo] + nums[hi]</div><div class="sval" id="v79-ssum">—</div></div>
+      <div class="stat best"><div class="slabel">count</div><div class="sval" id="v79-scount">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v79Back()">← Prev</button>
+      <button onclick="v79Fwd()">Next →</button>
+      <button onclick="v79Skip()">Skip to end</button>
+      <span class="prog" id="v79-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2px solid var(--red-border);outline-offset:-2px"></div>c (largest side)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>lo</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>hi</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>lo…hi−1 all pair with hi</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #611 Valid Triangle Number — sort, fix largest side c, two pointers count pairs with a + b > c */
+let v79Steps = [], v79Idx = 0, v79Arr = [];
+
+function v79Build(raw) {
+  const steps = [];
+  const a = [...raw].sort((x, y) => x - y);
+  v79Arr = a;
+  let count = 0;
+  steps.push({ c: -1, lo: -1, hi: -1, ok: null, count, found: [],
+    msg: `Sorted: <code>[${a.join(', ')}]</code>. For sorted sides only <code>a + b &gt; c</code> needs checking.` });
+
+  for (let c = a.length - 1; c >= 2; c--) {
+    let lo = 0, hi = c - 1;
+    steps.push({ c, lo, hi, ok: null, count, found: [],
+      msg: `Fix the largest side <code>c=${c}</code> (<code>nums[c]=${a[c]}</code>). Start <code>lo=0</code>, <code>hi=${hi}</code>.` });
+    while (lo < hi) {
+      const sum = a[lo] + a[hi];
+      if (sum > a[c]) {
+        const add = hi - lo;
+        count += add;
+        const found = [];
+        for (let x = lo; x < hi; x++) found.push(`(${a[x]}, ${a[hi]}, ${a[c]})`);
+        steps.push({ c, lo, hi, ok: true, count, found,
+          msg: `<code>${a[lo]} + ${a[hi]} = ${sum} &gt; ${a[c]}</code> ✓ → every index lo..hi−1 also works with hi → <code>count += ${hi} − ${lo} = ${add}</code> → ${count}. Then <code>hi -= 1</code>.` });
+        hi--;
+      } else {
+        steps.push({ c, lo, hi, ok: false, count, found: [],
+          msg: `<code>${a[lo]} + ${a[hi]} = ${sum} ≤ ${a[c]}</code> ✗ → nums[lo] is too small for any hi → <code>lo += 1</code>.` });
+        lo++;
+      }
+    }
+  }
+
+  steps.push({ c: -1, lo: -1, hi: -1, ok: null, count, found: [],
+    msg: `<strong>Answer: ${count}</strong> valid triangle${count === 1 ? '' : 's'}.` });
+  return steps;
+}
+
+function v79Render() {
+  if (!v79Steps.length) return;
+  const s = v79Steps[v79Idx];
+
+  const arr = document.getElementById('v79-arr');
+  arr.innerHTML = '';
+  v79Arr.forEach((v, i) => {
+    const c = document.createElement('div');
+    let cls = 'arr-cell';
+    if (i === s.lo) cls += ' is-l';
+    else if (i === s.hi) cls += ' is-r';
+    else if (s.ok && i > s.lo && i < s.hi) cls += ' in-window';
+    if (i === s.c) cls += ' is-target';
+    if (s.c >= 0 && i > s.c) c.style.opacity = '0.35';
+    c.className = cls;
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    arr.appendChild(c);
+  });
+
+  const hist = document.getElementById('v79-hist');
+  hist.innerHTML = '';
+  s.found.forEach(t => {
+    const chip = document.createElement('span');
+    chip.className = 'h-chip';
+    chip.textContent = t;
+    hist.appendChild(chip);
+  });
+
+  document.getElementById('v79-info').innerHTML = s.msg;
+  document.getElementById('v79-sc').textContent = s.c >= 0 ? s.c : '—';
+  document.getElementById('v79-slh').textContent = s.lo >= 0 ? `${s.lo}, ${s.hi}` : '—';
+  document.getElementById('v79-ssum').textContent = s.lo >= 0 ? v79Arr[s.lo] + v79Arr[s.hi] : '—';
+  document.getElementById('v79-scount').textContent = s.count;
+  document.getElementById('v79-prog').textContent = `Step ${v79Idx + 1} / ${v79Steps.length}`;
+}
+
+function v79Init() {
+  const nums = document.getElementById('v79-in').value.split(',').map(x => x.trim()).filter(x => x !== '').map(Number);
+  if (!nums.length || nums.length > 20 || nums.some(x => !Number.isInteger(x) || x < 0)) {
+    document.getElementById('v79-info').innerHTML = `<span style="color:var(--red-text)">Enter up to 20 comma-separated non-negative integers.</span>`;
+    return;
+  }
+  v79Steps = v79Build(nums);
+  v79Idx = 0;
+  v79Render();
+}
+function v79Fwd()  { if (v79Idx < v79Steps.length - 1) { v79Idx++; v79Render(); } }
+function v79Back() { if (v79Idx > 0) { v79Idx--; v79Render(); } }
+function v79Skip() { v79Idx = v79Steps.length - 1; v79Render(); }
+
+v79Init();
+initPage('0611-valid-triangle-number.html', v79Fwd, v79Back);
+</script>
+
+</body>
+</html>
