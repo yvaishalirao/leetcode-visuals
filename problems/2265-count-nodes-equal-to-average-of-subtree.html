@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#2265 Count Nodes Equal to Average of Subtree · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-count-nodes-equal-to-average-of-subtree" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#2265</div>
+      <h1>Count Nodes Equal to Average of Subtree</h1>
+      <a href="https://leetcode.com/problems/count-nodes-equal-to-average-of-subtree/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Count nodes whose value equals the (floored) average of their own subtree. A subtree's average needs its <strong>sum</strong> and its <strong>node count</strong> — and both can be built from the children's. So do one <strong>post-order DFS</strong> that returns <code>(sum, count)</code>: combine the left and right results with the node itself, test <code>sum // count == node.val</code>, and pass the pair up. Every node is visited once → O(n) time, O(h) stack.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def averageOfSubtree(self, root):
+        self.count = 0
+
+        def dfs(node):
+            if not node:
+                return 0, 0
+            left_sum, left_cnt = dfs(node.left)
+            right_sum, right_cnt = dfs(node.right)
+            total = left_sum + right_sum + node.val
+            cnt = left_cnt + right_cnt + 1
+            if total // cnt == node.val:
+                self.count += 1
+            return total, cnt
+
+        dfs(root)
+        return self.count</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>root (level order)</label><input type="text" id="v81-in" value="4,8,5,0,1,null,6" style="width:260px"></div>
+      <button onclick="v81Init()">Run</button>
+    </div>
+
+    <div class="section-label">tree — sum / count shown under each finished node</div>
+    <div class="tree-wrap"><div id="v81-tree"></div></div>
+
+    <div class="info-box" id="v81-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">node</div><div class="sval" id="v81-snode">—</div></div>
+      <div class="stat"><div class="slabel">sum // count</div><div class="sval" id="v81-savg">—</div></div>
+      <div class="stat best"><div class="slabel">count</div><div class="sval" id="v81-scount">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v81Back()">← Prev</button>
+      <button onclick="v81Fwd()">Next →</button>
+      <button onclick="v81Skip()">Skip to end</button>
+      <span class="prog" id="v81-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>current node</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>on the call stack (waiting for children)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>value == average → counted</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>value ≠ average</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #2265 Count Nodes Equal to Average of Subtree — post-order DFS returning (sum, count) */
+let v81Nodes = [], v81Edges = [], v81Steps = [], v81Idx = 0;
+
+function v81Parse(str) {
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (!tokens.length || tokens[0].toLowerCase() === 'null') return null;
+  let idc = 0;
+  const mk = v => ({ id: idc++, val: +v, left: null, right: null });
+  const root = mk(tokens[0]);
+  const queue = [root];
+  let i = 1;
+  while (queue.length && i < tokens.length) {
+    const node = queue.shift();
+    if (i < tokens.length) {
+      const lt = tokens[i]; i++;
+      if (lt.toLowerCase() !== 'null') { node.left = mk(lt); queue.push(node.left); }
+    }
+    if (i < tokens.length) {
+      const rt = tokens[i]; i++;
+      if (rt.toLowerCase() !== 'null') { node.right = mk(rt); queue.push(node.right); }
+    }
+  }
+  return root;
+}
+
+function v81Layout(root) {
+  let counter = 0;
+  const nodes = [], edges = [];
+  function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = counter++; node.y = depth;
+    nodes.push(node);
+    if (node.left) edges.push([node, node.left]);
+    if (node.right) edges.push([node, node.right]);
+    walk(node.right, depth + 1);
+  }
+  walk(root, 0);
+  return { nodes, edges };
+}
+
+function v81BuildTreeDOM(root) {
+  const cont = document.getElementById('v81-tree');
+  if (!root) { cont.style.width = ''; cont.style.height = '40px'; cont.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Empty tree.</span>'; return; }
+  const GAP_X = 64, GAP_Y = 76, PAD = 24, SIZE = 40;
+  const maxX = Math.max(...v81Nodes.map(n => n.x));
+  const maxY = Math.max(...v81Nodes.map(n => n.y));
+  const W = (maxX + 1) * GAP_X + PAD * 2, H = (maxY + 1) * GAP_Y + PAD * 2;
+  const cx = n => PAD + n.x * GAP_X + GAP_X / 2, cy = n => PAD + n.y * GAP_Y + GAP_Y / 2;
+  let svg = `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0;pointer-events:none">`;
+  v81Edges.forEach(([p, c]) => {
+    svg += `<line x1="${cx(p)}" y1="${cy(p)}" x2="${cx(c)}" y2="${cy(c)}" style="stroke:var(--border-strong);stroke-width:1.5"/>`;
+  });
+  svg += '</svg>';
+  let divs = '';
+  v81Nodes.forEach(n => {
+    divs += `<div class="tree-node" id="v81-tn-${n.id}" style="left:${cx(n) - SIZE / 2}px;top:${cy(n) - SIZE / 2}px">${n.val}</div>`;
+    divs += `<div id="v81-tl-${n.id}" style="position:absolute;left:${cx(n) - 30}px;top:${cy(n) + SIZE / 2 + 2}px;width:60px;text-align:center;font-size:10px;font-family:monospace;color:var(--text-sec)"></div>`;
+  });
+  cont.style.width = W + 'px'; cont.style.height = H + 'px';
+  cont.innerHTML = svg + divs;
+}
+
+function v81Build(root) {
+  const steps = [];
+  if (!root) {
+    steps.push({ cur: null, stack: [], res: {}, count: 0, msg: `<code>root is None</code> → return <code>0</code>.` });
+    return steps;
+  }
+  let count = 0;
+  const stack = [], res = {};
+  const snap = (cur, msg, extra) => steps.push({ cur, stack: [...stack], res: { ...res }, count, msg, ...extra });
+
+  function dfs(node) {
+    if (!node) return [0, 0];
+    stack.push(node.id);
+    snap(node.id, `Enter node <code>${node.val}</code> → first get <code>(sum, count)</code> from both children.`);
+    const [ls, lc] = dfs(node.left);
+    const [rs, rc] = dfs(node.right);
+    const total = ls + rs + node.val, cnt = lc + rc + 1;
+    const avg = Math.floor(total / cnt);
+    const match = avg === node.val;
+    if (match) count++;
+    res[node.id] = { total, cnt, match };
+    snap(node.id,
+      `Node <code>${node.val}</code>: left <code>(${ls}, ${lc})</code>, right <code>(${rs}, ${rc})</code> → <code>sum = ${total}</code>, <code>count = ${cnt}</code>, <code>${total} // ${cnt} = ${avg}</code> ` +
+      (match ? `== ${node.val} ✓ → count = ${count}.` : `≠ ${node.val} ✗.`) + ` Return <code>(${total}, ${cnt})</code>.`,
+      { avg });
+    stack.pop();
+    return [total, cnt];
+  }
+
+  dfs(root);
+  steps.push({ cur: null, stack: [], res: { ...res }, count, done: true,
+    msg: `DFS complete. <strong>Answer: ${count}</strong> node${count === 1 ? '' : 's'} equal the average of their subtree.` });
+  return steps;
+}
+
+function v81Render() {
+  if (!v81Steps.length) return;
+  const s = v81Steps[v81Idx];
+
+  v81Nodes.forEach(n => {
+    const el = document.getElementById('v81-tn-' + n.id);
+    const lab = document.getElementById('v81-tl-' + n.id);
+    if (!el) return;
+    el.className = 'tree-node';
+    el.style.background = el.style.borderColor = el.style.color = '';
+    const r = s.res[n.id];
+    if (r) {
+      if (r.match) el.classList.add('tn-done');
+      else { el.style.background = 'var(--red-bg)'; el.style.borderColor = 'var(--red-border)'; el.style.color = 'var(--red-text)'; }
+      lab.textContent = `${r.total} / ${r.cnt}`;
+    } else {
+      lab.textContent = '';
+      if (s.stack.includes(n.id)) el.classList.add('tn-queued');
+    }
+    if (n.id === s.cur) el.classList.add('tn-current');
+  });
+
+  const cur = s.cur !== null ? v81Nodes.find(n => n.id === s.cur) : null;
+  document.getElementById('v81-info').innerHTML = s.msg;
+  document.getElementById('v81-snode').textContent = cur ? cur.val : '—';
+  document.getElementById('v81-savg').textContent = s.avg !== undefined ? s.avg : '—';
+  document.getElementById('v81-scount').textContent = s.count;
+  document.getElementById('v81-prog').textContent = `Step ${v81Idx + 1} / ${v81Steps.length}`;
+}
+
+function v81Init() {
+  const str = document.getElementById('v81-in').value;
+  const tokens = str.split(',').map(t => t.trim()).filter(t => t.length);
+  if (tokens.some(t => t.toLowerCase() !== 'null' && !/^-?\d+$/.test(t)) || tokens.length > 31) {
+    document.getElementById('v81-info').innerHTML = `<span style="color:var(--red-text)">Enter up to 31 level-order values (integers or null).</span>`;
+    return;
+  }
+  const root = v81Parse(str);
+  const lay = v81Layout(root);
+  v81Nodes = lay.nodes; v81Edges = lay.edges;
+  v81BuildTreeDOM(root);
+  v81Steps = v81Build(root);
+  v81Idx = 0;
+  v81Render();
+}
+function v81Fwd()  { if (v81Idx < v81Steps.length - 1) { v81Idx++; v81Render(); } }
+function v81Back() { if (v81Idx > 0) { v81Idx--; v81Render(); } }
+function v81Skip() { v81Idx = v81Steps.length - 1; v81Render(); }
+
+v81Init();
+initPage('2265-count-nodes-equal-to-average-of-subtree.html', v81Fwd, v81Back);
+</script>
+
+</body>
+</html>

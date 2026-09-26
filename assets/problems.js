@@ -81,4 +81,5 @@ const PROBLEMS = [
   { num: '4014', title: "Minimum Total Price After Applying Discounts", file: '4014-minimum-total-price-after-applying-discounts.html' },
   { num: '611', title: "Valid Triangle Number", file: '0611-valid-triangle-number.html' },
   { num: '3483', title: "Unique 3-Digit Even Numbers", file: '3483-unique-3-digit-even-numbers.html' },
+  { num: '2265', title: "Count Nodes Equal to Average of Subtree", file: '2265-count-nodes-equal-to-average-of-subtree.html' },
 ];
