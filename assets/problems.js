@@ -80,4 +80,5 @@ const PROBLEMS = [
   { num: '807', title: "Max Increase to Keep City Skyline", file: '0807-max-increase-to-keep-city-skyline.html' },
   { num: '4014', title: "Minimum Total Price After Applying Discounts", file: '4014-minimum-total-price-after-applying-discounts.html' },
   { num: '611', title: "Valid Triangle Number", file: '0611-valid-triangle-number.html' },
+  { num: '3483', title: "Unique 3-Digit Even Numbers", file: '3483-unique-3-digit-even-numbers.html' },
 ];

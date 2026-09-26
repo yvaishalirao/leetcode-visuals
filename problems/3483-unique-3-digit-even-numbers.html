@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#3483 Unique 3-Digit Even Numbers · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-unique-3-digit-even-numbers" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#3483</div>
+      <h1>Unique 3-Digit Even Numbers</h1>
+      <a href="https://leetcode.com/problems/unique-3-digit-even-numbers/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Count the <strong>distinct</strong> 3-digit even numbers you can build from <code>digits</code>, using each copy at most once and no leading zero. Instead of generating permutations (and de-duplicating), flip it around: there are only 450 even numbers from 100 to 998. For each one, check that <code>digits</code> has enough copies of every digit it needs. Distinctness comes for free, and the work is constant — O(450) checks no matter the input.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>from collections import Counter
+
+class Solution(object):
+    def totalNumbers(self, digits):
+        have = Counter(digits)
+        count = 0
+
+        for num in range(100, 1000, 2):
+            need = Counter(map(int, str(num)))
+            if all(have[d] &gt;= k for d, k in need.items()):
+                count += 1
+
+        return count</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>digits</label><input type="text" id="v80-in" value="1,2,3,4" style="width:220px"></div>
+      <button onclick="v80Init()">Run</button>
+    </div>
+
+    <div class="section-label">have = Counter(digits)</div>
+    <div class="freq-row" id="v80-have"></div>
+
+    <div class="section-label">hundreds × tens → valid last (even) digits</div>
+    <div class="table-wrap"><table class="dp-table" id="v80-grid"></table></div>
+
+    <div class="info-box" id="v80-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">prefix</div><div class="sval" id="v80-spre">—</div></div>
+      <div class="stat"><div class="slabel">found here</div><div class="sval" id="v80-shere">—</div></div>
+      <div class="stat best"><div class="slabel">count</div><div class="sval" id="v80-scount">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v80Back()">← Prev</button>
+      <button onclick="v80Fwd()">Next →</button>
+      <button onclick="v80Skip()">Skip to end</button>
+      <span class="prog" id="v80-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>checking ab0, ab2, ab4, ab6, ab8</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>some numbers formed</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>digit in use for the current prefix</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #3483 Unique 3-Digit Even Numbers — test every even number 100..998 against the digit counts */
+let v80Steps = [], v80Idx = 0, v80Have = [];
+
+function v80Build(digits) {
+  const steps = [];
+  const have = new Array(10).fill(0);
+  digits.forEach(d => have[d]++);
+  v80Have = have;
+  const cells = {};   // "a,b" -> array of valid c, or null if prefix impossible
+  let count = 0;
+  const snap = (o) => steps.push({ a: -1, b: -1, cells: { ...cells }, count, here: null, ...o });
+
+  snap({ msg: `<code>have = {${have.map((c, d) => c ? `${d}: ${c}` : '').filter(x => x).join(', ')}}</code>. Walk every even number 100..998, grouped by its first two digits.` });
+
+  for (let a = 1; a <= 9; a++) {
+    if (!have[a]) {
+      for (let b = 0; b <= 9; b++) cells[a + ',' + b] = null;
+      snap({ a, msg: `No <code>${a}</code> in digits → none of ${a}00..${a}98 can be formed. Skip the row.` });
+      continue;
+    }
+    for (let b = 0; b <= 9; b++) {
+      const left = [...have];
+      left[a]--;
+      if (left[b] <= 0) { cells[a + ',' + b] = null; continue; }
+      left[b]--;
+      const ok = [];
+      for (let c = 0; c <= 8; c += 2) if (left[c] > 0) ok.push(c);
+      cells[a + ',' + b] = ok;
+      count += ok.length;
+      snap({ a, b, here: ok.length,
+        msg: ok.length
+          ? `Prefix <code>${a}${b}_</code>: after using ${a} and ${b}, even digits left → <code>${ok.map(c => `${a}${b}${c}`).join(', ')}</code> (+${ok.length}). count = ${count}.`
+          : `Prefix <code>${a}${b}_</code>: no even digit left after using ${a} and ${b} → 0 numbers.` });
+    }
+  }
+
+  snap({ msg: `<strong>Answer: ${count}</strong> distinct even number${count === 1 ? '' : 's'}.` });
+  return steps;
+}
+
+function v80Render() {
+  if (!v80Steps.length) return;
+  const s = v80Steps[v80Idx];
+
+  const hv = document.getElementById('v80-have');
+  hv.innerHTML = '';
+  v80Have.forEach((c, d) => {
+    if (!c) return;
+    const el = document.createElement('div');
+    el.className = 'freq-cell' + (d === s.a || d === s.b ? ' fc-active' : '');
+    if (d === s.a || d === s.b) { el.style.background = 'var(--amber-bg)'; el.style.borderColor = 'var(--amber-border)'; }
+    el.innerHTML = `<span class="fval">${d}</span><span class="fcnt">×${c}</span>`;
+    hv.appendChild(el);
+  });
+
+  const t = document.getElementById('v80-grid');
+  t.innerHTML = '';
+  const head = t.insertRow();
+  head.innerHTML = '<th class="row-header" style="min-width:60px">a \\ b</th>' + [...Array(10).keys()].map(b => `<th>${b}</th>`).join('');
+  for (let a = 1; a <= 9; a++) {
+    const tr = t.insertRow();
+    tr.innerHTML = `<th class="row-header" style="min-width:60px">${a}</th>`;
+    for (let b = 0; b <= 9; b++) {
+      const td = tr.insertCell();
+      td.style.cssText = 'width:44px;height:38px;font-size:11px';
+      const key = a + ',' + b;
+      if (key in s.cells) {
+        const v = s.cells[key];
+        if (v === null) { td.textContent = ''; td.style.background = 'var(--s2)'; }
+        else if (v.length) { td.textContent = v.join(','); td.className = 'cell-zero'; }
+        else { td.textContent = '0'; td.className = 'cell-empty'; }
+      }
+      if (a === s.a && b === s.b) td.className = 'cell-cur';
+    }
+  }
+
+  document.getElementById('v80-info').innerHTML = s.msg;
+  document.getElementById('v80-spre').textContent = s.b >= 0 ? `${s.a}${s.b}_` : (s.a >= 0 ? `${s.a}__` : '—');
+  document.getElementById('v80-shere').textContent = s.here !== null ? s.here : '—';
+  document.getElementById('v80-scount').textContent = s.count;
+  document.getElementById('v80-prog').textContent = `Step ${v80Idx + 1} / ${v80Steps.length}`;
+}
+
+function v80Init() {
+  const digits = document.getElementById('v80-in').value.split(',').map(x => x.trim()).filter(x => x !== '').map(Number);
+  if (digits.length < 3 || digits.length > 10 || digits.some(d => !Number.isInteger(d) || d < 0 || d > 9)) {
+    document.getElementById('v80-info').innerHTML = `<span style="color:var(--red-text)">Enter 3–10 comma-separated digits (0–9).</span>`;
+    return;
+  }
+  v80Steps = v80Build(digits);
+  v80Idx = 0;
+  v80Render();
+}
+function v80Fwd()  { if (v80Idx < v80Steps.length - 1) { v80Idx++; v80Render(); } }
+function v80Back() { if (v80Idx > 0) { v80Idx--; v80Render(); } }
+function v80Skip() { v80Idx = v80Steps.length - 1; v80Render(); }
+
+v80Init();
+initPage('3483-unique-3-digit-even-numbers.html', v80Fwd, v80Back);
+</script>
+
+</body>
+</html>
