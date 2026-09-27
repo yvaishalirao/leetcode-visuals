@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#3550 Smallest Index With Digit Sum Equal to Index · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-smallest-index-with-digit-sum-equal-to-index" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#3550</div>
+      <h1>Smallest Index With Digit Sum Equal to Index</h1>
+      <a href="https://leetcode.com/problems/smallest-index-with-digit-sum-equal-to-index/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Return the smallest index <code>i</code> where the digit sum of <code>nums[i]</code> equals <code>i</code>, or <code>-1</code>. Scan left to right — the first match is automatically the smallest, so return immediately. Digit sum: repeatedly add <code>num % 10</code> (last digit) and drop it with <code>num //= 10</code>. O(n · digits) time, O(1) space.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def smallestIndex(self, nums):
+        for i, num in enumerate(nums):
+            digit_sum = 0
+            while num:
+                digit_sum += num % 10
+                num //= 10
+            if digit_sum == i:
+                return i
+        return -1</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v83-in" value="5,13,40,30,22,7" style="width:240px"></div>
+      <button onclick="v83Init()">Run</button>
+    </div>
+
+    <div class="section-label">nums</div>
+    <div class="array-row" id="v83-arr"></div>
+
+    <div class="section-label">digits of nums[i]</div>
+    <div class="chain-row" id="v83-digits"></div>
+
+    <div class="info-box" id="v83-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v83-si">—</div></div>
+      <div class="stat"><div class="slabel">digit_sum</div><div class="sval" id="v83-ssum">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v83-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v83Back()">← Prev</button>
+      <button onclick="v83Fwd()">Next →</button>
+      <button onclick="v83Skip()">Skip to end</button>
+      <span class="prog" id="v83-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2px solid var(--accent);outline-offset:-2px"></div>current index</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>digit sum ≠ i</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>digit sum == i → answer</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #3550 Smallest Index With Digit Sum Equal to Index — scan left to right, return first match */
+let v83Steps = [], v83Idx = 0, v83Arr = [];
+
+function v83Build(nums) {
+  const steps = [];
+  const verdict = nums.map(() => null);
+  let ans = -1;
+  steps.push({ i: -1, digits: [], sum: null, verdict: [...verdict], ans: null,
+    msg: `Scan from index 0. The first index whose digit sum equals the index wins.` });
+
+  for (let i = 0; i < nums.length; i++) {
+    const digits = [];
+    let num = nums[i], sum = 0;
+    while (num) { digits.push(num % 10); sum += num % 10; num = Math.floor(num / 10); }
+    digits.reverse();
+    const match = sum === i;
+    verdict[i] = match ? 'ok' : 'no';
+    const expr = digits.length ? digits.join(' + ') : '0';
+    steps.push({ i, digits, sum, verdict: [...verdict], ans: match ? i : null,
+      msg: `<code>nums[${i}] = ${nums[i]}</code> → digit sum <code>${expr} = ${sum}</code> ` +
+        (match ? `== ${i} ✓ → return <code>${i}</code>.` : `≠ ${i} → keep going.`) });
+    if (match) { ans = i; break; }
+  }
+
+  steps.push({ i: ans, digits: [], sum: null, verdict: [...verdict], ans, done: true,
+    msg: ans === -1 ? `No index matched. <strong>Answer: -1</strong>.` : `<strong>Answer: ${ans}</strong>.` });
+  return steps;
+}
+
+function v83Render() {
+  if (!v83Steps.length) return;
+  const s = v83Steps[v83Idx];
+
+  const arr = document.getElementById('v83-arr');
+  arr.innerHTML = '';
+  v83Arr.forEach((v, i) => {
+    const c = document.createElement('div');
+    c.className = 'arr-cell' + (i === s.i && !s.done ? ' cell-current' : '');
+    if (s.verdict[i] === 'ok') { c.style.background = 'var(--green-bg)'; c.style.borderColor = 'var(--green-border)'; c.style.color = 'var(--green-text)'; }
+    else if (s.verdict[i] === 'no') { c.style.background = 'var(--red-bg)'; c.style.borderColor = 'var(--red-border)'; c.style.color = 'var(--red-text)'; }
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    arr.appendChild(c);
+  });
+
+  const dg = document.getElementById('v83-digits');
+  dg.innerHTML = '';
+  if (s.sum !== null) {
+    const parts = s.digits.length ? s.digits : [0];
+    parts.forEach((d, k) => {
+      if (k) { const p = document.createElement('span'); p.className = 'chain-arrow'; p.textContent = '+'; dg.appendChild(p); }
+      const node = document.createElement('div');
+      node.className = 'chain-node';
+      node.textContent = d;
+      dg.appendChild(node);
+    });
+    const eq = document.createElement('span'); eq.className = 'chain-arrow'; eq.textContent = '=';
+    dg.appendChild(eq);
+    const res = document.createElement('div');
+    res.className = 'chain-node ' + (s.sum === s.i ? 'done-node' : 'break-node');
+    res.innerHTML = `${s.sum}<span class="cn-sub">vs i = ${s.i}</span>`;
+    dg.appendChild(res);
+  }
+
+  document.getElementById('v83-info').innerHTML = s.msg;
+  document.getElementById('v83-si').textContent = s.i >= 0 && !s.done ? s.i : '—';
+  document.getElementById('v83-ssum').textContent = s.sum !== null ? s.sum : '—';
+  document.getElementById('v83-sans').textContent = s.ans !== null ? s.ans : '—';
+  document.getElementById('v83-prog').textContent = `Step ${v83Idx + 1} / ${v83Steps.length}`;
+}
+
+function v83Init() {
+  const nums = document.getElementById('v83-in').value.split(',').map(x => x.trim()).filter(x => x !== '').map(Number);
+  if (!nums.length || nums.some(x => !Number.isInteger(x) || x < 0)) {
+    document.getElementById('v83-info').innerHTML = `<span style="color:var(--red-text)">Enter comma-separated non-negative integers.</span>`;
+    return;
+  }
+  v83Arr = nums;
+  v83Steps = v83Build(nums);
+  v83Idx = 0;
+  v83Render();
+}
+function v83Fwd()  { if (v83Idx < v83Steps.length - 1) { v83Idx++; v83Render(); } }
+function v83Back() { if (v83Idx > 0) { v83Idx--; v83Render(); } }
+function v83Skip() { v83Idx = v83Steps.length - 1; v83Render(); }
+
+v83Init();
+initPage('3550-smallest-index-with-digit-sum-equal-to-index.html', v83Fwd, v83Back);
+</script>
+
+</body>
+</html>
