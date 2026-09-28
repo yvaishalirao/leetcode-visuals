@@ -84,4 +84,5 @@ const PROBLEMS = [
   { num: '2265', title: "Count Nodes Equal to Average of Subtree", file: '2265-count-nodes-equal-to-average-of-subtree.html' },
   { num: '712', title: "Minimum ASCII Delete Sum for Two Strings", file: '0712-minimum-ascii-delete-sum-for-two-strings.html' },
   { num: '3550', title: "Smallest Index With Digit Sum Equal to Index", file: '3550-smallest-index-with-digit-sum-equal-to-index.html' },
+  { num: '1658', title: "Minimum Operations to Reduce X to Zero", file: '1658-minimum-operations-to-reduce-x-to-zero.html' },
 ];

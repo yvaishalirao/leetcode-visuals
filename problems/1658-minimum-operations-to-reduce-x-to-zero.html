@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1658 Minimum Operations to Reduce X to Zero · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-minimum-operations-to-reduce-x-to-zero" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1658</div>
+      <h1>Minimum Operations to Reduce X to Zero</h1>
+      <a href="https://leetcode.com/problems/minimum-operations-to-reduce-x-to-zero/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Each operation removes the leftmost or rightmost number and subtracts it from <code>x</code>. Whatever we remove is a prefix plus a suffix, so what <strong>stays</strong> is one contiguous middle block summing to <code>sum(nums) − x</code>. Fewest removals = <strong>longest</strong> middle block with that sum. All numbers are positive, so a sliding window works: grow on the right, shrink from the left while the window is too big. O(n) time, O(1) space.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def minOperations(self, nums, x):
+        target = sum(nums) - x
+        if target &lt; 0:
+            return -1
+
+        best = -1
+        window = left = 0
+        for right, num in enumerate(nums):
+            window += num
+            while window &gt; target:
+                window -= nums[left]
+                left += 1
+            if window == target:
+                best = max(best, right - left + 1)
+
+        return len(nums) - best if best != -1 else -1</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v84-in" value="3,2,20,1,1,3" style="width:220px"></div>
+      <div class="ig"><label>x</label><input type="number" id="v84-x" value="10" style="width:80px"></div>
+      <button onclick="v84Init()">Run</button>
+    </div>
+
+    <div class="section-label">nums — window = the part we keep</div>
+    <div class="array-row" id="v84-arr"></div>
+
+    <div class="info-box" id="v84-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">target</div><div class="sval" id="v84-starget">—</div></div>
+      <div class="stat"><div class="slabel">window sum</div><div class="sval" id="v84-swin">0</div></div>
+      <div class="stat"><div class="slabel">longest keep</div><div class="sval" id="v84-sbest">-1</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v84-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v84Back()">← Prev</button>
+      <button onclick="v84Fwd()">Next →</button>
+      <button onclick="v84Skip()">Skip to end</button>
+      <span class="prog" id="v84-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>window [left, right] (kept)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>window sum == target</div>
+      <div class="leg"><div class="lb" style="outline:2px solid var(--red-border);outline-offset:-2px"></div>number just added / dropped</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1658 Minimum Operations to Reduce X to Zero — longest middle window with sum = total − x */
+let v84Steps = [], v84Idx = 0, v84Arr = [];
+
+function v84Build(nums, x) {
+  const steps = [];
+  const total = nums.reduce((a, b) => a + b, 0);
+  const target = total - x;
+  const snap = (o) => steps.push({ left: 0, right: -1, window: 0, best: -1, hit: false, mark: -1, ans: null, target, ...o });
+
+  if (target < 0) {
+    snap({ ans: -1, msg: `<code>target = sum(nums) − x = ${total} − ${x} = ${target}</code> &lt; 0 → even removing everything can't reach x. <strong>Answer: -1</strong>.` });
+    return steps;
+  }
+  snap({ msg: `<code>target = ${total} − ${x} = ${target}</code>. Find the longest contiguous block summing to ${target} — everything around it gets removed.` });
+
+  let best = -1, window = 0, left = 0;
+  for (let right = 0; right < nums.length; right++) {
+    window += nums[right];
+    snap({ left, right, window, best, mark: right,
+      msg: `Add <code>nums[${right}] = ${nums[right]}</code> → window sum = ${window}.` });
+    while (window > target) {
+      window -= nums[left];
+      left++;
+      snap({ left, right, window, best, mark: left - 1,
+        msg: `${window + nums[left - 1]} &gt; ${target} → drop <code>nums[${left - 1}] = ${nums[left - 1]}</code> from the left → window sum = ${window}.` });
+    }
+    if (window === target) {
+      const len = right - left + 1;
+      const improved = len > best;
+      best = Math.max(best, len);
+      snap({ left, right, window, best, hit: true,
+        msg: `Window sum == ${target} ✓ → keep ${len} number${len === 1 ? '' : 's'}, remove ${nums.length - len}.${improved ? ` New longest = ${best}.` : ` Longest stays ${best}.`}` });
+    }
+  }
+
+  const ans = best !== -1 ? nums.length - best : -1;
+  snap({ left: 0, right: -1, best, ans, done: true,
+    msg: best === -1
+      ? `No block sums to ${target}. <strong>Answer: -1</strong>.`
+      : `Longest kept block = ${best} → operations = <code>${nums.length} − ${best} = ${ans}</code>. <strong>Answer: ${ans}</strong>.` });
+  return steps;
+}
+
+function v84Render() {
+  if (!v84Steps.length) return;
+  const s = v84Steps[v84Idx];
+
+  const arr = document.getElementById('v84-arr');
+  arr.innerHTML = '';
+  v84Arr.forEach((v, i) => {
+    const c = document.createElement('div');
+    const inside = i >= s.left && i <= s.right;
+    c.className = 'arr-cell' + (inside ? (s.hit ? ' is-l' : ' in-window') : '') + (i === s.mark ? ' is-target' : '');
+    if (!inside && s.right >= 0) c.style.opacity = '0.55';
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    arr.appendChild(c);
+  });
+
+  document.getElementById('v84-info').innerHTML = s.msg;
+  document.getElementById('v84-starget').textContent = s.target;
+  document.getElementById('v84-swin').textContent = s.window;
+  document.getElementById('v84-sbest').textContent = s.best;
+  document.getElementById('v84-sans').textContent = s.ans !== null ? s.ans : '—';
+  document.getElementById('v84-prog').textContent = `Step ${v84Idx + 1} / ${v84Steps.length}`;
+}
+
+function v84Init() {
+  const nums = document.getElementById('v84-in').value.split(',').map(t => t.trim()).filter(t => t !== '').map(Number);
+  const x = parseInt(document.getElementById('v84-x').value, 10);
+  if (!nums.length || nums.some(v => !Number.isInteger(v) || v < 1) || !(x >= 1)) {
+    document.getElementById('v84-info').innerHTML = `<span style="color:var(--red-text)">nums must be positive integers and x ≥ 1.</span>`;
+    return;
+  }
+  v84Arr = nums;
+  v84Steps = v84Build(nums, x);
+  v84Idx = 0;
+  v84Render();
+}
+function v84Fwd()  { if (v84Idx < v84Steps.length - 1) { v84Idx++; v84Render(); } }
+function v84Back() { if (v84Idx > 0) { v84Idx--; v84Render(); } }
+function v84Skip() { v84Idx = v84Steps.length - 1; v84Render(); }
+
+v84Init();
+initPage('1658-minimum-operations-to-reduce-x-to-zero.html', v84Fwd, v84Back);
+</script>
+
+</body>
+</html>
