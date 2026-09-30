@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1387 Sort Integers by The Power Value · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-sort-integers-by-the-power-value" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1387</div>
+      <h1>Sort Integers by The Power Value</h1>
+      <a href="https://leetcode.com/problems/sort-integers-by-the-power-value/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">The <strong>power</strong> of <code>x</code> is how many steps it takes to reach 1 (halve if even, <code>3x + 1</code> if odd). Sort <code>lo..hi</code> by <code>(power, value)</code> and return the <code>k</code>-th. Chains overlap a lot — 12 → 6 → 3 → … reuses 6's chain — so <strong>memoise</strong>: <code>power(x) = 1 + power(next)</code>, and once any number's power is known it's never walked again. Then a single sort with the tuple key handles the tie-break.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def getKth(self, lo, hi, k):
+        memo = {1: 0}
+
+        def power(x):
+            if x not in memo:
+                memo[x] = 1 + power(x // 2 if x % 2 == 0 else 3 * x + 1)
+            return memo[x]
+
+        return sorted(range(lo, hi + 1), key=lambda x: (power(x), x))[k - 1]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>lo</label><input type="number" id="v86-lo" value="12" style="width:70px"></div>
+      <div class="ig"><label>hi</label><input type="number" id="v86-hi" value="15" style="width:70px"></div>
+      <div class="ig"><label>k</label><input type="number" id="v86-k" value="2" style="width:60px"></div>
+      <button onclick="v86Init()">Run</button>
+    </div>
+
+    <div class="section-label">lo..hi with their power</div>
+    <div class="array-row" id="v86-arr"></div>
+
+    <div class="section-label">chain walked for the current x (stops at a memoised value)</div>
+    <div class="chain-row" id="v86-chain"></div>
+
+    <div class="section-label">sorted by (power, x)</div>
+    <div class="array-row" id="v86-sorted" style="min-height:48px"></div>
+
+    <div class="info-box" id="v86-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">x</div><div class="sval" id="v86-sx">—</div></div>
+      <div class="stat"><div class="slabel">power(x)</div><div class="sval" id="v86-sp">—</div></div>
+      <div class="stat"><div class="slabel">memo size</div><div class="sval" id="v86-smemo">1</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v86-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v86Back()">← Prev</button>
+      <button onclick="v86Fwd()">Next →</button>
+      <button onclick="v86Skip()">Skip to end</button>
+      <span class="prog" id="v86-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>newly computed</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>memo hit — chain stops here</div>
+      <div class="leg"><div class="lb" style="outline:2px solid var(--red-border);outline-offset:-2px"></div>k-th in sorted order</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1387 Sort Integers by The Power Value — memoised Collatz steps, sort by (power, x) */
+let v86Steps = [], v86Idx = 0, v86Lo = 0, v86Hi = 0, v86K = 1;
+
+function v86Build(lo, hi, k) {
+  const steps = [];
+  const memo = new Map([[1, 0]]);
+  const pw = {};
+  steps.push({ x: null, chain: [], hit: null, pw: {}, memoSize: 1, sorted: null, ans: null,
+    msg: `<code>memo = {1: 0}</code>. Compute <code>power(x)</code> for each x in ${lo}..${hi}.` });
+
+  for (let x = lo; x <= hi; x++) {
+    const chain = [];
+    let y = x;
+    while (!memo.has(y)) { chain.push(y); y = y % 2 === 0 ? y / 2 : 3 * y + 1; }
+    const hit = y;
+    let p = memo.get(hit);
+    for (let t = chain.length - 1; t >= 0; t--) { p += 1; memo.set(chain[t], p); }
+    pw[x] = memo.get(x);
+    steps.push({ x, chain, hit, pw: { ...pw }, memoSize: memo.size, sorted: null, ans: null,
+      msg: chain.length
+        ? `<code>power(${x})</code>: walked ${chain.length} new number${chain.length === 1 ? '' : 's'} until <code>${hit}</code> (already known: ${memo.get(hit)}) → <code>power(${x}) = ${chain.length} + ${memo.get(hit)} = ${pw[x]}</code>. Every number on the way is now memoised too.`
+        : `<code>power(${x})</code> was already memoised from an earlier chain → <code>${pw[x]}</code>, no work.` });
+  }
+
+  const sorted = [];
+  for (let x = lo; x <= hi; x++) sorted.push(x);
+  sorted.sort((a, b) => pw[a] - pw[b] || a - b);
+  const ans = sorted[k - 1];
+  steps.push({ x: null, chain: [], hit: null, pw: { ...pw }, memoSize: memo.size, sorted, ans: null,
+    msg: `Sort by <code>(power, x)</code>: <code>[${sorted.join(', ')}]</code> — ties on power go to the smaller x.` });
+  steps.push({ x: null, chain: [], hit: null, pw: { ...pw }, memoSize: memo.size, sorted, ans, done: true,
+    msg: `The ${k}${['st', 'nd', 'rd'][k - 1] || 'th'} element is <code>${ans}</code> (power ${pw[ans]}). <strong>Answer: ${ans}</strong>.` });
+  return steps;
+}
+
+function v86Cell(x, p, cls) {
+  const c = document.createElement('div');
+  c.className = 'arr-cell' + (cls ? ' ' + cls : '');
+  c.style.cssText = 'width:auto;min-width:48px;padding:0 8px';
+  c.innerHTML = `${x}<span class="cidx">${p !== undefined ? 'p=' + p : ''}</span>`;
+  return c;
+}
+
+function v86Render() {
+  if (!v86Steps.length) return;
+  const s = v86Steps[v86Idx];
+
+  const arr = document.getElementById('v86-arr');
+  arr.innerHTML = '';
+  for (let x = v86Lo; x <= v86Hi; x++) arr.appendChild(v86Cell(x, s.pw[x], x === s.x ? 'cell-current' : (x in s.pw ? 'in-window' : '')));
+
+  const ch = document.getElementById('v86-chain');
+  ch.innerHTML = '';
+  if (s.x !== null) {
+    const show = s.chain.length > 24 ? [...s.chain.slice(0, 12), '…', ...s.chain.slice(-11)] : s.chain;
+    show.forEach(v => {
+      if (v === '…') { const e = document.createElement('span'); e.className = 'chain-arrow'; e.textContent = '…'; ch.appendChild(e); return; }
+      const n = document.createElement('div'); n.className = 'chain-node cur-node'; n.textContent = v; ch.appendChild(n);
+      const a = document.createElement('span'); a.className = 'chain-arrow'; a.textContent = '→'; ch.appendChild(a);
+    });
+    const h = document.createElement('div');
+    h.className = 'chain-node done-node';
+    h.innerHTML = `${s.hit}<span class="cn-sub">memo ${s.chain.length ? '' : '(x itself) '}</span>`;
+    ch.appendChild(h);
+  }
+
+  const so = document.getElementById('v86-sorted');
+  so.innerHTML = '';
+  if (s.sorted) s.sorted.forEach((x, i) => so.appendChild(v86Cell(x, s.pw[x], i === v86K - 1 ? 'is-target' + (s.done ? ' is-l' : '') : '')));
+
+  document.getElementById('v86-info').innerHTML = s.msg;
+  document.getElementById('v86-sx').textContent = s.x !== null ? s.x : '—';
+  document.getElementById('v86-sp').textContent = s.x !== null ? s.pw[s.x] : '—';
+  document.getElementById('v86-smemo').textContent = s.memoSize;
+  document.getElementById('v86-sans').textContent = s.ans !== null ? s.ans : '—';
+  document.getElementById('v86-prog').textContent = `Step ${v86Idx + 1} / ${v86Steps.length}`;
+}
+
+function v86Init() {
+  const lo = parseInt(document.getElementById('v86-lo').value, 10);
+  const hi = parseInt(document.getElementById('v86-hi').value, 10);
+  const k = parseInt(document.getElementById('v86-k').value, 10);
+  if (!(lo >= 1 && hi >= lo && hi <= 1000 && hi - lo <= 30 && k >= 1 && k <= hi - lo + 1)) {
+    document.getElementById('v86-info').innerHTML = `<span style="color:var(--red-text)">Need 1 ≤ lo ≤ hi ≤ 1000, at most 31 numbers, and 1 ≤ k ≤ hi − lo + 1.</span>`;
+    return;
+  }
+  v86Lo = lo; v86Hi = hi; v86K = k;
+  v86Steps = v86Build(lo, hi, k);
+  v86Idx = 0;
+  v86Render();
+}
+function v86Fwd()  { if (v86Idx < v86Steps.length - 1) { v86Idx++; v86Render(); } }
+function v86Back() { if (v86Idx > 0) { v86Idx--; v86Render(); } }
+function v86Skip() { v86Idx = v86Steps.length - 1; v86Render(); }
+
+v86Init();
+initPage('1387-sort-integers-by-the-power-value.html', v86Fwd, v86Back);
+</script>
+
+</body>
+</html>
