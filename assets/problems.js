@@ -85,4 +85,5 @@ const PROBLEMS = [
   { num: '712', title: "Minimum ASCII Delete Sum for Two Strings", file: '0712-minimum-ascii-delete-sum-for-two-strings.html' },
   { num: '3550', title: "Smallest Index With Digit Sum Equal to Index", file: '3550-smallest-index-with-digit-sum-equal-to-index.html' },
   { num: '1658', title: "Minimum Operations to Reduce X to Zero", file: '1658-minimum-operations-to-reduce-x-to-zero.html' },
+  { num: '412', title: "Fizz Buzz", file: '0412-fizz-buzz.html' },
 ];

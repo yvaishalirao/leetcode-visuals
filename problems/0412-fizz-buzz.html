@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#412 Fizz Buzz · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-fizz-buzz" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#412</div>
+      <h1>Fizz Buzz</h1>
+      <a href="https://leetcode.com/problems/fizz-buzz/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">For each <code>i</code> from 1 to <code>n</code>: multiples of 3 become <code>"Fizz"</code>, multiples of 5 become <code>"Buzz"</code>, multiples of both become <code>"FizzBuzz"</code>, and everything else stays as the number. Build the word by <strong>appending</strong> — <code>"Fizz"</code> if divisible by 3, then <code>"Buzz"</code> if divisible by 5 — so the FizzBuzz case needs no separate check. If the word is still empty, use the number. O(n) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def fizzBuzz(self, n):
+        result = []
+        for i in range(1, n + 1):
+            word = ""
+            if i % 3 == 0:
+                word += "Fizz"
+            if i % 5 == 0:
+                word += "Buzz"
+            result.append(word or str(i))
+        return result</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>n</label><input type="number" id="v85-n" value="15" min="1" max="60" style="width:80px"></div>
+      <button onclick="v85Init()">Run</button>
+    </div>
+
+    <div class="section-label">result</div>
+    <div id="v85-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v85-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v85-si">—</div></div>
+      <div class="stat"><div class="slabel">i % 3, i % 5</div><div class="sval" id="v85-smod">—</div></div>
+      <div class="stat best"><div class="slabel">appended</div><div class="sval" id="v85-sword">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v85Back()">← Prev</button>
+      <button onclick="v85Fwd()">Next →</button>
+      <button onclick="v85Skip()">Skip to end</button>
+      <span class="prog" id="v85-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>Fizz (÷3)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>Buzz (÷5)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>FizzBuzz (÷15)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #412 Fizz Buzz — append "Fizz" for ÷3 and "Buzz" for ÷5; empty word means use the number */
+let v85Steps = [], v85Idx = 0;
+
+function v85Build(n) {
+  const steps = [];
+  const result = [];
+  steps.push({ i: 0, result: [], msg: `Walk i = 1..${n}, building each word by appending.` });
+  for (let i = 1; i <= n; i++) {
+    let word = '';
+    if (i % 3 === 0) word += 'Fizz';
+    if (i % 5 === 0) word += 'Buzz';
+    const out = word || String(i);
+    result.push(out);
+    const why = word === 'FizzBuzz' ? `divisible by 3 <em>and</em> 5 → both parts appended`
+      : word === 'Fizz' ? `divisible by 3 → <code>"Fizz"</code>`
+      : word === 'Buzz' ? `divisible by 5 → <code>"Buzz"</code>`
+      : `not divisible by 3 or 5 → word is empty → use <code>"${i}"</code>`;
+    steps.push({ i, result: [...result], msg: `<code>i = ${i}</code>: ${why}.` });
+  }
+  steps.push({ i: 0, result: [...result], done: true,
+    msg: `<strong>Answer: [${result.map(r => `"${r}"`).join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v85Render() {
+  if (!v85Steps.length) return;
+  const s = v85Steps[v85Idx];
+  const grid = document.getElementById('v85-grid');
+  grid.innerHTML = '';
+  s.result.forEach((w, k) => {
+    const i = k + 1;
+    const c = document.createElement('div');
+    c.className = 'arr-cell' + (i === s.i ? ' cell-current' : '');
+    c.style.cssText = 'width:auto;min-width:48px;padding:0 8px;font-size:13px';
+    if (w === 'FizzBuzz') { c.style.background = 'var(--green-bg)'; c.style.borderColor = 'var(--green-border)'; c.style.color = 'var(--green-text)'; }
+    else if (w === 'Fizz') { c.style.background = 'var(--accent-bg)'; c.style.borderColor = 'var(--accent-border)'; c.style.color = 'var(--accent-text)'; }
+    else if (w === 'Buzz') { c.style.background = 'var(--amber-bg)'; c.style.borderColor = 'var(--amber-border)'; c.style.color = 'var(--amber-text)'; }
+    c.innerHTML = `${w}<span class="cidx">${i}</span>`;
+    grid.appendChild(c);
+  });
+
+  document.getElementById('v85-info').innerHTML = s.msg;
+  document.getElementById('v85-si').textContent = s.i || '—';
+  document.getElementById('v85-smod').textContent = s.i ? `${s.i % 3}, ${s.i % 5}` : '—';
+  document.getElementById('v85-sword').textContent = s.i ? `"${s.result[s.i - 1]}"` : '—';
+  document.getElementById('v85-prog').textContent = `Step ${v85Idx + 1} / ${v85Steps.length}`;
+}
+
+function v85Init() {
+  const n = parseInt(document.getElementById('v85-n').value, 10);
+  if (!(n >= 1 && n <= 60)) {
+    document.getElementById('v85-info').innerHTML = `<span style="color:var(--red-text)">n must be between 1 and 60.</span>`;
+    return;
+  }
+  v85Steps = v85Build(n);
+  v85Idx = 0;
+  v85Render();
+}
+function v85Fwd()  { if (v85Idx < v85Steps.length - 1) { v85Idx++; v85Render(); } }
+function v85Back() { if (v85Idx > 0) { v85Idx--; v85Render(); } }
+function v85Skip() { v85Idx = v85Steps.length - 1; v85Render(); }
+
+v85Init();
+initPage('0412-fizz-buzz.html', v85Fwd, v85Back);
+</script>
+
+</body>
+</html>
