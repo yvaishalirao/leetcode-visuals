@@ -87,4 +87,5 @@ const PROBLEMS = [
   { num: '1658', title: "Minimum Operations to Reduce X to Zero", file: '1658-minimum-operations-to-reduce-x-to-zero.html' },
   { num: '412', title: "Fizz Buzz", file: '0412-fizz-buzz.html' },
   { num: '1387', title: "Sort Integers by The Power Value", file: '1387-sort-integers-by-the-power-value.html' },
+  { num: '561', title: "Array Partition", file: '0561-array-partition.html' },
 ];

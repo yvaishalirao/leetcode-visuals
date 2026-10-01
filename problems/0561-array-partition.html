@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#561 Array Partition · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-array-partition" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#561</div>
+      <h1>Array Partition</h1>
+      <a href="https://leetcode.com/problems/array-partition/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Split <code>2n</code> numbers into <code>n</code> pairs to maximise the sum of each pair's <strong>minimum</strong>. The smallest number is always some pair's minimum, so pair it with the second smallest — wasting anything bigger on it would throw that value away. Repeat: after sorting, pair neighbours <code>(0,1), (2,3), …</code> and the minimum of each pair is the element at the even index. O(n log n) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def arrayPairSum(self, nums):
+        nums.sort()
+        return sum(nums[::2])</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums</label><input type="text" id="v87-in" value="6,2,6,5,1,2" style="width:220px"></div>
+      <button onclick="v87Init()">Run</button>
+    </div>
+
+    <div class="section-label">nums (sorted) — paired as neighbours</div>
+    <div class="array-row" id="v87-arr"></div>
+
+    <div class="section-label">pairs (min counted)</div>
+    <div class="history-list" id="v87-hist" style="margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v87-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">pair</div><div class="sval" id="v87-spair">—</div></div>
+      <div class="stat"><div class="slabel">min</div><div class="sval" id="v87-smin">—</div></div>
+      <div class="stat best"><div class="slabel">sum</div><div class="sval" id="v87-ssum">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v87Back()">← Prev</button>
+      <button onclick="v87Fwd()">Next →</button>
+      <button onclick="v87Skip()">Skip to end</button>
+      <span class="prog" id="v87-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>even index → pair minimum (added)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>odd index → its partner</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #561 Array Partition — sort, pair neighbours, sum the even-index elements */
+let v87Steps = [], v87Idx = 0, v87Arr = [];
+
+function v87Build(nums) {
+  const steps = [];
+  const a = [...nums].sort((x, y) => x - y);
+  v87Arr = a;
+  const pairs = [];
+  let sum = 0;
+  steps.push({ p: -1, pairs: [], sum,
+    msg: `Sorted: <code>[${a.join(', ')}]</code>. Pair neighbours so each small number is paired with the next smallest.` });
+  for (let i = 0; i < a.length; i += 2) {
+    sum += a[i];
+    pairs.push(`(${a[i]}, ${a[i + 1]}) → ${a[i]}`);
+    steps.push({ p: i, pairs: [...pairs], sum,
+      msg: `Pair <code>(${a[i]}, ${a[i + 1]})</code>: min is <code>nums[${i}] = ${a[i]}</code> → sum = ${sum}.` });
+  }
+  steps.push({ p: -1, pairs: [...pairs], sum, done: true,
+    msg: `<code>sum(nums[::2]) = ${a.filter((_, i) => i % 2 === 0).join(' + ')} = ${sum}</code>. <strong>Answer: ${sum}</strong>.` });
+  return steps;
+}
+
+function v87Render() {
+  if (!v87Steps.length) return;
+  const s = v87Steps[v87Idx];
+
+  const arr = document.getElementById('v87-arr');
+  arr.innerHTML = '';
+  v87Arr.forEach((v, i) => {
+    if (i && i % 2 === 0) { const gap = document.createElement('span'); gap.style.width = '10px'; arr.appendChild(gap); }
+    const c = document.createElement('div');
+    const pairStart = i - (i % 2);
+    const reached = s.done || pairStart <= s.p;
+    let cls = 'arr-cell';
+    if (reached) cls += i % 2 === 0 ? ' is-l' : ' is-r';
+    if (pairStart === s.p) cls += ' cell-current';
+    c.className = cls;
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    arr.appendChild(c);
+  });
+
+  const hist = document.getElementById('v87-hist');
+  hist.innerHTML = '';
+  s.pairs.forEach(p => { const chip = document.createElement('span'); chip.className = 'h-chip'; chip.textContent = p; hist.appendChild(chip); });
+
+  document.getElementById('v87-info').innerHTML = s.msg;
+  document.getElementById('v87-spair').textContent = s.p >= 0 ? `(${v87Arr[s.p]}, ${v87Arr[s.p + 1]})` : '—';
+  document.getElementById('v87-smin').textContent = s.p >= 0 ? v87Arr[s.p] : '—';
+  document.getElementById('v87-ssum').textContent = s.sum;
+  document.getElementById('v87-prog').textContent = `Step ${v87Idx + 1} / ${v87Steps.length}`;
+}
+
+function v87Init() {
+  const nums = document.getElementById('v87-in').value.split(',').map(x => x.trim()).filter(x => x !== '').map(Number);
+  if (!nums.length || nums.length % 2 || nums.some(x => !Number.isInteger(x))) {
+    document.getElementById('v87-info').innerHTML = `<span style="color:var(--red-text)">Enter an even number of comma-separated integers.</span>`;
+    return;
+  }
+  v87Steps = v87Build(nums);
+  v87Idx = 0;
+  v87Render();
+}
+function v87Fwd()  { if (v87Idx < v87Steps.length - 1) { v87Idx++; v87Render(); } }
+function v87Back() { if (v87Idx > 0) { v87Idx--; v87Render(); } }
+function v87Skip() { v87Idx = v87Steps.length - 1; v87Render(); }
+
+v87Init();
+initPage('0561-array-partition.html', v87Fwd, v87Back);
+</script>
+
+</body>
+</html>
