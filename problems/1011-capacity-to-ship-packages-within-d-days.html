@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1011 Capacity To Ship Packages Within D Days · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-capacity-to-ship-packages-within-d-days" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1011</div>
+      <h1>Capacity To Ship Packages Within D Days</h1>
+      <a href="https://leetcode.com/problems/capacity-to-ship-packages-within-d-days/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Packages ship in order; find the smallest ship capacity that gets them all out within <code>days</code>. For a given capacity, a greedy pass tells us how many days it takes (load each day until the next package won't fit). Bigger capacity never needs <em>more</em> days, so <strong>binary search the answer</strong> between <code>max(weights)</code> (must fit the heaviest package) and <code>sum(weights)</code> (everything in one day). O(n log(sum)) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def shipWithinDays(self, weights, days):
+        def days_needed(cap):
+            need, load = 1, 0
+            for w in weights:
+                if load + w &gt; cap:
+                    need += 1
+                    load = 0
+                load += w
+            return need
+
+        lo, hi = max(weights), sum(weights)
+        while lo &lt; hi:
+            mid = (lo + hi) // 2
+            if days_needed(mid) &lt;= days:
+                hi = mid
+            else:
+                lo = mid + 1
+
+        return lo</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>weights</label><input type="text" id="v88-w" value="1,2,3,4,5,6,7,8,9,10" style="width:260px"></div>
+      <div class="ig"><label>days</label><input type="number" id="v88-d" value="5" min="1" style="width:70px"></div>
+      <button onclick="v88Init()">Run</button>
+    </div>
+
+    <div class="section-label">search range for capacity</div>
+    <div id="v88-range" style="position:relative;height:54px;margin:0 16px 1rem;max-width:640px"></div>
+
+    <div class="section-label">greedy loading with capacity = mid</div>
+    <div id="v88-days" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:1rem;min-height:56px"></div>
+
+    <div class="info-box" id="v88-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">lo, hi</div><div class="sval" id="v88-slh">—</div></div>
+      <div class="stat"><div class="slabel">mid</div><div class="sval" id="v88-smid">—</div></div>
+      <div class="stat"><div class="slabel">days needed</div><div class="sval" id="v88-sneed">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v88-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v88Back()">← Prev</button>
+      <button onclick="v88Fwd()">Next →</button>
+      <button onclick="v88Skip()">Skip to end</button>
+      <span class="prog" id="v88-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>remaining range [lo, hi]</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>fits within days → hi = mid</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>too many days → lo = mid + 1</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1011 Capacity To Ship Packages — binary search capacity, greedy count of days for each guess */
+let v88Steps = [], v88Idx = 0, v88Min = 0, v88Max = 0, v88Days = 1;
+
+function v88Groups(weights, cap) {
+  const groups = [[]];
+  let load = 0;
+  for (const w of weights) {
+    if (load + w > cap) { groups.push([]); load = 0; }
+    load += w;
+    groups[groups.length - 1].push(w);
+  }
+  return groups;
+}
+
+function v88Build(weights, days) {
+  const steps = [];
+  let lo = Math.max(...weights), hi = weights.reduce((a, b) => a + b, 0);
+  v88Min = lo; v88Max = hi;
+  steps.push({ lo, hi, mid: null, groups: null, ok: null, ans: null,
+    msg: `Capacity must be at least <code>max(weights) = ${lo}</code> and never needs more than <code>sum(weights) = ${hi}</code>. Binary search in [${lo}, ${hi}].` });
+
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const groups = v88Groups(weights, mid);
+    const ok = groups.length <= days;
+    steps.push({ lo, hi, mid, groups, ok, ans: null,
+      msg: `<code>mid = (${lo} + ${hi}) // 2 = ${mid}</code> → greedy loading takes <code>${groups.length}</code> day${groups.length === 1 ? '' : 's'} ` +
+        (ok ? `≤ ${days} ✓ → ${mid} works, maybe smaller does too: <code>hi = ${mid}</code>.` : `&gt; ${days} ✗ → too small: <code>lo = ${mid + 1}</code>.`) });
+    if (ok) hi = mid; else lo = mid + 1;
+  }
+
+  steps.push({ lo, hi, mid: lo, groups: v88Groups(weights, lo), ok: true, ans: lo, done: true,
+    msg: `<code>lo == hi == ${lo}</code> → smallest capacity that ships in ${days} days. <strong>Answer: ${lo}</strong>.` });
+  return steps;
+}
+
+function v88Render() {
+  if (!v88Steps.length) return;
+  const s = v88Steps[v88Idx];
+  const span = Math.max(1, v88Max - v88Min);
+  const pct = (v) => ((v - v88Min) / span) * 100;
+
+  const r = document.getElementById('v88-range');
+  r.innerHTML = '';
+  const track = document.createElement('div');
+  track.style.cssText = 'position:absolute;left:0;right:0;top:16px;height:8px;border-radius:4px;background:var(--s2)';
+  r.appendChild(track);
+  const live = document.createElement('div');
+  live.style.cssText = `position:absolute;top:16px;height:8px;border-radius:4px;background:var(--accent-border);left:${pct(s.lo)}%;width:${Math.max(pct(s.hi) - pct(s.lo), 0.8)}%`;
+  r.appendChild(live);
+  const label = (v, text, color, top) => {
+    const el = document.createElement('span');
+    el.style.cssText = `position:absolute;top:${top}px;left:${pct(v)}%;transform:translateX(-50%);font-size:11px;font-family:monospace;color:${color};white-space:nowrap`;
+    el.textContent = text;
+    r.appendChild(el);
+  };
+  label(v88Min, String(v88Min), 'var(--text-muted)', 30);
+  label(v88Max, String(v88Max), 'var(--text-muted)', 30);
+  if (s.mid !== null) {
+    const dot = document.createElement('div');
+    const col = s.done ? 'var(--green-border)' : s.ok ? 'var(--green-border)' : 'var(--red-border)';
+    dot.style.cssText = `position:absolute;top:10px;left:${pct(s.mid)}%;width:4px;height:20px;margin-left:-2px;background:${col};border-radius:2px`;
+    r.appendChild(dot);
+    label(s.mid, (s.done ? 'answer ' : 'mid ') + s.mid, col, -4);
+  }
+
+  const d = document.getElementById('v88-days');
+  d.innerHTML = '';
+  if (s.groups) {
+    s.groups.forEach((g, k) => {
+      const box = document.createElement('div');
+      const over = k >= v88Days;
+      box.style.cssText = `padding:6px 10px;border-radius:var(--radius);border:.5px solid ${over ? 'var(--red-border)' : 'var(--green-border)'};background:${over ? 'var(--red-bg)' : 'var(--green-bg)'};color:${over ? 'var(--red-text)' : 'var(--green-text)'};font-family:monospace;font-size:13px`;
+      const load = g.reduce((a, b) => a + b, 0);
+      box.innerHTML = `<div style="font-size:10px;opacity:.8">day ${k + 1} · load ${load}/${s.mid}</div>[${g.join(', ')}]`;
+      d.appendChild(box);
+    });
+  }
+
+  document.getElementById('v88-info').innerHTML = s.msg;
+  document.getElementById('v88-slh').textContent = `${s.lo}, ${s.hi}`;
+  document.getElementById('v88-smid').textContent = s.mid !== null ? s.mid : '—';
+  document.getElementById('v88-sneed').textContent = s.groups ? s.groups.length : '—';
+  document.getElementById('v88-sans').textContent = s.ans !== null ? s.ans : '—';
+  document.getElementById('v88-prog').textContent = `Step ${v88Idx + 1} / ${v88Steps.length}`;
+}
+
+function v88Init() {
+  const weights = document.getElementById('v88-w').value.split(',').map(x => x.trim()).filter(x => x !== '').map(Number);
+  const days = parseInt(document.getElementById('v88-d').value, 10);
+  if (!weights.length || weights.some(w => !Number.isInteger(w) || w < 1) || !(days >= 1 && days <= weights.length)) {
+    document.getElementById('v88-info').innerHTML = `<span style="color:var(--red-text)">weights must be positive integers and 1 ≤ days ≤ number of packages.</span>`;
+    return;
+  }
+  v88Days = days;
+  v88Steps = v88Build(weights, days);
+  v88Idx = 0;
+  v88Render();
+}
+function v88Fwd()  { if (v88Idx < v88Steps.length - 1) { v88Idx++; v88Render(); } }
+function v88Back() { if (v88Idx > 0) { v88Idx--; v88Render(); } }
+function v88Skip() { v88Idx = v88Steps.length - 1; v88Render(); }
+
+v88Init();
+initPage('1011-capacity-to-ship-packages-within-d-days.html', v88Fwd, v88Back);
+</script>
+
+</body>
+</html>

@@ -88,4 +88,5 @@ const PROBLEMS = [
   { num: '412', title: "Fizz Buzz", file: '0412-fizz-buzz.html' },
   { num: '1387', title: "Sort Integers by The Power Value", file: '1387-sort-integers-by-the-power-value.html' },
   { num: '561', title: "Array Partition", file: '0561-array-partition.html' },
+  { num: '1011', title: "Capacity To Ship Packages Within D Days", file: '1011-capacity-to-ship-packages-within-d-days.html' },
 ];
