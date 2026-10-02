@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#950 Reveal Cards In Increasing Order · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-reveal-cards-in-increasing-order" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#950</div>
+      <h1>Reveal Cards In Increasing Order</h1>
+      <a href="https://leetcode.com/problems/reveal-cards-in-increasing-order/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Order the deck so that repeatedly <em>reveal the top card, then move the next card to the bottom</em> reveals cards in increasing order. Instead of guessing the order, <strong>simulate the process on positions</strong>: a queue holds deck positions <code>0..n-1</code>. The first position popped is where the smallest card must go; then the next position moves to the back, exactly like the real deck. Keep placing the next smallest card at each popped position. O(n log n) for the sort, O(n) for the simulation.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>from collections import deque
+
+class Solution(object):
+    def deckRevealedIncreasing(self, deck):
+        n = len(deck)
+        positions = deque(range(n))
+        result = [0] * n
+
+        for card in sorted(deck):
+            result[positions.popleft()] = card
+            if positions:
+                positions.append(positions.popleft())
+
+        return result</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>deck</label><input type="text" id="v89-in" value="17,13,11,2,3,5,7" style="width:240px"></div>
+      <button onclick="v89Init()">Run</button>
+    </div>
+
+    <div class="section-label">sorted cards</div>
+    <div class="array-row" id="v89-sorted"></div>
+
+    <div class="section-label">positions queue (front → back)</div>
+    <div class="chain-row" id="v89-queue" style="min-height:40px"></div>
+
+    <div class="section-label">result (the deck, top first)</div>
+    <div class="array-row" id="v89-res"></div>
+
+    <div class="info-box" id="v89-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">card</div><div class="sval" id="v89-scard">—</div></div>
+      <div class="stat"><div class="slabel">placed at</div><div class="sval" id="v89-spos">—</div></div>
+      <div class="stat best"><div class="slabel">moved to back</div><div class="sval" id="v89-smove">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v89Back()">← Prev</button>
+      <button onclick="v89Fwd()">Next →</button>
+      <button onclick="v89Skip()">Skip to end</button>
+      <span class="prog" id="v89-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2px solid var(--accent);outline-offset:-2px"></div>card / position being placed</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>position moved to the back</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>filled</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #950 Reveal Cards In Increasing Order — simulate reveal/move-to-bottom on a queue of positions */
+let v89Steps = [], v89Idx = 0, v89Sorted = [];
+
+function v89Build(deck) {
+  const steps = [];
+  const n = deck.length;
+  const sorted = [...deck].sort((a, b) => a - b);
+  v89Sorted = sorted;
+  const q = [...Array(n).keys()];
+  const result = new Array(n).fill(null);
+  steps.push({ ci: -1, pos: null, moved: null, q: [...q], result: [...result],
+    msg: `Sorted cards: <code>[${sorted.join(', ')}]</code>. <code>positions = deque([${q.join(', ')}])</code> — simulate the reveal process on positions.` });
+
+  sorted.forEach((card, ci) => {
+    const pos = q.shift();
+    result[pos] = card;
+    let moved = null;
+    if (q.length) { moved = q.shift(); q.push(moved); }
+    steps.push({ ci, pos, moved, q: [...q], result: [...result],
+      msg: `Next revealed card is <code>${card}</code> → <code>popleft()</code> gives position <code>${pos}</code> → <code>result[${pos}] = ${card}</code>.` +
+        (moved !== null ? ` Then the next card goes to the bottom: position <code>${moved}</code> moves to the back.` : ' Queue is empty.') });
+  });
+
+  steps.push({ ci: -1, pos: null, moved: null, q: [], result: [...result], done: true,
+    msg: `<strong>Answer: [${result.join(', ')}]</strong>. Reveal it: ${result[0]} first, then the cards come out in increasing order.` });
+  return steps;
+}
+
+function v89Render() {
+  if (!v89Steps.length) return;
+  const s = v89Steps[v89Idx];
+
+  const so = document.getElementById('v89-sorted');
+  so.innerHTML = '';
+  v89Sorted.forEach((v, i) => {
+    const c = document.createElement('div');
+    c.className = 'arr-cell' + (i === s.ci ? ' cell-current' : '');
+    if (s.done || i < s.ci) c.style.opacity = '0.4';
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    so.appendChild(c);
+  });
+
+  const qe = document.getElementById('v89-queue');
+  qe.innerHTML = '';
+  if (s.pos !== null) {
+    const popped = document.createElement('div');
+    popped.className = 'chain-node cur-node';
+    popped.innerHTML = `${s.pos}<span class="cn-sub">popped</span>`;
+    qe.appendChild(popped);
+    const sep = document.createElement('span'); sep.className = 'chain-arrow'; sep.textContent = '|';
+    qe.appendChild(sep);
+  }
+  s.q.forEach((p, k) => {
+    const node = document.createElement('div');
+    node.className = 'chain-node' + (p === s.moved && k === s.q.length - 1 ? ' break-node' : '');
+    node.textContent = p;
+    qe.appendChild(node);
+  });
+  if (!s.q.length && s.pos === null) qe.innerHTML = '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+
+  const re = document.getElementById('v89-res');
+  re.innerHTML = '';
+  s.result.forEach((v, i) => {
+    const c = document.createElement('div');
+    c.className = 'arr-cell' + (v !== null ? ' is-l' : '') + (i === s.pos ? ' cell-current' : '');
+    c.innerHTML = `${v === null ? '' : v}<span class="cidx">${i}</span>`;
+    re.appendChild(c);
+  });
+
+  document.getElementById('v89-info').innerHTML = s.msg;
+  document.getElementById('v89-scard').textContent = s.ci >= 0 ? v89Sorted[s.ci] : '—';
+  document.getElementById('v89-spos').textContent = s.pos !== null ? s.pos : '—';
+  document.getElementById('v89-smove').textContent = s.moved !== null ? s.moved : '—';
+  document.getElementById('v89-prog').textContent = `Step ${v89Idx + 1} / ${v89Steps.length}`;
+}
+
+function v89Init() {
+  const deck = document.getElementById('v89-in').value.split(',').map(x => x.trim()).filter(x => x !== '').map(Number);
+  if (!deck.length || deck.length > 20 || deck.some(x => !Number.isInteger(x)) || new Set(deck).size !== deck.length) {
+    document.getElementById('v89-info').innerHTML = `<span style="color:var(--red-text)">Enter up to 20 distinct comma-separated integers.</span>`;
+    return;
+  }
+  v89Steps = v89Build(deck);
+  v89Idx = 0;
+  v89Render();
+}
+function v89Fwd()  { if (v89Idx < v89Steps.length - 1) { v89Idx++; v89Render(); } }
+function v89Back() { if (v89Idx > 0) { v89Idx--; v89Render(); } }
+function v89Skip() { v89Idx = v89Steps.length - 1; v89Render(); }
+
+v89Init();
+initPage('0950-reveal-cards-in-increasing-order.html', v89Fwd, v89Back);
+</script>
+
+</body>
+</html>
