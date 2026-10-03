@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1971 Find if Path Exists in Graph · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-find-if-path-exists-in-graph" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1971</div>
+      <h1>Find if Path Exists in Graph</h1>
+      <a href="https://leetcode.com/problems/find-if-path-exists-in-graph/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Is there any path from <code>source</code> to <code>destination</code> in an undirected graph? Build an adjacency list (add each edge both ways), then <strong>BFS</strong> from <code>source</code>. Mark nodes as seen when they're queued so nothing is queued twice. If <code>destination</code> is ever popped, a path exists; if the queue runs dry first, it doesn't. O(V + E) time and space.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>from collections import deque
+
+class Solution(object):
+    def validPath(self, n, edges, source, destination):
+        graph = [[] for _ in range(n)]
+        for u, v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+
+        seen = {source}
+        queue = deque([source])
+        while queue:
+            node = queue.popleft()
+            if node == destination:
+                return True
+            for nxt in graph[node]:
+                if nxt not in seen:
+                    seen.add(nxt)
+                    queue.append(nxt)
+
+        return False</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>n</label><input type="number" id="v91-n" value="7" min="1" style="width:70px"></div>
+      <div class="ig"><label>edges (u,v separated by ;)</label><input type="text" id="v91-e" value="0,1; 0,2; 1,3; 2,3; 3,4; 5,6" style="width:260px"></div>
+      <div class="ig"><label>source</label><input type="number" id="v91-s" value="0" style="width:70px"></div>
+      <div class="ig"><label>destination</label><input type="number" id="v91-d" value="4" style="width:70px"></div>
+      <button onclick="v91Init()">Run</button>
+    </div>
+
+    <div class="section-label">graph</div>
+    <div class="tree-wrap"><div id="v91-graph" style="position:relative"></div></div>
+
+    <div class="section-label">queue (front → back)</div>
+    <div class="chain-row" id="v91-queue" style="min-height:40px"></div>
+
+    <div class="info-box" id="v91-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">node</div><div class="sval" id="v91-snode">—</div></div>
+      <div class="stat"><div class="slabel">seen</div><div class="sval" id="v91-sseen">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v91-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v91Back()">← Prev</button>
+      <button onclick="v91Fwd()">Next →</button>
+      <button onclick="v91Skip()">Skip to end</button>
+      <span class="prog" id="v91-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>node just popped</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>seen, waiting in queue</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>processed</div>
+      <div class="leg"><div class="lb" style="outline:2px dashed var(--red-border);outline-offset:-2px"></div>destination</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1971 Find if Path Exists in Graph — BFS from source over an adjacency list */
+let v91Steps = [], v91Idx = 0, v91N = 0, v91Edges = [], v91Src = 0, v91Dst = 0, v91Pos = {};
+
+function v91Build(n, edges, src, dst) {
+  const steps = [];
+  const graph = Array.from({ length: n }, () => []);
+  edges.forEach(([u, v]) => { graph[u].push(v); graph[v].push(u); });
+  const seen = new Set([src]);
+  const done = new Set();
+  const queue = [src];
+  const snap = (o) => steps.push({ cur: null, hot: [], seen: [...seen], done: [...done], queue: [...queue], ans: null, ...o });
+
+  snap({ msg: `Adjacency list built. <code>seen = {${src}}</code>, <code>queue = [${src}]</code>.` });
+  while (queue.length) {
+    const node = queue.shift();
+    if (node === dst) {
+      snap({ cur: node, ans: true, msg: `Pop <code>${node}</code> — that's the destination → return <code>True</code>.` });
+      snap({ cur: node, ans: true, fin: true, msg: `<strong>Answer: true</strong> — ${dst} is reachable from ${src}.` });
+      return steps;
+    }
+    const added = [];
+    for (const nxt of graph[node]) if (!seen.has(nxt)) { seen.add(nxt); queue.push(nxt); added.push(nxt); }
+    done.add(node);
+    snap({ cur: node, hot: graph[node].map(v => [node, v]),
+      msg: `Pop <code>${node}</code>, neighbours <code>[${graph[node].join(', ')}]</code> → ` +
+        (added.length ? `queue the unseen ones: <code>${added.join(', ')}</code>.` : `all already seen, nothing new.`) });
+  }
+  snap({ ans: false, fin: true, msg: `Queue is empty and ${dst} was never reached. <strong>Answer: false</strong>.` });
+  return steps;
+}
+
+function v91Layout() {
+  const R = v91N <= 2 ? 60 : 50 + v91N * 12, PAD = 34, SIZE = 40;
+  const W = 2 * (R + PAD);
+  v91Pos = {};
+  for (let p = 0; p < v91N; p++) {
+    const ang = -Math.PI / 2 + (2 * Math.PI * p) / v91N;
+    v91Pos[p] = { x: W / 2 + R * Math.cos(ang), y: W / 2 + R * Math.sin(ang) };
+  }
+  const g = document.getElementById('v91-graph');
+  g.style.width = W + 'px'; g.style.height = W + 'px';
+  let html = `<svg id="v91-svg" width="${W}" height="${W}" style="position:absolute;top:0;left:0;pointer-events:none"></svg>`;
+  for (let p = 0; p < v91N; p++) {
+    html += `<div class="tree-node" id="v91-n-${p}" style="left:${v91Pos[p].x - SIZE / 2}px;top:${v91Pos[p].y - SIZE / 2}px">${p}</div>`;
+  }
+  g.innerHTML = html;
+}
+
+function v91Render() {
+  if (!v91Steps.length) return;
+  const s = v91Steps[v91Idx];
+
+  const svg = document.getElementById('v91-svg');
+  svg.innerHTML = '';
+  v91Edges.forEach(([u, v]) => {
+    const hot = s.hot.some(([a, b]) => (a === u && b === v) || (a === v && b === u));
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', v91Pos[u].x); line.setAttribute('y1', v91Pos[u].y);
+    line.setAttribute('x2', v91Pos[v].x); line.setAttribute('y2', v91Pos[v].y);
+    line.setAttribute('style', `stroke:${hot ? 'var(--accent)' : 'var(--border-strong)'};stroke-width:${hot ? 2.5 : 1.5}`);
+    svg.appendChild(line);
+  });
+
+  for (let p = 0; p < v91N; p++) {
+    const el = document.getElementById('v91-n-' + p);
+    el.className = 'tree-node';
+    if (s.done.includes(p)) el.classList.add('tn-done');
+    else if (s.seen.includes(p)) el.classList.add('tn-queued');
+    if (p === s.cur) el.classList.add(s.ans ? 'tn-visible' : 'tn-current');
+    el.style.outline = p === v91Dst && p !== s.cur ? '2px dashed var(--red-border)' : '';
+    el.style.outlineOffset = '2px';
+    el.title = p === v91Src ? 'source' : p === v91Dst ? 'destination' : '';
+  }
+
+  const q = document.getElementById('v91-queue');
+  q.innerHTML = '';
+  if (!s.queue.length) q.innerHTML = '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+  s.queue.forEach(p => {
+    const node = document.createElement('div');
+    node.className = 'chain-node';
+    node.textContent = p;
+    q.appendChild(node);
+  });
+
+  document.getElementById('v91-info').innerHTML = s.msg;
+  document.getElementById('v91-snode').textContent = s.cur !== null ? s.cur : '—';
+  document.getElementById('v91-sseen').textContent = `{${[...s.seen].sort((a, b) => a - b).join(', ')}}`;
+  document.getElementById('v91-sans').textContent = s.ans === null ? '—' : String(s.ans);
+  document.getElementById('v91-prog').textContent = `Step ${v91Idx + 1} / ${v91Steps.length}`;
+}
+
+function v91Init() {
+  const n = parseInt(document.getElementById('v91-n').value, 10);
+  const src = parseInt(document.getElementById('v91-s').value, 10);
+  const dst = parseInt(document.getElementById('v91-d').value, 10);
+  const raw = document.getElementById('v91-e').value.trim();
+  const edges = raw ? raw.split(';').map(p => p.split(',').map(x => x.trim()).filter(x => x !== '').map(Number)).filter(p => p.length) : [];
+  const inRange = (v) => Number.isInteger(v) && v >= 0 && v < n;
+  const ok = n >= 1 && n <= 14 && inRange(src) && inRange(dst) && edges.every(p => p.length === 2 && p.every(inRange) && p[0] !== p[1]);
+  if (!ok) {
+    document.getElementById('v91-info').innerHTML = `<span style="color:var(--red-text)">Need 1 ≤ n ≤ 14, nodes 0..n−1, and edges "u,v" (u ≠ v) separated by ;</span>`;
+    return;
+  }
+  v91N = n; v91Edges = edges; v91Src = src; v91Dst = dst;
+  v91Layout();
+  v91Steps = v91Build(n, edges, src, dst);
+  v91Idx = 0;
+  v91Render();
+}
+function v91Fwd()  { if (v91Idx < v91Steps.length - 1) { v91Idx++; v91Render(); } }
+function v91Back() { if (v91Idx > 0) { v91Idx--; v91Render(); } }
+function v91Skip() { v91Idx = v91Steps.length - 1; v91Render(); }
+
+v91Init();
+initPage('1971-find-if-path-exists-in-graph.html', v91Fwd, v91Back);
+</script>
+
+</body>
+</html>
