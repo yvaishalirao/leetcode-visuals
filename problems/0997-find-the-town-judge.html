@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#997 Find the Town Judge · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-find-the-town-judge" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#997</div>
+      <h1>Find the Town Judge</h1>
+      <a href="https://leetcode.com/problems/find-the-town-judge/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">The judge trusts nobody and is trusted by everyone else. Give each person a single <strong>score</strong> = (people who trust them) − (people they trust). Every trust pair <code>[a, b]</code> does <code>score[a] -= 1</code>, <code>score[b] += 1</code>. Only the judge can reach <code>n − 1</code>: that needs all <code>n − 1</code> others trusting them <em>and</em> zero outgoing trust. O(n + trust) time, O(n) space.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def findJudge(self, n, trust):
+        score = [0] * (n + 1)
+        for a, b in trust:
+            score[a] -= 1
+            score[b] += 1
+
+        for person in range(1, n + 1):
+            if score[person] == n - 1:
+                return person
+        return -1</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>n</label><input type="number" id="v90-n" value="4" min="1" style="width:70px"></div>
+      <div class="ig"><label>trust (pairs a,b separated by ;)</label><input type="text" id="v90-t" value="1,3; 1,4; 2,3; 2,4; 4,3" style="width:280px"></div>
+      <button onclick="v90Init()">Run</button>
+    </div>
+
+    <div class="section-label">trust graph (a → b means a trusts b)</div>
+    <div class="tree-wrap"><div id="v90-graph" style="position:relative"></div></div>
+
+    <div class="section-label">score[person]</div>
+    <div class="array-row" id="v90-score"></div>
+
+    <div class="info-box" id="v90-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">pair</div><div class="sval" id="v90-spair">—</div></div>
+      <div class="stat"><div class="slabel">need n − 1</div><div class="sval" id="v90-sneed">—</div></div>
+      <div class="stat best"><div class="slabel">judge</div><div class="sval" id="v90-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v90Back()">← Prev</button>
+      <button onclick="v90Fwd()">Next →</button>
+      <button onclick="v90Skip()">Skip to end</button>
+      <span class="prog" id="v90-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>a (trusts) → score − 1</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>b (trusted) → score + 1 / the judge</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>person being checked</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #997 Find the Town Judge — score = in-degree − out-degree; judge alone reaches n − 1 */
+let v90Steps = [], v90Idx = 0, v90N = 0, v90Trust = [], v90Pos = {};
+
+function v90Build(n, trust) {
+  const steps = [];
+  const score = new Array(n + 1).fill(0);
+  steps.push({ e: -1, check: null, score: [...score], ans: null,
+    msg: `<code>score = [0] * ${n + 1}</code> (index 0 unused). Process each trust pair.` });
+
+  trust.forEach(([a, b], e) => {
+    score[a]--; score[b]++;
+    steps.push({ e, check: null, score: [...score], ans: null,
+      msg: `<code>[${a}, ${b}]</code>: ${a} trusts ${b} → <code>score[${a}] = ${score[a]}</code>, <code>score[${b}] = ${score[b]}</code>.` });
+  });
+
+  let ans = -1;
+  for (let p = 1; p <= n; p++) {
+    const ok = score[p] === n - 1;
+    steps.push({ e: trust.length - 1, check: p, score: [...score], ans: ok ? p : null,
+      msg: `<code>score[${p}] = ${score[p]}</code> ${ok ? `== ${n - 1} ✓ → person ${p} is the judge.` : `≠ ${n - 1}.`}` });
+    if (ok) { ans = p; break; }
+  }
+
+  steps.push({ e: trust.length - 1, check: null, score: [...score], ans, done: true,
+    msg: ans === -1 ? `Nobody has score ${n - 1}. <strong>Answer: -1</strong>.` : `<strong>Answer: ${ans}</strong>.` });
+  return steps;
+}
+
+function v90Layout() {
+  const R = v90N <= 2 ? 60 : 50 + v90N * 12, PAD = 34, SIZE = 40;
+  const W = 2 * (R + PAD);
+  v90Pos = {};
+  for (let p = 1; p <= v90N; p++) {
+    const ang = -Math.PI / 2 + (2 * Math.PI * (p - 1)) / v90N;
+    v90Pos[p] = { x: W / 2 + R * Math.cos(ang), y: W / 2 + R * Math.sin(ang) };
+  }
+  const g = document.getElementById('v90-graph');
+  g.style.width = W + 'px'; g.style.height = W + 'px';
+  let html = `<svg id="v90-svg" width="${W}" height="${W}" style="position:absolute;top:0;left:0;pointer-events:none">
+    <defs><marker id="v90-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--text-sec)"/></marker>
+    <marker id="v90-arr-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs></svg>`;
+  for (let p = 1; p <= v90N; p++) {
+    html += `<div class="tree-node" id="v90-n-${p}" style="left:${v90Pos[p].x - SIZE / 2}px;top:${v90Pos[p].y - SIZE / 2}px">${p}</div>`;
+  }
+  g.innerHTML = html;
+}
+
+function v90Render() {
+  if (!v90Steps.length) return;
+  const s = v90Steps[v90Idx];
+
+  const svg = document.getElementById('v90-svg');
+  svg.querySelectorAll('line').forEach(l => l.remove());
+  for (let e = 0; e <= s.e; e++) {
+    const [a, b] = v90Trust[e];
+    const A = v90Pos[a], B = v90Pos[b];
+    const dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len, uy = dy / len;
+    const hot = e === s.e && s.check === null && !s.done;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', A.x + ux * 22); line.setAttribute('y1', A.y + uy * 22);
+    line.setAttribute('x2', B.x - ux * 23); line.setAttribute('y2', B.y - uy * 23);
+    line.setAttribute('style', `stroke:${hot ? 'var(--accent)' : 'var(--border-strong)'};stroke-width:${hot ? 2.5 : 1.5}`);
+    line.setAttribute('marker-end', `url(#${hot ? 'v90-arr-hot' : 'v90-arr'})`);
+    svg.appendChild(line);
+  }
+
+  const cur = s.e >= 0 && s.check === null && !s.done ? v90Trust[s.e] : null;
+  for (let p = 1; p <= v90N; p++) {
+    const el = document.getElementById('v90-n-' + p);
+    el.className = 'tree-node';
+    el.style.background = el.style.borderColor = el.style.color = '';
+    if (cur && p === cur[0]) { el.style.background = 'var(--red-bg)'; el.style.borderColor = 'var(--red-border)'; el.style.color = 'var(--red-text)'; }
+    if (cur && p === cur[1]) el.classList.add('tn-done');
+    if (p === s.check) el.classList.add('tn-current');
+    if (p === s.ans) el.classList.add('tn-visible');
+  }
+
+  const sc = document.getElementById('v90-score');
+  sc.innerHTML = '';
+  for (let p = 1; p <= v90N; p++) {
+    const c = document.createElement('div');
+    let cls = 'arr-cell';
+    if (p === s.ans) cls += ' is-l';
+    else if (p === s.check) cls += ' cell-current';
+    else if (cur && p === cur[1]) cls += ' is-l';
+    c.className = cls;
+    if (cur && p === cur[0]) { c.style.background = 'var(--red-bg)'; c.style.borderColor = 'var(--red-border)'; c.style.color = 'var(--red-text)'; }
+    c.innerHTML = `${s.score[p]}<span class="cidx">p${p}</span>`;
+    sc.appendChild(c);
+  }
+
+  document.getElementById('v90-info').innerHTML = s.msg;
+  document.getElementById('v90-spair').textContent = cur ? `${cur[0]} → ${cur[1]}` : '—';
+  document.getElementById('v90-sneed').textContent = v90N - 1;
+  document.getElementById('v90-sans').textContent = s.done ? s.ans : (s.ans !== null ? s.ans : '—');
+  document.getElementById('v90-prog').textContent = `Step ${v90Idx + 1} / ${v90Steps.length}`;
+}
+
+function v90Init() {
+  const n = parseInt(document.getElementById('v90-n').value, 10);
+  const raw = document.getElementById('v90-t').value.trim();
+  const trust = raw ? raw.split(';').map(p => p.split(',').map(x => x.trim()).filter(x => x !== '').map(Number)).filter(p => p.length) : [];
+  const ok = n >= 1 && n <= 12 && trust.every(p => p.length === 2 && p.every(v => Number.isInteger(v) && v >= 1 && v <= n) && p[0] !== p[1]);
+  if (!ok) {
+    document.getElementById('v90-info').innerHTML = `<span style="color:var(--red-text)">Need 1 ≤ n ≤ 12 and pairs "a,b" with 1 ≤ a, b ≤ n, a ≠ b, separated by ;</span>`;
+    return;
+  }
+  v90N = n; v90Trust = trust;
+  v90Layout();
+  v90Steps = v90Build(n, trust);
+  v90Idx = 0;
+  v90Render();
+}
+function v90Fwd()  { if (v90Idx < v90Steps.length - 1) { v90Idx++; v90Render(); } }
+function v90Back() { if (v90Idx > 0) { v90Idx--; v90Render(); } }
+function v90Skip() { v90Idx = v90Steps.length - 1; v90Render(); }
+
+v90Init();
+initPage('0997-find-the-town-judge.html', v90Fwd, v90Back);
+</script>
+
+</body>
+</html>

@@ -90,4 +90,5 @@ const PROBLEMS = [
   { num: '561', title: "Array Partition", file: '0561-array-partition.html' },
   { num: '1011', title: "Capacity To Ship Packages Within D Days", file: '1011-capacity-to-ship-packages-within-d-days.html' },
   { num: '950', title: "Reveal Cards In Increasing Order", file: '0950-reveal-cards-in-increasing-order.html' },
+  { num: '997', title: "Find the Town Judge", file: '0997-find-the-town-judge.html' },
 ];
