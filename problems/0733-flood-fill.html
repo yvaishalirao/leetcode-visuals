@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#733 Flood Fill · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-flood-fill" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#733</div>
+      <h1>Flood Fill</h1>
+      <a href="https://leetcode.com/problems/flood-fill/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Starting at <code>(sr, sc)</code>, repaint every cell connected to it (up/down/left/right) that has the same original colour. <strong>DFS:</strong> if a cell is in bounds and still the original colour, paint it and recurse into its four neighbours. Painting before recursing doubles as the "visited" mark. One edge case: if the new colour equals the old one, return immediately — otherwise the DFS would never see a cell as painted and loop forever. O(rows · cols) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def floodFill(self, image, sr, sc, color):
+        old = image[sr][sc]
+        if old == color:
+            return image
+
+        def fill(r, c):
+            if 0 &lt;= r &lt; len(image) and 0 &lt;= c &lt; len(image[0]) and image[r][c] == old:
+                image[r][c] = color
+                fill(r + 1, c)
+                fill(r - 1, c)
+                fill(r, c + 1)
+                fill(r, c - 1)
+
+        fill(sr, sc)
+        return image</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>image (rows separated by ;)</label><input type="text" id="v92-in" value="1,1,1,0; 1,1,0,0; 1,0,1,1; 0,1,1,1" style="width:280px"></div>
+      <div class="ig"><label>sr</label><input type="number" id="v92-r" value="1" style="width:60px"></div>
+      <div class="ig"><label>sc</label><input type="number" id="v92-c" value="1" style="width:60px"></div>
+      <div class="ig"><label>color</label><input type="number" id="v92-col" value="2" style="width:60px"></div>
+      <button onclick="v92Init()">Run</button>
+    </div>
+
+    <div class="section-label">image</div>
+    <div class="table-wrap"><table class="dp-table" id="v92-grid"></table></div>
+
+    <div class="info-box" id="v92-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">cell</div><div class="sval" id="v92-scell">—</div></div>
+      <div class="stat"><div class="slabel">depth</div><div class="sval" id="v92-sdepth">—</div></div>
+      <div class="stat best"><div class="slabel">painted</div><div class="sval" id="v92-spainted">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v92Back()">← Prev</button>
+      <button onclick="v92Fwd()">Next →</button>
+      <button onclick="v92Skip()">Skip to end</button>
+      <span class="prog" id="v92-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>just painted</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>painted with the new colour</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>still the original colour (not reached yet)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #733 Flood Fill — DFS paints every 4-connected cell with the original colour */
+let v92Steps = [], v92Idx = 0, v92Old = null;
+
+function v92Build(image, sr, sc, color) {
+  const steps = [];
+  const img = image.map(r => [...r]);
+  const R = img.length, C = img[0].length;
+  const old = img[sr][sc];
+  v92Old = old;
+  const painted = new Set();
+  const snap = (o) => steps.push({ img: img.map(r => [...r]), painted: [...painted], cur: null, depth: null, ...o });
+
+  if (old === color) {
+    snap({ msg: `<code>image[${sr}][${sc}] = ${old}</code> is already colour ${color} → nothing to do, return image as is.` });
+    snap({ fin: true, msg: `<strong>Answer: unchanged image</strong>.` });
+    return steps;
+  }
+  snap({ msg: `<code>old = image[${sr}][${sc}] = ${old}</code>. Paint every connected cell of colour ${old} with ${color}, starting at (${sr}, ${sc}).` });
+
+  function fill(r, c, depth, from) {
+    if (r < 0 || r >= R || c < 0 || c >= C || img[r][c] !== old) return;
+    img[r][c] = color;
+    painted.add(r + ',' + c);
+    snap({ cur: [r, c], depth,
+      msg: `${from ? `From ${from}, go to` : 'Start at'} <code>(${r}, ${c})</code>: in bounds and colour ${old} → paint it <code>${color}</code>, then try down, up, right, left.` });
+    const here = `(${r}, ${c})`;
+    fill(r + 1, c, depth + 1, here);
+    fill(r - 1, c, depth + 1, here);
+    fill(r, c + 1, depth + 1, here);
+    fill(r, c - 1, depth + 1, here);
+  }
+  fill(sr, sc, 0, null);
+
+  snap({ fin: true, msg: `No more reachable cells of colour ${old}. Painted ${painted.size} cell${painted.size === 1 ? '' : 's'}. <strong>Answer: [${img.map(r => `[${r.join(',')}]`).join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v92Render() {
+  if (!v92Steps.length) return;
+  const s = v92Steps[v92Idx];
+  const t = document.getElementById('v92-grid');
+  t.innerHTML = '';
+  const head = t.insertRow();
+  head.innerHTML = '<th></th>' + s.img[0].map((_, j) => `<th>${j}</th>`).join('');
+  s.img.forEach((row, i) => {
+    const tr = t.insertRow();
+    tr.innerHTML = `<th>${i}</th>`;
+    row.forEach((v, j) => {
+      const td = tr.insertCell();
+      td.textContent = v;
+      if (s.painted.includes(i + ',' + j)) td.className = 'cell-zero';
+      else if (v === v92Old) td.className = 'cell-amber';
+      if (s.cur && s.cur[0] === i && s.cur[1] === j) td.className = 'cell-cur';
+    });
+  });
+
+  document.getElementById('v92-info').innerHTML = s.msg;
+  document.getElementById('v92-scell').textContent = s.cur ? `(${s.cur[0]}, ${s.cur[1]})` : '—';
+  document.getElementById('v92-sdepth').textContent = s.depth !== null ? s.depth : '—';
+  document.getElementById('v92-spainted').textContent = s.painted.length;
+  document.getElementById('v92-prog').textContent = `Step ${v92Idx + 1} / ${v92Steps.length}`;
+}
+
+function v92Init() {
+  const img = document.getElementById('v92-in').value.split(';').map(r => r.split(',').map(x => x.trim()).filter(x => x !== '').map(Number)).filter(r => r.length);
+  const sr = parseInt(document.getElementById('v92-r').value, 10);
+  const sc = parseInt(document.getElementById('v92-c').value, 10);
+  const color = parseInt(document.getElementById('v92-col').value, 10);
+  const C = img.length ? img[0].length : 0;
+  const ok = img.length && img.length <= 10 && C <= 10 && img.every(r => r.length === C && r.every(v => Number.isInteger(v) && v >= 0)) &&
+    sr >= 0 && sr < img.length && sc >= 0 && sc < C && Number.isInteger(color) && color >= 0;
+  if (!ok) {
+    document.getElementById('v92-info').innerHTML = `<span style="color:var(--red-text)">Enter a grid up to 10×10 of non-negative integers, a valid (sr, sc), and color ≥ 0.</span>`;
+    return;
+  }
+  v92Steps = v92Build(img, sr, sc, color);
+  v92Idx = 0;
+  v92Render();
+}
+function v92Fwd()  { if (v92Idx < v92Steps.length - 1) { v92Idx++; v92Render(); } }
+function v92Back() { if (v92Idx > 0) { v92Idx--; v92Render(); } }
+function v92Skip() { v92Idx = v92Steps.length - 1; v92Render(); }
+
+v92Init();
+initPage('0733-flood-fill.html', v92Fwd, v92Back);
+</script>
+
+</body>
+</html>
