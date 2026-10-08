@@ -93,4 +93,5 @@ const PROBLEMS = [
   { num: '997', title: "Find the Town Judge", file: '0997-find-the-town-judge.html' },
   { num: '1971', title: "Find if Path Exists in Graph", file: '1971-find-if-path-exists-in-graph.html' },
   { num: '733', title: "Flood Fill", file: '0733-flood-fill.html' },
+  { num: '1111', title: "Maximum Nesting Depth of Two Valid Parentheses Strings", file: '1111-maximum-nesting-depth-of-two-valid-parentheses-strings.html' },
 ];

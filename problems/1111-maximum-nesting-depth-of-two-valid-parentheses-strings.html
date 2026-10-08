@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1111 Maximum Nesting Depth of Two Valid Parentheses Strings · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-maximum-nesting-depth-of-two-valid-parentheses-strings" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1111</div>
+      <h1>Maximum Nesting Depth of Two Valid Parentheses Strings</h1>
+      <a href="https://leetcode.com/problems/maximum-nesting-depth-of-two-valid-parentheses-strings/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Split a valid parentheses string into two valid strings <code>A</code> (0) and <code>B</code> (1) so the deeper of the two is as shallow as possible. Track the nesting depth of each bracket and <strong>alternate by depth</strong>: odd levels go to one string, even levels to the other. A <code>(</code> and its matching <code>)</code> sit at the same depth, so they always land in the same string and both halves stay valid — and each half gets about half the levels, giving <code>ceil(maxDepth / 2)</code>. O(n) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def maxDepthAfterSplit(self, seq):
+        result = []
+        depth = 0
+        for ch in seq:
+            if ch == '(':
+                depth += 1
+                result.append(depth % 2)
+            else:
+                result.append(depth % 2)
+                depth -= 1
+        return result</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>seq</label><input type="text" id="v93-in" value="(()())((()))" style="width:240px"></div>
+      <button onclick="v93Init()">Run</button>
+    </div>
+
+    <div class="section-label">seq — small number = depth of that bracket</div>
+    <div id="v93-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem"></div>
+
+    <div class="section-label">split</div>
+    <div class="str-vis" id="v93-a"></div>
+    <div class="str-vis" id="v93-b" style="margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v93-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">depth</div><div class="sval" id="v93-sdepth">0</div></div>
+      <div class="stat"><div class="slabel">answer[i]</div><div class="sval" id="v93-sgroup">—</div></div>
+      <div class="stat best"><div class="slabel">result</div><div class="sval" id="v93-sres" style="font-size:14px">[]</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v93Back()">← Prev</button>
+      <button onclick="v93Fwd()">Next →</button>
+      <button onclick="v93Skip()">Skip to end</button>
+      <span class="prog" id="v93-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>group 0 → A (even depth)</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>group 1 → B (odd depth)</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--text);outline-offset:-2px"></div>current bracket</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1111 Max Nesting Depth of Two Valid Parentheses Strings — alternate groups by depth parity */
+let v93Steps = [], v93Idx = 0, v93Seq = '';
+
+function v93Build(seq) {
+  const steps = [];
+  const result = [], depths = [];
+  let depth = 0, maxDepth = 0;
+  steps.push({ i: -1, depth: 0, result: [], depths: [],
+    msg: `Walk the string tracking depth. Each bracket goes to group <code>depth % 2</code>.` });
+
+  for (let i = 0; i < seq.length; i++) {
+    let d;
+    if (seq[i] === '(') {
+      depth++; d = depth;
+      maxDepth = Math.max(maxDepth, depth);
+      result.push(depth % 2);
+      depths.push(d);
+      steps.push({ i, depth, result: [...result], depths: [...depths],
+        msg: `<code>'('</code> → depth becomes ${depth} → group <code>${depth} % 2 = ${depth % 2}</code> (${depth % 2 ? 'B' : 'A'}).` });
+    } else {
+      d = depth;
+      result.push(depth % 2);
+      depths.push(d);
+      depth--;
+      steps.push({ i, depth, result: [...result], depths: [...depths],
+        msg: `<code>')'</code> closes depth ${d} → same group as its <code>'('</code>: <code>${d % 2}</code> (${d % 2 ? 'B' : 'A'}). Depth back to ${depth}.` });
+    }
+  }
+
+  const A = [...seq].filter((_, i) => result[i] === 0).join('');
+  const B = [...seq].filter((_, i) => result[i] === 1).join('');
+  steps.push({ i: -1, depth, result: [...result], depths: [...depths], fin: true,
+    msg: `Original max depth ${maxDepth} → each half has depth at most ${Math.ceil(maxDepth / 2)}. A = <code>"${A}"</code>, B = <code>"${B}"</code>. <strong>Answer: [${result.join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v93Render() {
+  if (!v93Steps.length) return;
+  const s = v93Steps[v93Idx];
+
+  const strip = document.getElementById('v93-strip');
+  strip.innerHTML = '';
+  for (let k = 0; k < v93Seq.length; k++) {
+    const box = document.createElement('div');
+    box.className = 'char-box';
+    if (k < s.result.length) {
+      const g = s.result[k];
+      box.style.background = g ? 'var(--amber-bg)' : 'var(--accent-bg)';
+      box.style.borderColor = g ? 'var(--amber-border)' : 'var(--accent-border)';
+      box.style.color = g ? 'var(--amber-text)' : 'var(--accent-text)';
+    }
+    if (k === s.i) { box.style.outline = '2.5px solid var(--text)'; box.style.outlineOffset = '-2px'; }
+    box.innerHTML = `${v93Seq[k]}<span class="ci">${k < s.depths.length ? s.depths[k] : ''}</span>`;
+    strip.appendChild(box);
+  }
+
+  ['a', 'b'].forEach((name, g) => {
+    const row = document.getElementById('v93-' + name);
+    row.innerHTML = `<span class="sv-label" style="min-width:24px">${name.toUpperCase()}</span>`;
+    s.result.forEach((grp, k) => {
+      if (grp !== g) return;
+      const ch = document.createElement('span');
+      ch.className = 'sv-char' + (k === s.i ? ' active' : '');
+      ch.textContent = v93Seq[k];
+      row.appendChild(ch);
+    });
+  });
+
+  document.getElementById('v93-info').innerHTML = s.msg;
+  document.getElementById('v93-sdepth').textContent = s.depth;
+  document.getElementById('v93-sgroup').textContent = s.i >= 0 ? s.result[s.i] : '—';
+  document.getElementById('v93-sres').textContent = `[${s.result.join(',')}]`;
+  document.getElementById('v93-prog').textContent = `Step ${v93Idx + 1} / ${v93Steps.length}`;
+}
+
+function v93Init() {
+  const seq = document.getElementById('v93-in').value.trim();
+  let bal = 0, ok = /^[()]{1,40}$/.test(seq);
+  for (const ch of seq) { bal += ch === '(' ? 1 : -1; if (bal < 0) ok = false; }
+  if (!ok || bal !== 0) {
+    document.getElementById('v93-info').innerHTML = `<span style="color:var(--red-text)">seq must be a valid parentheses string (up to 40 characters).</span>`;
+    return;
+  }
+  v93Seq = seq;
+  v93Steps = v93Build(seq);
+  v93Idx = 0;
+  v93Render();
+}
+function v93Fwd()  { if (v93Idx < v93Steps.length - 1) { v93Idx++; v93Render(); } }
+function v93Back() { if (v93Idx > 0) { v93Idx--; v93Render(); } }
+function v93Skip() { v93Idx = v93Steps.length - 1; v93Render(); }
+
+v93Init();
+initPage('1111-maximum-nesting-depth-of-two-valid-parentheses-strings.html', v93Fwd, v93Back);
+</script>
+
+</body>
+</html>
