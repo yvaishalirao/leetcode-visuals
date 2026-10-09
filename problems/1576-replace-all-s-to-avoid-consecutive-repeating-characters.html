@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1576 Replace All ?'s to Avoid Consecutive Repeating Characters · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-replace-all-s-to-avoid-consecutive-repeating-characters" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1576</div>
+      <h1>Replace All ?'s to Avoid Consecutive Repeating Characters</h1>
+      <a href="https://leetcode.com/problems/replace-all-s-to-avoid-consecutive-repeating-characters/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Replace every <code>?</code> with a lowercase letter so no two neighbours are equal (the original letters already have no repeats). A <code>?</code> only has two neighbours, so at most two letters are ruled out — one of <code>'a'</code>, <code>'b'</code>, <code>'c'</code> is always free. Go left to right; the left neighbour is already final (a replaced <code>?</code> counts), and the right one is either a fixed letter or another <code>?</code> that will avoid us later. O(n) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def modifyString(self, s):
+        chars = list(s)
+        for i, ch in enumerate(chars):
+            if ch == '?':
+                left = chars[i - 1] if i &gt; 0 else ''
+                right = chars[i + 1] if i + 1 &lt; len(chars) else ''
+                for c in "abc":
+                    if c != left and c != right:
+                        chars[i] = c
+                        break
+        return ''.join(chars)</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s</label><input type="text" id="v96-in" value="ab??a?c?" style="width:220px"></div>
+      <button onclick="v96Init()">Run</button>
+    </div>
+
+    <div class="section-label">chars</div>
+    <div id="v96-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem"></div>
+
+    <div class="section-label">trying "abc"</div>
+    <div id="v96-try" style="display:flex;gap:6px;margin-bottom:1rem;min-height:30px"></div>
+
+    <div class="info-box" id="v96-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">i</div><div class="sval" id="v96-si">—</div></div>
+      <div class="stat"><div class="slabel">left, right</div><div class="sval" id="v96-slr">—</div></div>
+      <div class="stat best"><div class="slabel">result</div><div class="sval" id="v96-sres" style="font-size:14px">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v96Back()">← Prev</button>
+      <button onclick="v96Fwd()">Next →</button>
+      <button onclick="v96Skip()">Skip to end</button>
+      <span class="prog" id="v96-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>? being replaced</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>left / right neighbours</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>replaced letter</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1576 Replace All ?'s — pick the first of 'a','b','c' that differs from both neighbours */
+let v96Steps = [], v96Idx = 0, v96Orig = '';
+
+function v96Build(s) {
+  const steps = [];
+  const chars = [...s];
+  steps.push({ i: -1, chars: [...chars], tries: [], msg: `Scan left to right; only <code>?</code> positions change.` });
+
+  for (let i = 0; i < chars.length; i++) {
+    if (chars[i] !== '?') continue;
+    const left = i > 0 ? chars[i - 1] : '';
+    const right = i + 1 < chars.length ? chars[i + 1] : '';
+    const tries = [];
+    let pick = null;
+    for (const c of 'abc') {
+      const bad = c === left || c === right;
+      tries.push({ c, ok: !bad });
+      if (!bad) { pick = c; break; }
+    }
+    chars[i] = pick;
+    const why = tries.filter(t => !t.ok).map(t => `'${t.c}' equals ${t.c === left ? 'left' : 'right'}`).join(', ');
+    steps.push({ i, chars: [...chars], tries, left, right,
+      msg: `<code>chars[${i}] = '?'</code>, left = <code>${left ? `'${left}'` : 'none'}</code>, right = <code>${right ? `'${right}'` : 'none'}</code>. ` +
+        (why ? `${why} → ` : '') + `use <code>'${pick}'</code>.` });
+  }
+
+  steps.push({ i: -1, chars: [...chars], tries: [], fin: true,
+    msg: `<strong>Answer: "${chars.join('')}"</strong>.` });
+  return steps;
+}
+
+function v96Render() {
+  if (!v96Steps.length) return;
+  const s = v96Steps[v96Idx];
+
+  const strip = document.getElementById('v96-strip');
+  strip.innerHTML = '';
+  s.chars.forEach((ch, k) => {
+    const box = document.createElement('div');
+    box.className = 'char-box';
+    if (k === s.i) box.classList.add('s-cur');
+    else if (v96Orig[k] === '?' && ch !== '?') box.classList.add('s-match');
+    else if (s.i >= 0 && (k === s.i - 1 || k === s.i + 1)) { box.style.background = 'var(--amber-bg)'; box.style.borderColor = 'var(--amber-border)'; box.style.color = 'var(--amber-text)'; }
+    box.innerHTML = `${ch}<span class="ci">${k}</span>`;
+    strip.appendChild(box);
+  });
+
+  const tr = document.getElementById('v96-try');
+  tr.innerHTML = '';
+  s.tries.forEach(t => {
+    const chip = document.createElement('span');
+    chip.className = 'word-chip ' + (t.ok ? 'matched' : 'failed');
+    chip.textContent = `'${t.c}' ${t.ok ? '✓' : '✗'}`;
+    tr.appendChild(chip);
+  });
+
+  document.getElementById('v96-info').innerHTML = s.msg;
+  document.getElementById('v96-si').textContent = s.i >= 0 ? s.i : '—';
+  document.getElementById('v96-slr').textContent = s.i >= 0 ? `${s.left || '∅'}, ${s.right || '∅'}` : '—';
+  document.getElementById('v96-sres').textContent = `"${s.chars.join('')}"`;
+  document.getElementById('v96-prog').textContent = `Step ${v96Idx + 1} / ${v96Steps.length}`;
+}
+
+function v96Init() {
+  const s = document.getElementById('v96-in').value.trim();
+  const ok = /^[a-z?]{1,40}$/.test(s) && [...s].every((c, i) => c === '?' || c !== s[i + 1]);
+  if (!ok) {
+    document.getElementById('v96-info').innerHTML = `<span style="color:var(--red-text)">s must be 1–40 lowercase letters or ?, with no two equal letters next to each other.</span>`;
+    return;
+  }
+  v96Orig = s;
+  v96Steps = v96Build(s);
+  v96Idx = 0;
+  v96Render();
+}
+function v96Fwd()  { if (v96Idx < v96Steps.length - 1) { v96Idx++; v96Render(); } }
+function v96Back() { if (v96Idx > 0) { v96Idx--; v96Render(); } }
+function v96Skip() { v96Idx = v96Steps.length - 1; v96Render(); }
+
+v96Init();
+initPage('1576-replace-all-s-to-avoid-consecutive-repeating-characters.html', v96Fwd, v96Back);
+</script>
+
+</body>
+</html>
