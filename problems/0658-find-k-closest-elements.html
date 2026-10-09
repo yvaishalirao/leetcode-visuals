@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#658 Find K Closest Elements · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-find-k-closest-elements" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#658</div>
+      <h1>Find K Closest Elements</h1>
+      <a href="https://leetcode.com/problems/find-k-closest-elements/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Return the <code>k</code> elements of sorted <code>arr</code> closest to <code>x</code> (ties prefer the smaller value). The answer is always a contiguous window <code>arr[left : left + k]</code>, so <strong>binary search for <code>left</code></strong> in <code>[0, n − k]</code>. For a candidate <code>mid</code>, compare the window's first element <code>arr[mid]</code> with the element just past it, <code>arr[mid + k]</code>: if <code>x − arr[mid] &gt; arr[mid + k] − x</code>, the right one is strictly closer, so the window must slide right; otherwise it starts at <code>mid</code> or earlier. O(log(n − k) + k) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def findClosestElements(self, arr, k, x):
+        lo, hi = 0, len(arr) - k
+        while lo &lt; hi:
+            mid = (lo + hi) // 2
+            if x - arr[mid] &gt; arr[mid + k] - x:
+                lo = mid + 1
+            else:
+                hi = mid
+        return arr[lo:lo + k]</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>arr (sorted)</label><input type="text" id="v94-in" value="1,3,4,7,8,10,12,15,18" style="width:260px"></div>
+      <div class="ig"><label>k</label><input type="number" id="v94-k" value="3" min="1" style="width:60px"></div>
+      <div class="ig"><label>x</label><input type="number" id="v94-x" value="9" style="width:70px"></div>
+      <button onclick="v94Init()">Run</button>
+    </div>
+
+    <div class="section-label">arr — window arr[mid : mid + k] and the element just past it</div>
+    <div class="array-row" id="v94-arr"></div>
+
+    <div class="info-box" id="v94-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">lo, hi</div><div class="sval" id="v94-slh">—</div></div>
+      <div class="stat"><div class="slabel">mid</div><div class="sval" id="v94-smid">—</div></div>
+      <div class="stat"><div class="slabel">x − arr[mid] vs arr[mid+k] − x</div><div class="sval" id="v94-scmp">—</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v94-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v94Back()">← Prev</button>
+      <button onclick="v94Fwd()">Next →</button>
+      <button onclick="v94Skip()">Skip to end</button>
+      <span class="prog" id="v94-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>candidate window</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>arr[mid] (window start) / final answer</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>arr[mid + k] (just outside)</div>
+      <div class="leg"><div class="lb" style="outline:2px dashed var(--text-muted);outline-offset:-2px"></div>possible start positions [lo, hi]</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #658 Find K Closest Elements — binary search the left edge of the k-window */
+let v94Steps = [], v94Idx = 0, v94Arr = [], v94K = 1;
+
+function v94Build(arr, k, x) {
+  const steps = [];
+  let lo = 0, hi = arr.length - k;
+  steps.push({ lo, hi, mid: null, cmp: null, ans: null,
+    msg: `The answer is a window of ${k}. Its start <code>left</code> is somewhere in <code>[0, ${hi}]</code> — binary search it.` });
+
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const dl = x - arr[mid], dr = arr[mid + k] - x;
+    const right = dl > dr;
+    steps.push({ lo, hi, mid, cmp: [dl, dr], ans: null,
+      msg: `<code>mid = ${mid}</code>: window starts at ${arr[mid]}, next element outside is ${arr[mid + k]}. ` +
+        `<code>x − arr[mid] = ${dl}</code> vs <code>arr[mid+k] − x = ${dr}</code> → ` +
+        (right ? `${arr[mid + k]} is strictly closer, so drop ${arr[mid]}: <code>lo = ${mid + 1}</code>.` : `${arr[mid]} is at least as close (ties keep the smaller), so the start is ≤ mid: <code>hi = ${mid}</code>.`) });
+    if (right) lo = mid + 1; else hi = mid;
+  }
+
+  const ans = arr.slice(lo, lo + k);
+  steps.push({ lo, hi, mid: lo, cmp: null, ans, fin: true,
+    msg: `<code>lo == hi == ${lo}</code>. <strong>Answer: [${ans.join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v94Render() {
+  if (!v94Steps.length) return;
+  const s = v94Steps[v94Idx];
+  const arrEl = document.getElementById('v94-arr');
+  arrEl.innerHTML = '';
+  v94Arr.forEach((v, i) => {
+    const c = document.createElement('div');
+    let cls = 'arr-cell';
+    if (s.mid !== null) {
+      if (s.fin) { if (i >= s.mid && i < s.mid + v94K) cls += ' is-l'; }
+      else if (i === s.mid) cls += ' is-l';
+      else if (i > s.mid && i < s.mid + v94K) cls += ' in-window';
+      else if (i === s.mid + v94K) cls += ' is-r';
+    }
+    c.className = cls;
+    if (!s.fin && i >= s.lo && i <= s.hi) { c.style.outline = '2px dashed var(--text-muted)'; c.style.outlineOffset = '2px'; }
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    arrEl.appendChild(c);
+  });
+
+  document.getElementById('v94-info').innerHTML = s.msg;
+  document.getElementById('v94-slh').textContent = `${s.lo}, ${s.hi}`;
+  document.getElementById('v94-smid').textContent = s.mid !== null && !s.fin ? s.mid : '—';
+  document.getElementById('v94-scmp').textContent = s.cmp ? `${s.cmp[0]} vs ${s.cmp[1]}` : '—';
+  document.getElementById('v94-sans').textContent = s.ans ? `[${s.ans.join(', ')}]` : '—';
+  document.getElementById('v94-prog').textContent = `Step ${v94Idx + 1} / ${v94Steps.length}`;
+}
+
+function v94Init() {
+  const arr = document.getElementById('v94-in').value.split(',').map(t => t.trim()).filter(t => t !== '').map(Number);
+  const k = parseInt(document.getElementById('v94-k').value, 10);
+  const x = parseInt(document.getElementById('v94-x').value, 10);
+  const sorted = arr.every((v, i) => i === 0 || arr[i - 1] <= v);
+  if (!arr.length || arr.some(v => !Number.isInteger(v)) || !sorted || !(k >= 1 && k <= arr.length) || !Number.isInteger(x)) {
+    document.getElementById('v94-info').innerHTML = `<span style="color:var(--red-text)">arr must be sorted integers, 1 ≤ k ≤ len(arr), and x an integer.</span>`;
+    return;
+  }
+  v94Arr = arr; v94K = k;
+  v94Steps = v94Build(arr, k, x);
+  v94Idx = 0;
+  v94Render();
+}
+function v94Fwd()  { if (v94Idx < v94Steps.length - 1) { v94Idx++; v94Render(); } }
+function v94Back() { if (v94Idx > 0) { v94Idx--; v94Render(); } }
+function v94Skip() { v94Idx = v94Steps.length - 1; v94Render(); }
+
+v94Init();
+initPage('0658-find-k-closest-elements.html', v94Fwd, v94Back);
+</script>
+
+</body>
+</html>
