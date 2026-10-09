@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#435 Non-overlapping Intervals · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-non-overlapping-intervals" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#435</div>
+      <h1>Non-overlapping Intervals</h1>
+      <a href="https://leetcode.com/problems/non-overlapping-intervals/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Remove the fewest intervals so the rest don't overlap (touching at an endpoint is fine). Flip it: <strong>keep as many as possible</strong>. Sort by <strong>end</strong> time and greedily keep each interval that starts at or after the last kept end — the interval that finishes earliest leaves the most room for everything after it. Anything that starts before <code>prev_end</code> overlaps and is removed. O(n log n) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def eraseOverlapIntervals(self, intervals):
+        intervals.sort(key=lambda iv: iv[1])
+        removed = 0
+        prev_end = float('-inf')
+
+        for start, end in intervals:
+            if start &gt;= prev_end:
+                prev_end = end
+            else:
+                removed += 1
+
+        return removed</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>intervals (start,end separated by ;)</label><input type="text" id="v95-in" value="1,2; 2,3; 3,4; 1,3; 2,5; 4,6" style="width:280px"></div>
+      <button onclick="v95Init()">Run</button>
+    </div>
+
+    <div class="section-label">intervals sorted by end — dashed line = prev_end</div>
+    <div id="v95-chart" style="position:relative;margin:0 16px 1rem;max-width:640px"></div>
+
+    <div class="info-box" id="v95-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">interval</div><div class="sval" id="v95-siv">—</div></div>
+      <div class="stat"><div class="slabel">prev_end</div><div class="sval" id="v95-send">−∞</div></div>
+      <div class="stat best"><div class="slabel">removed</div><div class="sval" id="v95-srem">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v95Back()">← Prev</button>
+      <button onclick="v95Fwd()">Next →</button>
+      <button onclick="v95Skip()">Skip to end</button>
+      <span class="prog" id="v95-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>kept</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>overlaps → removed</div>
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px"></div>current interval</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #435 Non-overlapping Intervals — sort by end, keep greedily, count the rest */
+let v95Steps = [], v95Idx = 0, v95Ivs = [], v95Lo = 0, v95Hi = 1;
+
+function v95Build(raw) {
+  const steps = [];
+  const ivs = raw.map(([s, e]) => [s, e]).sort((a, b) => a[1] - b[1]);
+  v95Ivs = ivs;
+  const state = ivs.map(() => null);
+  let removed = 0, prevEnd = -Infinity;
+  steps.push({ i: -1, state: [...state], removed, prevEnd,
+    msg: `Sorted by end: <code>${ivs.map(v => `[${v.join(',')}]`).join(' ')}</code>. <code>prev_end = −∞</code>.` });
+
+  ivs.forEach(([s, e], i) => {
+    const pe = prevEnd === -Infinity ? '−∞' : prevEnd;
+    if (s >= prevEnd) {
+      prevEnd = e; state[i] = 'keep';
+      steps.push({ i, state: [...state], removed, prevEnd,
+        msg: `<code>[${s}, ${e}]</code>: start ${s} ≥ prev_end ${pe} → no overlap, keep it. <code>prev_end = ${e}</code>.` });
+    } else {
+      removed++; state[i] = 'drop';
+      steps.push({ i, state: [...state], removed, prevEnd,
+        msg: `<code>[${s}, ${e}]</code>: start ${s} &lt; prev_end ${pe} → overlaps the last kept interval, remove it. removed = ${removed}.` });
+    }
+  });
+
+  steps.push({ i: -1, state: [...state], removed, prevEnd, fin: true,
+    msg: `Kept ${ivs.length - removed}, removed ${removed}. <strong>Answer: ${removed}</strong>.` });
+  return steps;
+}
+
+function v95Render() {
+  if (!v95Steps.length) return;
+  const s = v95Steps[v95Idx];
+  const span = Math.max(1, v95Hi - v95Lo);
+  const pct = (v) => ((v - v95Lo) / span) * 100;
+  const ROW = 30, TOP = 4;
+
+  const chart = document.getElementById('v95-chart');
+  chart.innerHTML = '';
+  chart.style.height = (TOP + v95Ivs.length * ROW + 24) + 'px';
+
+  v95Ivs.forEach(([a, b], i) => {
+    const bar = document.createElement('div');
+    const st = s.state[i];
+    let bg = 'var(--s1)', bd = 'var(--border-strong)', fg = 'var(--text-sec)';
+    if (st === 'keep') { bg = 'var(--green-bg)'; bd = 'var(--green-border)'; fg = 'var(--green-text)'; }
+    if (st === 'drop') { bg = 'var(--red-bg)'; bd = 'var(--red-border)'; fg = 'var(--red-text)'; }
+    bar.style.cssText = `position:absolute;top:${TOP + i * ROW}px;left:${pct(a)}%;width:${Math.max(pct(b) - pct(a), 1.5)}%;height:22px;border-radius:4px;background:${bg};border:.5px solid ${bd};color:${fg};font:500 11px monospace;display:flex;align-items:center;justify-content:center;white-space:nowrap` +
+      (st === 'drop' ? ';opacity:.75;text-decoration:line-through' : '') +
+      (i === s.i ? ';outline:2.5px solid var(--accent);outline-offset:1px' : '');
+    bar.textContent = `[${a},${b}]`;
+    chart.appendChild(bar);
+  });
+
+  for (let t = v95Lo; t <= v95Hi; t++) {
+    if (span > 20 && t % 5) continue;
+    const tick = document.createElement('span');
+    tick.style.cssText = `position:absolute;top:${TOP + v95Ivs.length * ROW + 4}px;left:${pct(t)}%;transform:translateX(-50%);font-size:10px;font-family:monospace;color:var(--text-muted)`;
+    tick.textContent = t;
+    chart.appendChild(tick);
+  }
+
+  if (s.prevEnd !== -Infinity) {
+    const line = document.createElement('div');
+    line.style.cssText = `position:absolute;top:0;height:${TOP + v95Ivs.length * ROW}px;left:${pct(s.prevEnd)}%;border-left:2px dashed var(--accent)`;
+    chart.appendChild(line);
+  }
+
+  const cur = s.i >= 0 ? v95Ivs[s.i] : null;
+  document.getElementById('v95-info').innerHTML = s.msg;
+  document.getElementById('v95-siv').textContent = cur ? `[${cur.join(', ')}]` : '—';
+  document.getElementById('v95-send').textContent = s.prevEnd === -Infinity ? '−∞' : s.prevEnd;
+  document.getElementById('v95-srem').textContent = s.removed;
+  document.getElementById('v95-prog').textContent = `Step ${v95Idx + 1} / ${v95Steps.length}`;
+}
+
+function v95Init() {
+  const ivs = document.getElementById('v95-in').value.split(';').map(p => p.split(',').map(x => x.trim()).filter(x => x !== '').map(Number)).filter(p => p.length);
+  if (!ivs.length || ivs.length > 15 || ivs.some(p => p.length !== 2 || !p.every(Number.isInteger) || p[0] >= p[1])) {
+    document.getElementById('v95-info').innerHTML = `<span style="color:var(--red-text)">Enter up to 15 intervals "start,end" (start &lt; end) separated by ;</span>`;
+    return;
+  }
+  v95Lo = Math.min(...ivs.map(p => p[0])); v95Hi = Math.max(...ivs.map(p => p[1]));
+  v95Steps = v95Build(ivs);
+  v95Idx = 0;
+  v95Render();
+}
+function v95Fwd()  { if (v95Idx < v95Steps.length - 1) { v95Idx++; v95Render(); } }
+function v95Back() { if (v95Idx > 0) { v95Idx--; v95Render(); } }
+function v95Skip() { v95Idx = v95Steps.length - 1; v95Render(); }
+
+v95Init();
+initPage('0435-non-overlapping-intervals.html', v95Fwd, v95Back);
+</script>
+
+</body>
+</html>
