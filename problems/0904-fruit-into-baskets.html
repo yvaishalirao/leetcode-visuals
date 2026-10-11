@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#904 Fruit Into Baskets · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-fruit-into-baskets" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#904</div>
+      <h1>Fruit Into Baskets</h1>
+      <a href="https://leetcode.com/problems/fruit-into-baskets/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Two baskets, each holding one fruit type; pick from consecutive trees and stop at a third type. That's the <strong>longest subarray with at most 2 distinct values</strong>. Sliding window: add <code>fruits[right]</code> to a count map; while the map has more than 2 types, drop <code>fruits[left]</code> and move <code>left</code> right (deleting a type when its count hits 0). Each tree enters and leaves the window once → O(n) time, O(1) space.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def totalFruit(self, fruits):
+        count = {}
+        left = best = 0
+        for right, f in enumerate(fruits):
+            count[f] = count.get(f, 0) + 1
+            while len(count) &gt; 2:
+                count[fruits[left]] -= 1
+                if count[fruits[left]] == 0:
+                    del count[fruits[left]]
+                left += 1
+            best = max(best, right - left + 1)
+        return best</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>fruits</label><input type="text" id="v97-in" value="3,3,3,1,2,1,1,2,3,3,4" style="width:280px"></div>
+      <button onclick="v97Init()">Run</button>
+    </div>
+
+    <div class="section-label">fruits — window [left, right]</div>
+    <div class="array-row" id="v97-arr"></div>
+
+    <div class="section-label">baskets (count map)</div>
+    <div class="freq-row" id="v97-count" style="min-height:56px"></div>
+
+    <div class="info-box" id="v97-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">left, right</div><div class="sval" id="v97-slr">—</div></div>
+      <div class="stat"><div class="slabel">types</div><div class="sval" id="v97-stypes">0</div></div>
+      <div class="stat best"><div class="slabel">best</div><div class="sval" id="v97-sbest">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v97Back()">← Prev</button>
+      <button onclick="v97Fwd()">Next →</button>
+      <button onclick="v97Skip()">Skip to end</button>
+      <span class="prog" id="v97-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>window (≤ 2 types)</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>3 types → shrinking</div>
+      <div class="leg"><div class="lb" style="outline:2px solid var(--red-border);outline-offset:-2px"></div>tree just added / dropped</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #904 Fruit Into Baskets — longest window with at most 2 distinct values */
+let v97Steps = [], v97Idx = 0, v97Arr = [];
+
+function v97Build(fruits) {
+  const steps = [];
+  const count = new Map();
+  let left = 0, best = 0;
+  const snap = (o) => steps.push({ left, right: -1, count: [...count.entries()], best, mark: -1, over: false, ...o });
+  snap({ msg: `Grow the window to the right; shrink from the left whenever it holds 3 types.` });
+
+  for (let right = 0; right < fruits.length; right++) {
+    const f = fruits[right];
+    count.set(f, (count.get(f) || 0) + 1);
+    snap({ right, mark: right, over: count.size > 2,
+      msg: `Add <code>fruits[${right}] = ${f}</code> → ${count.size} type${count.size === 1 ? '' : 's'} in the baskets${count.size > 2 ? ' — too many!' : '.'}` });
+    while (count.size > 2) {
+      const g = fruits[left];
+      count.set(g, count.get(g) - 1);
+      const gone = count.get(g) === 0;
+      if (gone) count.delete(g);
+      left++;
+      snap({ right, mark: left - 1, over: count.size > 2,
+        msg: `Drop <code>fruits[${left - 1}] = ${g}</code> from the left${gone ? ` — no ${g} left, that basket is free` : ''}. <code>left = ${left}</code>.` });
+    }
+    const len = right - left + 1;
+    if (len > best) {
+      best = len;
+      snap({ right, msg: `Window <code>[${left}, ${right}]</code> has ${len} fruits with ≤ 2 types → new best = ${best}.` });
+    }
+  }
+  snap({ left: 0, right: -1, fin: true, msg: `<strong>Answer: ${best}</strong>.` });
+  return steps;
+}
+
+function v97Render() {
+  if (!v97Steps.length) return;
+  const s = v97Steps[v97Idx];
+  const arr = document.getElementById('v97-arr');
+  arr.innerHTML = '';
+  v97Arr.forEach((v, i) => {
+    const c = document.createElement('div');
+    const inside = i >= s.left && i <= s.right;
+    c.className = 'arr-cell' + (inside && !s.over ? ' in-window' : '') + (i === s.mark ? ' is-target' : '');
+    if (inside && s.over) { c.style.background = 'var(--red-bg)'; c.style.borderColor = 'var(--red-border)'; c.style.color = 'var(--red-text)'; }
+    c.innerHTML = `${v}<span class="cidx">${i}</span>`;
+    arr.appendChild(c);
+  });
+
+  const cm = document.getElementById('v97-count');
+  cm.innerHTML = '';
+  s.count.forEach(([k, v]) => {
+    const c = document.createElement('div');
+    c.className = 'freq-cell ' + (s.over ? 'fc-break' : 'fc-active');
+    c.innerHTML = `<span class="fval">${k}</span><span class="fcnt">×${v}</span>`;
+    cm.appendChild(c);
+  });
+
+  document.getElementById('v97-info').innerHTML = s.msg;
+  document.getElementById('v97-slr').textContent = s.right >= 0 ? `${s.left}, ${s.right}` : '—';
+  document.getElementById('v97-stypes').textContent = s.count.length;
+  document.getElementById('v97-sbest').textContent = s.best;
+  document.getElementById('v97-prog').textContent = `Step ${v97Idx + 1} / ${v97Steps.length}`;
+}
+
+function v97Init() {
+  const fruits = document.getElementById('v97-in').value.split(',').map(x => x.trim()).filter(x => x !== '').map(Number);
+  if (!fruits.length || fruits.some(x => !Number.isInteger(x) || x < 0)) {
+    document.getElementById('v97-info').innerHTML = `<span style="color:var(--red-text)">Enter comma-separated non-negative integers.</span>`;
+    return;
+  }
+  v97Arr = fruits;
+  v97Steps = v97Build(fruits);
+  v97Idx = 0;
+  v97Render();
+}
+function v97Fwd()  { if (v97Idx < v97Steps.length - 1) { v97Idx++; v97Render(); } }
+function v97Back() { if (v97Idx > 0) { v97Idx--; v97Render(); } }
+function v97Skip() { v97Idx = v97Steps.length - 1; v97Render(); }
+
+v97Init();
+initPage('0904-fruit-into-baskets.html', v97Fwd, v97Back);
+</script>
+
+</body>
+</html>
