@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#409 Longest Palindrome · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-longest-palindrome" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#409</div>
+      <h1>Longest Palindrome</h1>
+      <a href="https://leetcode.com/problems/longest-palindrome/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Return the length of the longest palindrome you can <strong>build</strong> from the letters of <code>s</code> (case-sensitive). A palindrome is mirrored pairs around an optional single middle letter. So from each letter's count, use as many <strong>pairs</strong> as possible: <code>count // 2 * 2</code>. If any letter has a leftover (an odd count), one of them can sit in the middle for +1. O(n) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>from collections import Counter
+
+class Solution(object):
+    def longestPalindrome(self, s):
+        length = 0
+        has_odd = False
+        for c in Counter(s).values():
+            length += c // 2 * 2
+            if c % 2:
+                has_odd = True
+        return length + 1 if has_odd else length</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s</label><input type="text" id="v98-in" value="abccccdd" style="width:240px"></div>
+      <button onclick="v98Init()">Run</button>
+    </div>
+
+    <div class="section-label">Counter(s)</div>
+    <div class="freq-row" id="v98-freq"></div>
+
+    <div class="section-label">palindrome being built (pairs mirror around the middle)</div>
+    <div id="v98-pal" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem;min-height:36px"></div>
+
+    <div class="info-box" id="v98-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">letter</div><div class="sval" id="v98-sch">—</div></div>
+      <div class="stat"><div class="slabel">has_odd</div><div class="sval" id="v98-sodd">False</div></div>
+      <div class="stat best"><div class="slabel">length</div><div class="sval" id="v98-slen">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v98Back()">← Prev</button>
+      <button onclick="v98Fwd()">Next →</button>
+      <button onclick="v98Skip()">Skip to end</button>
+      <span class="prog" id="v98-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>letter being counted</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>paired letters</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>middle letter (from an odd count)</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #409 Longest Palindrome — use every pair, plus one middle letter if any count is odd */
+let v98Steps = [], v98Idx = 0, v98Counts = [];
+
+function v98Build(s) {
+  const steps = [];
+  const counts = new Map();
+  for (const ch of s) counts.set(ch, (counts.get(ch) || 0) + 1);
+  v98Counts = [...counts.entries()];
+  let length = 0, hasOdd = false, oddCh = null;
+  const half = [];
+  steps.push({ k: -1, length, hasOdd, half: [], mid: null,
+    msg: `Counted ${v98Counts.length} distinct letter${v98Counts.length === 1 ? '' : 's'}. Take pairs from each.` });
+
+  v98Counts.forEach(([ch, c], k) => {
+    const pairs = Math.floor(c / 2);
+    length += pairs * 2;
+    for (let p = 0; p < pairs; p++) half.push(ch);
+    const odd = c % 2 === 1;
+    if (odd && !hasOdd) oddCh = ch;
+    if (odd) hasOdd = true;
+    steps.push({ k, length, hasOdd, half: [...half], mid: null,
+      msg: `<code>'${ch}'</code> × ${c} → ${pairs} pair${pairs === 1 ? '' : 's'} → <code>length += ${pairs * 2}</code> = ${length}.` +
+        (odd ? ` One <code>'${ch}'</code> left over → <code>has_odd = True</code>.` : '') });
+  });
+
+  const ans = hasOdd ? length + 1 : length;
+  steps.push({ k: -1, length: ans, hasOdd, half: [...half], mid: hasOdd ? oddCh : null, fin: true,
+    msg: (hasOdd ? `A leftover letter (<code>'${oddCh}'</code>) goes in the middle → ${length} + 1. ` : `No leftovers, so no middle letter. `) +
+      `<strong>Answer: ${ans}</strong>.` });
+  return steps;
+}
+
+function v98Render() {
+  if (!v98Steps.length) return;
+  const s = v98Steps[v98Idx];
+
+  const fr = document.getElementById('v98-freq');
+  fr.innerHTML = '';
+  v98Counts.forEach(([ch, c], k) => {
+    const el = document.createElement('div');
+    el.className = 'freq-cell' + (k === s.k ? ' fc-active' : k < s.k || s.fin ? ' fc-chain' : '');
+    el.innerHTML = `<span class="fval">${ch}</span><span class="fcnt">×${c}</span>`;
+    fr.appendChild(el);
+  });
+
+  const pal = document.getElementById('v98-pal');
+  pal.innerHTML = '';
+  const seq = [...s.half, ...(s.mid ? [s.mid] : []), ...[...s.half].reverse()];
+  seq.forEach((ch, i) => {
+    const box = document.createElement('div');
+    box.className = 'char-box ' + (s.mid && i === s.half.length ? 'w-cur' : 's-match');
+    box.textContent = ch;
+    pal.appendChild(box);
+  });
+
+  document.getElementById('v98-info').innerHTML = s.msg;
+  document.getElementById('v98-sch').textContent = s.k >= 0 ? `'${v98Counts[s.k][0]}'` : '—';
+  document.getElementById('v98-sodd').textContent = s.hasOdd ? 'True' : 'False';
+  document.getElementById('v98-slen').textContent = s.length;
+  document.getElementById('v98-prog').textContent = `Step ${v98Idx + 1} / ${v98Steps.length}`;
+}
+
+function v98Init() {
+  const s = document.getElementById('v98-in').value.trim();
+  if (!/^[A-Za-z]{1,60}$/.test(s)) {
+    document.getElementById('v98-info').innerHTML = `<span style="color:var(--red-text)">s must be 1–60 English letters.</span>`;
+    return;
+  }
+  v98Steps = v98Build(s);
+  v98Idx = 0;
+  v98Render();
+}
+function v98Fwd()  { if (v98Idx < v98Steps.length - 1) { v98Idx++; v98Render(); } }
+function v98Back() { if (v98Idx > 0) { v98Idx--; v98Render(); } }
+function v98Skip() { v98Idx = v98Steps.length - 1; v98Render(); }
+
+v98Init();
+initPage('0409-longest-palindrome.html', v98Fwd, v98Back);
+</script>
+
+</body>
+</html>
