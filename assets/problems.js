@@ -99,4 +99,5 @@ const PROBLEMS = [
   { num: '1576', title: "Replace All ?'s to Avoid Consecutive Repeating Characters", file: '1576-replace-all-s-to-avoid-consecutive-repeating-characters.html' },
   { num: '904', title: "Fruit Into Baskets", file: '0904-fruit-into-baskets.html' },
   { num: '409', title: "Longest Palindrome", file: '0409-longest-palindrome.html' },
+  { num: '350', title: "Intersection of Two Arrays II", file: '0350-intersection-of-two-arrays-ii.html' },
 ];

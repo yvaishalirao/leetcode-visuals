@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#350 Intersection of Two Arrays II · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-intersection-of-two-arrays-ii" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#350</div>
+      <h1>Intersection of Two Arrays II</h1>
+      <a href="https://leetcode.com/problems/intersection-of-two-arrays-ii/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Return the common elements, each appearing as many times as it shows up in <strong>both</strong> arrays. Count <code>nums1</code> with a hash map. Walk <code>nums2</code>: if the current value still has a count left, it's a match — append it and use up one copy. Values run out exactly when <code>nums1</code> has no more copies to pair with. O(n + m) time, O(n) space.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>from collections import Counter
+
+class Solution(object):
+    def intersect(self, nums1, nums2):
+        count = Counter(nums1)
+        result = []
+        for x in nums2:
+            if count[x] &gt; 0:
+                result.append(x)
+                count[x] -= 1
+        return result</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>nums1</label><input type="text" id="v99-a" value="4,9,5,9,4" style="width:200px"></div>
+      <div class="ig"><label>nums2</label><input type="text" id="v99-b" value="9,4,9,8,4,4" style="width:200px"></div>
+      <button onclick="v99Init()">Run</button>
+    </div>
+
+    <div class="section-label">count = Counter(nums1) — copies still available</div>
+    <div class="freq-row" id="v99-count"></div>
+
+    <div class="section-label">nums2</div>
+    <div class="array-row" id="v99-arr"></div>
+
+    <div class="section-label">result</div>
+    <div class="history-list" id="v99-res" style="margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v99-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">x</div><div class="sval" id="v99-sx">—</div></div>
+      <div class="stat"><div class="slabel">count[x] before</div><div class="sval" id="v99-sc">—</div></div>
+      <div class="stat best"><div class="slabel">matches</div><div class="sval" id="v99-sn">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v99Back()">← Prev</button>
+      <button onclick="v99Fwd()">Next →</button>
+      <button onclick="v99Skip()">Skip to end</button>
+      <span class="prog" id="v99-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>matched → appended</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>no copies left → skipped</div>
+      <div class="leg"><div class="lb" style="outline:2px solid var(--accent);outline-offset:-2px"></div>current element</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #350 Intersection of Two Arrays II — count nums1, consume one copy per match in nums2 */
+let v99Steps = [], v99Idx = 0, v99B = [], v99Keys = [];
+
+function v99Build(a, b) {
+  const steps = [];
+  const count = new Map();
+  for (const x of a) count.set(x, (count.get(x) || 0) + 1);
+  v99Keys = [...count.keys()];
+  const verdict = b.map(() => null);
+  const result = [];
+  const snap = (o) => steps.push({ i: -1, count: new Map(count), verdict: [...verdict], result: [...result], before: null, ...o });
+  snap({ msg: `<code>count = {${[...count].map(([k, v]) => `${k}: ${v}`).join(', ')}}</code>. Walk nums2.` });
+
+  b.forEach((x, i) => {
+    const before = count.get(x) || 0;
+    if (before > 0) {
+      result.push(x);
+      count.set(x, before - 1);
+      verdict[i] = 'ok';
+      snap({ i, before, msg: `<code>${x}</code>: count is ${before} &gt; 0 → match, append ${x}, count[${x}] → ${before - 1}.` });
+    } else {
+      verdict[i] = 'no';
+      snap({ i, before, msg: `<code>${x}</code>: count is 0 → ${count.has(x) ? `all copies of ${x} from nums1 are used up` : `${x} isn't in nums1`}, skip.` });
+    }
+  });
+  snap({ fin: true, msg: `<strong>Answer: [${result.join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v99Render() {
+  if (!v99Steps.length) return;
+  const s = v99Steps[v99Idx];
+  const cur = s.i >= 0 ? v99B[s.i] : null;
+
+  const cm = document.getElementById('v99-count');
+  cm.innerHTML = '';
+  v99Keys.forEach(k => {
+    const v = s.count.get(k);
+    const el = document.createElement('div');
+    el.className = 'freq-cell' + (k === cur ? (s.verdict[s.i] === 'ok' ? ' fc-chain' : ' fc-break') : v === 0 ? '' : ' fc-active');
+    if (v === 0 && k !== cur) el.style.opacity = '0.45';
+    el.innerHTML = `<span class="fval">${k}</span><span class="fcnt">×${v}</span>`;
+    cm.appendChild(el);
+  });
+
+  const arr = document.getElementById('v99-arr');
+  arr.innerHTML = '';
+  v99B.forEach((x, i) => {
+    const c = document.createElement('div');
+    c.className = 'arr-cell' + (i === s.i ? ' cell-current' : '');
+    if (s.verdict[i] === 'ok') { c.style.background = 'var(--green-bg)'; c.style.borderColor = 'var(--green-border)'; c.style.color = 'var(--green-text)'; }
+    if (s.verdict[i] === 'no') { c.style.background = 'var(--red-bg)'; c.style.borderColor = 'var(--red-border)'; c.style.color = 'var(--red-text)'; }
+    c.innerHTML = `${x}<span class="cidx">${i}</span>`;
+    arr.appendChild(c);
+  });
+
+  const res = document.getElementById('v99-res');
+  res.innerHTML = '';
+  s.result.forEach(x => { const chip = document.createElement('span'); chip.className = 'h-chip'; chip.textContent = x; res.appendChild(chip); });
+
+  document.getElementById('v99-info').innerHTML = s.msg;
+  document.getElementById('v99-sx').textContent = cur !== null ? cur : '—';
+  document.getElementById('v99-sc').textContent = s.before !== null ? s.before : '—';
+  document.getElementById('v99-sn').textContent = s.result.length;
+  document.getElementById('v99-prog').textContent = `Step ${v99Idx + 1} / ${v99Steps.length}`;
+}
+
+function v99Init() {
+  const parse = (id) => document.getElementById(id).value.split(',').map(x => x.trim()).filter(x => x !== '').map(Number);
+  const a = parse('v99-a'), b = parse('v99-b');
+  if (!a.length || !b.length || [...a, ...b].some(x => !Number.isInteger(x))) {
+    document.getElementById('v99-info').innerHTML = `<span style="color:var(--red-text)">Enter two non-empty lists of comma-separated integers.</span>`;
+    return;
+  }
+  v99B = b;
+  v99Steps = v99Build(a, b);
+  v99Idx = 0;
+  v99Render();
+}
+function v99Fwd()  { if (v99Idx < v99Steps.length - 1) { v99Idx++; v99Render(); } }
+function v99Back() { if (v99Idx > 0) { v99Idx--; v99Render(); } }
+function v99Skip() { v99Idx = v99Steps.length - 1; v99Render(); }
+
+v99Init();
+initPage('0350-intersection-of-two-arrays-ii.html', v99Fwd, v99Back);
+</script>
+
+</body>
+</html>
