@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#921 Minimum Add to Make Parentheses Valid · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-minimum-add-to-make-parentheses-valid" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#921</div>
+      <h1>Minimum Add to Make Parentheses Valid</h1>
+      <a href="https://leetcode.com/problems/minimum-add-to-make-parentheses-valid/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Fewest parentheses to insert so the string is valid. No stack needed — just two counters. <code>open_count</code> = <code>(</code> still waiting for a match. A <code>)</code> uses one up if there is one; if not, it can never be matched by anything later, so we must insert a <code>(</code> for it (<code>add += 1</code>). At the end, every still-open <code>(</code> needs a <code>)</code> too. O(n) time, O(1) space.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def minAddToMakeValid(self, s):
+        open_count = 0
+        add = 0
+        for ch in s:
+            if ch == '(':
+                open_count += 1
+            elif open_count:
+                open_count -= 1
+            else:
+                add += 1
+        return add + open_count</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s</label><input type="text" id="v100-in" value="())(()((" style="width:220px"></div>
+      <button onclick="v100Init()">Run</button>
+    </div>
+
+    <div class="section-label">s</div>
+    <div id="v100-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v100-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">char</div><div class="sval" id="v100-sch">—</div></div>
+      <div class="stat"><div class="slabel">open_count</div><div class="sval" id="v100-sopen">0</div></div>
+      <div class="stat"><div class="slabel">add</div><div class="sval" id="v100-sadd">0</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v100-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v100Back()">← Prev</button>
+      <button onclick="v100Fwd()">Next →</button>
+      <button onclick="v100Skip()">Skip to end</button>
+      <span class="prog" id="v100-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>'(' still open</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>matched pair</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>unmatched ')' → needs an inserted '('</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #921 Minimum Add to Make Parentheses Valid — count open '(' and unmatchable ')' */
+let v100Steps = [], v100Idx = 0, v100Str = '';
+
+function v100Build(s) {
+  const steps = [];
+  const state = [...s].map(() => null);
+  const openStack = [];
+  let open = 0, add = 0;
+  steps.push({ i: -1, state: [...state], open, add, ans: null, msg: `<code>open_count = 0</code>, <code>add = 0</code>. Scan left to right.` });
+
+  for (let i = 0; i < s.length; i++) {
+    let msg;
+    if (s[i] === '(') {
+      open++; state[i] = 'open'; openStack.push(i);
+      msg = `<code>'('</code> → one more waiting: <code>open_count = ${open}</code>.`;
+    } else if (open) {
+      open--; state[i] = 'pair'; state[openStack.pop()] = 'pair';
+      msg = `<code>')'</code> matches an open <code>'('</code> → <code>open_count = ${open}</code>.`;
+    } else {
+      add++; state[i] = 'bad';
+      msg = `<code>')'</code> with nothing open → nothing later can fix it, insert a <code>'('</code>: <code>add = ${add}</code>.`;
+    }
+    steps.push({ i, state: [...state], open, add, ans: null, msg });
+  }
+
+  const ans = add + open;
+  steps.push({ i: -1, state: [...state], open, add, ans, fin: true,
+    msg: `${open} <code>'('</code> never closed → each needs a <code>')'</code>. <code>add + open_count = ${add} + ${open} = ${ans}</code>. <strong>Answer: ${ans}</strong>.` });
+  return steps;
+}
+
+function v100Render() {
+  if (!v100Steps.length) return;
+  const s = v100Steps[v100Idx];
+  const strip = document.getElementById('v100-strip');
+  strip.innerHTML = '';
+  [...v100Str].forEach((ch, k) => {
+    const box = document.createElement('div');
+    box.className = 'char-box';
+    const st = s.state[k];
+    if (st === 'pair') box.classList.add('s-match');
+    else if (st === 'bad') box.classList.add('s-fail');
+    else if (st === 'open') { box.style.background = 'var(--amber-bg)'; box.style.borderColor = 'var(--amber-border)'; box.style.color = 'var(--amber-text)'; }
+    if (k === s.i) { box.style.outline = '2.5px solid var(--accent)'; box.style.outlineOffset = '-2px'; }
+    box.innerHTML = `${ch}<span class="ci">${k}</span>`;
+    strip.appendChild(box);
+  });
+
+  document.getElementById('v100-info').innerHTML = s.msg;
+  document.getElementById('v100-sch').textContent = s.i >= 0 ? `'${v100Str[s.i]}'` : '—';
+  document.getElementById('v100-sopen').textContent = s.open;
+  document.getElementById('v100-sadd').textContent = s.add;
+  document.getElementById('v100-sans').textContent = s.ans !== null ? s.ans : '—';
+  document.getElementById('v100-prog').textContent = `Step ${v100Idx + 1} / ${v100Steps.length}`;
+}
+
+function v100Init() {
+  const s = document.getElementById('v100-in').value.trim();
+  if (!/^[()]{1,40}$/.test(s)) {
+    document.getElementById('v100-info').innerHTML = `<span style="color:var(--red-text)">s must be 1–40 characters of '(' and ')'.</span>`;
+    return;
+  }
+  v100Str = s;
+  v100Steps = v100Build(s);
+  v100Idx = 0;
+  v100Render();
+}
+function v100Fwd()  { if (v100Idx < v100Steps.length - 1) { v100Idx++; v100Render(); } }
+function v100Back() { if (v100Idx > 0) { v100Idx--; v100Render(); } }
+function v100Skip() { v100Idx = v100Steps.length - 1; v100Render(); }
+
+v100Init();
+initPage('0921-minimum-add-to-make-parentheses-valid.html', v100Fwd, v100Back);
+</script>
+
+</body>
+</html>
