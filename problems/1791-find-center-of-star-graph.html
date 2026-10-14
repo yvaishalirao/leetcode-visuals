@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#1791 Find Center of Star Graph · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-find-center-of-star-graph" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#1791</div>
+      <h1>Find Center of Star Graph</h1>
+      <a href="https://leetcode.com/problems/find-center-of-star-graph/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">In a star graph one center node is connected to every other node, and there are no other edges. So <strong>every</strong> edge touches the center — which means any two edges share exactly one node, and that node is the center. Look at just the first two edges: whichever endpoint of edge 0 also appears in edge 1 is the answer. O(1) time and space, no matter how big the graph.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def findCenter(self, edges):
+        a, b = edges[0]
+        c, d = edges[1]
+        return a if a in (c, d) else b</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>edges (u,v separated by ;)</label><input type="text" id="v101-in" value="4,2; 1,2; 2,5; 3,2; 6,2" style="width:260px"></div>
+      <button onclick="v101Init()">Run</button>
+    </div>
+
+    <div class="section-label">graph</div>
+    <div class="tree-wrap"><div id="v101-graph" style="position:relative"></div></div>
+
+    <div class="info-box" id="v101-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">edge 0</div><div class="sval" id="v101-se0">—</div></div>
+      <div class="stat"><div class="slabel">edge 1</div><div class="sval" id="v101-se1">—</div></div>
+      <div class="stat best"><div class="slabel">center</div><div class="sval" id="v101-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v101Back()">← Prev</button>
+      <button onclick="v101Fwd()">Next →</button>
+      <button onclick="v101Skip()">Skip to end</button>
+      <span class="prog" id="v101-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>endpoints of edge 0</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>endpoints of edge 1</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>shared node = center</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #1791 Find Center of Star Graph — the node shared by the first two edges */
+let v101Steps = [], v101Idx = 0, v101Edges = [], v101Nodes = [], v101Pos = {};
+
+function v101Build(edges) {
+  const steps = [];
+  const [a, b] = edges[0], [c, d] = edges[1];
+  steps.push({ show: [], center: null, msg: `${edges.length} edges. Every edge in a star touches the center, so the first two are enough.` });
+  steps.push({ show: [0], center: null, msg: `Edge 0 = <code>[${a}, ${b}]</code> → the center is either ${a} or ${b}.` });
+  steps.push({ show: [0, 1], center: null, msg: `Edge 1 = <code>[${c}, ${d}]</code> → the center must be in this edge too.` });
+  const center = (a === c || a === d) ? a : b;
+  steps.push({ show: [0, 1], center, msg: `<code>${a} in (${c}, ${d})</code> is ${a === c || a === d ? 'True' : 'False'} → the shared node is <code>${center}</code>.` });
+  steps.push({ show: edges.map((_, i) => i), center, fin: true,
+    msg: `Check: every edge touches ${center}. <strong>Answer: ${center}</strong>.` });
+  return steps;
+}
+
+function v101Layout() {
+  const n = v101Nodes.length;
+  const R = 50 + n * 12, PAD = 34, SIZE = 40, W = 2 * (R + PAD);
+  v101Pos = {};
+  v101Nodes.forEach((p, k) => {
+    const ang = -Math.PI / 2 + (2 * Math.PI * k) / n;
+    v101Pos[p] = { x: W / 2 + R * Math.cos(ang), y: W / 2 + R * Math.sin(ang) };
+  });
+  const g = document.getElementById('v101-graph');
+  g.style.width = W + 'px'; g.style.height = W + 'px';
+  let html = `<svg id="v101-svg" width="${W}" height="${W}" style="position:absolute;top:0;left:0;pointer-events:none"></svg>`;
+  v101Nodes.forEach(p => {
+    html += `<div class="tree-node" id="v101-n-${p}" style="left:${v101Pos[p].x - SIZE / 2}px;top:${v101Pos[p].y - SIZE / 2}px">${p}</div>`;
+  });
+  g.innerHTML = html;
+}
+
+function v101Render() {
+  if (!v101Steps.length) return;
+  const s = v101Steps[v101Idx];
+  const svg = document.getElementById('v101-svg');
+  svg.innerHTML = '';
+  v101Edges.forEach(([u, v], i) => {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', v101Pos[u].x); line.setAttribute('y1', v101Pos[u].y);
+    line.setAttribute('x2', v101Pos[v].x); line.setAttribute('y2', v101Pos[v].y);
+    const color = s.fin ? 'var(--green-border)' : i === 0 && s.show.includes(0) ? 'var(--amber-border)' : i === 1 && s.show.includes(1) ? 'var(--accent)' : 'var(--border-strong)';
+    const wide = s.show.includes(i) && (i < 2 || s.fin);
+    line.setAttribute('style', `stroke:${color};stroke-width:${wide ? 2.5 : 1.2};${wide ? '' : 'stroke-dasharray:4 4'}`);
+    svg.appendChild(line);
+  });
+
+  const e0 = s.show.includes(0) ? v101Edges[0] : [], e1 = s.show.includes(1) ? v101Edges[1] : [];
+  v101Nodes.forEach(p => {
+    const el = document.getElementById('v101-n-' + p);
+    el.className = 'tree-node';
+    el.style.background = el.style.borderColor = el.style.color = '';
+    if (p === s.center) el.classList.add('tn-visible');
+    else if (e1.includes(p)) el.classList.add('tn-current');
+    else if (e0.includes(p)) el.classList.add('tn-queued');
+  });
+
+  document.getElementById('v101-info').innerHTML = s.msg;
+  document.getElementById('v101-se0').textContent = e0.length ? `[${e0.join(', ')}]` : '—';
+  document.getElementById('v101-se1').textContent = e1.length ? `[${e1.join(', ')}]` : '—';
+  document.getElementById('v101-sans').textContent = s.center !== null ? s.center : '—';
+  document.getElementById('v101-prog').textContent = `Step ${v101Idx + 1} / ${v101Steps.length}`;
+}
+
+function v101Init() {
+  const edges = document.getElementById('v101-in').value.split(';').map(p => p.split(',').map(x => x.trim()).filter(x => x !== '').map(Number)).filter(p => p.length);
+  const nodes = [...new Set(edges.flat())].sort((x, y) => x - y);
+  const n = edges.length + 1;
+  const deg = {};
+  edges.flat().forEach(v => { deg[v] = (deg[v] || 0) + 1; });
+  const isStar = edges.length >= 2 && nodes.length === n && edges.every(p => p.length === 2 && p.every(v => Number.isInteger(v) && v >= 1) && p[0] !== p[1]) &&
+    Object.values(deg).filter(d => d === n - 1).length === 1;
+  if (!isStar || n > 14) {
+    document.getElementById('v101-info').innerHTML = `<span style="color:var(--red-text)">Enter a star graph (2–13 edges "u,v" separated by ;) where one node is connected to all others.</span>`;
+    return;
+  }
+  v101Edges = edges; v101Nodes = nodes;
+  v101Layout();
+  v101Steps = v101Build(edges);
+  v101Idx = 0;
+  v101Render();
+}
+function v101Fwd()  { if (v101Idx < v101Steps.length - 1) { v101Idx++; v101Render(); } }
+function v101Back() { if (v101Idx > 0) { v101Idx--; v101Render(); } }
+function v101Skip() { v101Idx = v101Steps.length - 1; v101Render(); }
+
+v101Init();
+initPage('1791-find-center-of-star-graph.html', v101Fwd, v101Back);
+</script>
+
+</body>
+</html>

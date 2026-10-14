@@ -101,4 +101,5 @@ const PROBLEMS = [
   { num: '409', title: "Longest Palindrome", file: '0409-longest-palindrome.html' },
   { num: '350', title: "Intersection of Two Arrays II", file: '0350-intersection-of-two-arrays-ii.html' },
   { num: '921', title: "Minimum Add to Make Parentheses Valid", file: '0921-minimum-add-to-make-parentheses-valid.html' },
+  { num: '1791', title: "Find Center of Star Graph", file: '1791-find-center-of-star-graph.html' },
 ];
