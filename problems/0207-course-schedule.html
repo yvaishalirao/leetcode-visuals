@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#207 Course Schedule · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-course-schedule" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#207</div>
+      <h1>Course Schedule</h1>
+      <a href="https://leetcode.com/problems/course-schedule/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Can every course be finished? <code>[a, b]</code> means take <code>b</code> before <code>a</code> — an edge <code>b → a</code>. It's possible exactly when the graph has <strong>no cycle</strong>. <strong>Kahn's algorithm</strong>: count each course's unmet prerequisites (<code>indegree</code>). Start with every course that has none. Taking a course removes one prerequisite from each course that depends on it; any that drop to 0 become available. If we take all courses, there's no cycle; courses stuck in a cycle never reach 0. O(V + E) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>from collections import deque
+
+class Solution(object):
+    def canFinish(self, numCourses, prerequisites):
+        graph = [[] for _ in range(numCourses)]
+        indegree = [0] * numCourses
+        for course, pre in prerequisites:
+            graph[pre].append(course)
+            indegree[course] += 1
+
+        queue = deque(c for c in range(numCourses) if indegree[c] == 0)
+        taken = 0
+        while queue:
+            c = queue.popleft()
+            taken += 1
+            for nxt in graph[c]:
+                indegree[nxt] -= 1
+                if indegree[nxt] == 0:
+                    queue.append(nxt)
+
+        return taken == numCourses</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>numCourses</label><input type="number" id="v104-n" value="6" min="1" style="width:70px"></div>
+      <div class="ig"><label>prerequisites (a,b = b before a; separated by ;)</label><input type="text" id="v104-p" value="1,0; 2,0; 3,1; 3,2; 4,3; 5,4" style="width:280px"></div>
+      <button onclick="v104Init()">Run</button>
+    </div>
+
+    <div class="section-label">courses — arrow b → a means b must come first; small number = indegree</div>
+    <div class="tree-wrap"><div id="v104-graph" style="position:relative"></div></div>
+
+    <div class="section-label">queue (ready to take)</div>
+    <div class="chain-row" id="v104-queue" style="min-height:40px"></div>
+
+    <div class="info-box" id="v104-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">course</div><div class="sval" id="v104-sc">—</div></div>
+      <div class="stat"><div class="slabel">taken</div><div class="sval" id="v104-staken">0</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v104-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v104Back()">← Prev</button>
+      <button onclick="v104Fwd()">Next →</button>
+      <button onclick="v104Skip()">Skip to end</button>
+      <span class="prog" id="v104-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>course being taken</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>in queue (indegree 0)</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>taken</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>stuck in a cycle</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #207 Course Schedule — Kahn's topological sort; all courses taken ⇔ no cycle */
+let v104Steps = [], v104Idx = 0, v104N = 0, v104Pre = [], v104Pos = {};
+
+function v104Build(n, pre) {
+  const steps = [];
+  const graph = Array.from({ length: n }, () => []);
+  const indeg = new Array(n).fill(0);
+  pre.forEach(([a, b]) => { graph[b].push(a); indeg[a]++; });
+  const queue = [];
+  for (let c = 0; c < n; c++) if (indeg[c] === 0) queue.push(c);
+  const taken = [];
+  const snap = (o) => steps.push({ indeg: [...indeg], queue: [...queue], taken: [...taken], cur: null, hot: [], ans: null, ...o });
+  snap({ msg: `indegree = <code>[${indeg.join(', ')}]</code>. Courses with no prerequisites start in the queue: <code>[${queue.join(', ')}]</code>.` });
+
+  while (queue.length) {
+    const c = queue.shift();
+    taken.push(c);
+    const freed = [];
+    for (const nxt of graph[c]) {
+      indeg[nxt]--;
+      if (indeg[nxt] === 0) { queue.push(nxt); freed.push(nxt); }
+    }
+    snap({ cur: c, hot: graph[c],
+      msg: `Take course <code>${c}</code> (taken = ${taken.length}). ` +
+        (graph[c].length ? `It unlocks <code>${graph[c].join(', ')}</code> → their indegree drops by 1.` : `Nothing depends on it.`) +
+        (freed.length ? ` Now ready: <code>${freed.join(', ')}</code>.` : '') });
+  }
+
+  const ans = taken.length === n;
+  const stuck = [...Array(n).keys()].filter(c => !taken.includes(c));
+  snap({ ans, stuck, fin: true,
+    msg: ans ? `Queue empty and all ${n} courses taken → no cycle. <strong>Answer: true</strong>.`
+             : `Queue empty but only ${taken.length}/${n} taken. Courses <code>${stuck.join(', ')}</code> still wait on each other — a cycle. <strong>Answer: false</strong>.` });
+  return steps;
+}
+
+function v104Layout() {
+  const n = v104N;
+  const R = n <= 2 ? 60 : 50 + n * 12, PAD = 34, SIZE = 40, W = 2 * (R + PAD);
+  v104Pos = {};
+  for (let p = 0; p < n; p++) {
+    const ang = -Math.PI / 2 + (2 * Math.PI * p) / n;
+    v104Pos[p] = { x: W / 2 + R * Math.cos(ang), y: W / 2 + R * Math.sin(ang) };
+  }
+  const g = document.getElementById('v104-graph');
+  g.style.width = W + 'px'; g.style.height = W + 'px';
+  let html = `<svg id="v104-svg" width="${W}" height="${W}" style="position:absolute;top:0;left:0;pointer-events:none">
+    <defs><marker id="v104-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--text-sec)"/></marker>
+    <marker id="v104-arr-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker></defs><g id="v104-edges"></g></svg>`;
+  for (let p = 0; p < n; p++) {
+    html += `<div class="tree-node" id="v104-n-${p}" style="left:${v104Pos[p].x - SIZE / 2}px;top:${v104Pos[p].y - SIZE / 2}px">${p}</div>`;
+    html += `<span id="v104-d-${p}" style="position:absolute;left:${v104Pos[p].x + 14}px;top:${v104Pos[p].y - 30}px;font-size:10px;font-family:monospace;color:var(--text-sec)"></span>`;
+  }
+  g.innerHTML = html;
+}
+
+function v104Render() {
+  if (!v104Steps.length) return;
+  const s = v104Steps[v104Idx];
+  const eg = document.getElementById('v104-edges');
+  eg.innerHTML = '';
+  v104Pre.forEach(([a, b]) => {
+    const A = v104Pos[b], B = v104Pos[a];
+    const dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
+    const hot = s.cur === b && s.hot.includes(a);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', A.x + ux * 22); line.setAttribute('y1', A.y + uy * 22);
+    line.setAttribute('x2', B.x - ux * 23); line.setAttribute('y2', B.y - uy * 23);
+    line.setAttribute('style', `stroke:${hot ? 'var(--accent)' : 'var(--border-strong)'};stroke-width:${hot ? 2.5 : 1.5}`);
+    line.setAttribute('marker-end', `url(#${hot ? 'v104-arr-hot' : 'v104-arr'})`);
+    eg.appendChild(line);
+  });
+
+  for (let p = 0; p < v104N; p++) {
+    const el = document.getElementById('v104-n-' + p);
+    el.className = 'tree-node';
+    el.style.background = el.style.borderColor = el.style.color = '';
+    if (p === s.cur) el.classList.add('tn-current');
+    else if (s.taken.includes(p)) el.classList.add('tn-done');
+    else if (s.queue.includes(p)) el.classList.add('tn-queued');
+    else if (s.stuck && s.stuck.includes(p)) { el.style.background = 'var(--red-bg)'; el.style.borderColor = 'var(--red-border)'; el.style.color = 'var(--red-text)'; }
+    document.getElementById('v104-d-' + p).textContent = s.taken.includes(p) ? '' : 'in ' + s.indeg[p];
+  }
+
+  const q = document.getElementById('v104-queue');
+  q.innerHTML = s.queue.length ? '' : '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+  s.queue.forEach(c => { const node = document.createElement('div'); node.className = 'chain-node'; node.textContent = c; q.appendChild(node); });
+
+  document.getElementById('v104-info').innerHTML = s.msg;
+  document.getElementById('v104-sc').textContent = s.cur !== null ? s.cur : '—';
+  document.getElementById('v104-staken').textContent = `${s.taken.length} / ${v104N}`;
+  document.getElementById('v104-sans').textContent = s.ans === null ? '—' : String(s.ans);
+  document.getElementById('v104-prog').textContent = `Step ${v104Idx + 1} / ${v104Steps.length}`;
+}
+
+function v104Init() {
+  const n = parseInt(document.getElementById('v104-n').value, 10);
+  const raw = document.getElementById('v104-p').value.trim();
+  const pre = raw ? raw.split(';').map(p => p.split(',').map(x => x.trim()).filter(x => x !== '').map(Number)).filter(p => p.length) : [];
+  const inR = (v) => Number.isInteger(v) && v >= 0 && v < n;
+  if (!(n >= 1 && n <= 14) || !pre.every(p => p.length === 2 && p.every(inR) && p[0] !== p[1])) {
+    document.getElementById('v104-info').innerHTML = `<span style="color:var(--red-text)">Need 1 ≤ numCourses ≤ 14 and pairs "a,b" (a ≠ b, both in range) separated by ;</span>`;
+    return;
+  }
+  v104N = n; v104Pre = pre;
+  v104Layout();
+  v104Steps = v104Build(n, pre);
+  v104Idx = 0;
+  v104Render();
+}
+function v104Fwd()  { if (v104Idx < v104Steps.length - 1) { v104Idx++; v104Render(); } }
+function v104Back() { if (v104Idx > 0) { v104Idx--; v104Render(); } }
+function v104Skip() { v104Idx = v104Steps.length - 1; v104Render(); }
+
+v104Init();
+initPage('0207-course-schedule.html', v104Fwd, v104Back);
+</script>
+
+</body>
+</html>
