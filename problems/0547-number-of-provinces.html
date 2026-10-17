@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#547 Number of Provinces · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-number-of-provinces" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#547</div>
+      <h1>Number of Provinces</h1>
+      <a href="https://leetcode.com/problems/number-of-provinces/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">A province is a group of cities connected directly or through other cities — a <strong>connected component</strong>. Walk the cities in order; each one not yet seen starts a new province, and a <strong>DFS</strong> from it marks every city reachable through <code>isConnected</code>. The number of DFS starts is the answer. The matrix is n × n, so O(n²) time, O(n) space.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def findCircleNum(self, isConnected):
+        n = len(isConnected)
+        seen = [False] * n
+
+        def dfs(city):
+            for nxt in range(n):
+                if isConnected[city][nxt] and not seen[nxt]:
+                    seen[nxt] = True
+                    dfs(nxt)
+
+        provinces = 0
+        for city in range(n):
+            if not seen[city]:
+                seen[city] = True
+                dfs(city)
+                provinces += 1
+        return provinces</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>isConnected (rows separated by ;)</label><input type="text" id="v102-in" value="1,1,0,0,0,0; 1,1,1,0,0,0; 0,1,1,0,0,0; 0,0,0,1,1,0; 0,0,0,1,1,0; 0,0,0,0,0,1" style="width:380px"></div>
+      <button onclick="v102Init()">Run</button>
+    </div>
+
+    <div class="section-label">cities — colour = province</div>
+    <div class="tree-wrap"><div id="v102-graph" style="position:relative"></div></div>
+
+    <div class="info-box" id="v102-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">city</div><div class="sval" id="v102-scity">—</div></div>
+      <div class="stat"><div class="slabel">DFS depth</div><div class="sval" id="v102-sdepth">—</div></div>
+      <div class="stat best"><div class="slabel">provinces</div><div class="sval" id="v102-sprov">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v102Back()">← Prev</button>
+      <button onclick="v102Fwd()">Next →</button>
+      <button onclick="v102Skip()">Skip to end</button>
+      <span class="prog" id="v102-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--text);outline-offset:-2px"></div>city just reached</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>one colour per province</div>
+      <div class="leg"><div class="lb"></div>not seen yet</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #547 Number of Provinces — count DFS starts over the adjacency matrix */
+const v102Pal = ['accent', 'green', 'amber', 'red'];
+let v102Steps = [], v102Idx = 0, v102M = [], v102Pos = {};
+
+function v102Build(M) {
+  const steps = [];
+  const n = M.length;
+  const prov = new Array(n).fill(-1);
+  let provinces = 0;
+  const snap = (o) => steps.push({ prov: [...prov], provinces, cur: null, depth: null, ...o });
+  snap({ msg: `${n} cities. Every unseen city starts a new province; DFS marks everything it can reach.` });
+
+  function dfs(city, depth) {
+    for (let nxt = 0; nxt < n; nxt++) {
+      if (M[city][nxt] && prov[nxt] === -1) {
+        prov[nxt] = provinces;
+        snap({ cur: nxt, from: city, depth: depth + 1,
+          msg: `From city ${city}: <code>isConnected[${city}][${nxt}] = 1</code> and ${nxt} is unseen → mark it, province #${provinces + 1}. DFS into ${nxt}.` });
+        dfs(nxt, depth + 1);
+      }
+    }
+  }
+
+  for (let city = 0; city < n; city++) {
+    if (prov[city] !== -1) continue;
+    prov[city] = provinces;
+    snap({ cur: city, depth: 0, msg: `City ${city} hasn't been seen → it starts province #${provinces + 1}. DFS from it.` });
+    dfs(city, 0);
+    provinces++;
+    snap({ msg: `DFS from ${city} finished — nothing else reachable. <code>provinces = ${provinces}</code>.` });
+  }
+  snap({ fin: true, msg: `<strong>Answer: ${provinces}</strong>.` });
+  return steps;
+}
+
+function v102Layout() {
+  const n = v102M.length;
+  const R = n <= 2 ? 60 : 50 + n * 12, PAD = 34, SIZE = 40, W = 2 * (R + PAD);
+  v102Pos = {};
+  for (let p = 0; p < n; p++) {
+    const ang = -Math.PI / 2 + (2 * Math.PI * p) / n;
+    v102Pos[p] = { x: W / 2 + R * Math.cos(ang), y: W / 2 + R * Math.sin(ang) };
+  }
+  const g = document.getElementById('v102-graph');
+  g.style.width = W + 'px'; g.style.height = W + 'px';
+  let html = `<svg id="v102-svg" width="${W}" height="${W}" style="position:absolute;top:0;left:0;pointer-events:none"></svg>`;
+  for (let p = 0; p < n; p++) html += `<div class="tree-node" id="v102-n-${p}" style="left:${v102Pos[p].x - SIZE / 2}px;top:${v102Pos[p].y - SIZE / 2}px">${p}</div>`;
+  g.innerHTML = html;
+}
+
+function v102Render() {
+  if (!v102Steps.length) return;
+  const s = v102Steps[v102Idx];
+  const n = v102M.length;
+  const svg = document.getElementById('v102-svg');
+  svg.innerHTML = '';
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    if (!v102M[i][j]) continue;
+    const hot = s.cur !== null && s.from !== undefined && ((i === s.from && j === s.cur) || (j === s.from && i === s.cur));
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', v102Pos[i].x); line.setAttribute('y1', v102Pos[i].y);
+    line.setAttribute('x2', v102Pos[j].x); line.setAttribute('y2', v102Pos[j].y);
+    line.setAttribute('style', `stroke:${hot ? 'var(--text)' : 'var(--border-strong)'};stroke-width:${hot ? 2.5 : 1.5}`);
+    svg.appendChild(line);
+  }
+  for (let p = 0; p < n; p++) {
+    const el = document.getElementById('v102-n-' + p);
+    el.className = 'tree-node';
+    const k = s.prov[p];
+    if (k >= 0) {
+      const c = v102Pal[k % v102Pal.length];
+      el.style.background = `var(--${c}-bg)`; el.style.borderColor = `var(--${c}-border)`; el.style.color = `var(--${c}-text)`;
+    } else { el.style.background = el.style.borderColor = el.style.color = ''; }
+    el.style.outline = p === s.cur ? '2.5px solid var(--text)' : '';
+    el.style.outlineOffset = '2px';
+  }
+
+  document.getElementById('v102-info').innerHTML = s.msg;
+  document.getElementById('v102-scity').textContent = s.cur !== null ? s.cur : '—';
+  document.getElementById('v102-sdepth').textContent = s.depth !== null ? s.depth : '—';
+  document.getElementById('v102-sprov').textContent = s.provinces;
+  document.getElementById('v102-prog').textContent = `Step ${v102Idx + 1} / ${v102Steps.length}`;
+}
+
+function v102Init() {
+  const M = document.getElementById('v102-in').value.split(';').map(r => r.split(',').map(x => x.trim()).filter(x => x !== '').map(Number)).filter(r => r.length);
+  const n = M.length;
+  const ok = n >= 1 && n <= 14 && M.every((r, i) => r.length === n && r.every(v => v === 0 || v === 1) && r[i] === 1 && r.every((v, j) => v === M[j][i]));
+  if (!ok) {
+    document.getElementById('v102-info').innerHTML = `<span style="color:var(--red-text)">Enter a symmetric n×n 0/1 matrix (n ≤ 14) with 1s on the diagonal, rows separated by ;</span>`;
+    return;
+  }
+  v102M = M;
+  v102Layout();
+  v102Steps = v102Build(M);
+  v102Idx = 0;
+  v102Render();
+}
+function v102Fwd()  { if (v102Idx < v102Steps.length - 1) { v102Idx++; v102Render(); } }
+function v102Back() { if (v102Idx > 0) { v102Idx--; v102Render(); } }
+function v102Skip() { v102Idx = v102Steps.length - 1; v102Render(); }
+
+v102Init();
+initPage('0547-number-of-provinces.html', v102Fwd, v102Back);
+</script>
+
+</body>
+</html>
