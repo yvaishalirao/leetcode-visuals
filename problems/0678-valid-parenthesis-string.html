@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#678 Valid Parenthesis String · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-valid-parenthesis-string" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#678</div>
+      <h1>Valid Parenthesis String</h1>
+      <a href="https://leetcode.com/problems/valid-parenthesis-string/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Each <code>*</code> can be <code>(</code>, <code>)</code> or nothing. Instead of trying every choice, track the <strong>range</strong> of possible open-bracket counts: <code>lo</code> (fewest open) and <code>hi</code> (most open). <code>(</code> raises both, <code>)</code> lowers both, <code>*</code> lowers <code>lo</code> and raises <code>hi</code>. If <code>hi</code> drops below 0, even the most generous choices have too many <code>)</code> → invalid. <code>lo</code> can't go below 0 (we'd just not use a <code>*</code> as <code>)</code>), so clamp it. Valid if 0 is possible at the end: <code>lo == 0</code>. O(n) time, O(1) space.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def checkValidString(self, s):
+        lo = hi = 0
+        for ch in s:
+            if ch == '(':
+                lo += 1
+                hi += 1
+            elif ch == ')':
+                lo -= 1
+                hi -= 1
+            else:
+                lo -= 1
+                hi += 1
+            if hi &lt; 0:
+                return False
+            lo = max(lo, 0)
+        return lo == 0</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>s</label><input type="text" id="v103-in" value="(*()**)" style="width:220px"></div>
+      <button onclick="v103Init()">Run</button>
+    </div>
+
+    <div class="section-label">s</div>
+    <div id="v103-strip" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem"></div>
+
+    <div class="section-label">possible open counts [lo, hi]</div>
+    <div id="v103-range" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v103-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">char</div><div class="sval" id="v103-sch">—</div></div>
+      <div class="stat"><div class="slabel">lo, hi</div><div class="sval" id="v103-slh">0, 0</div></div>
+      <div class="stat best"><div class="slabel">answer</div><div class="sval" id="v103-sans">—</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v103Back()">← Prev</button>
+      <button onclick="v103Fwd()">Next →</button>
+      <button onclick="v103Skip()">Skip to end</button>
+      <span class="prog" id="v103-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div>open count still possible</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>0 reachable at the end → valid</div>
+      <div class="leg"><div class="lb" style="background:var(--red-bg);border-color:var(--red-border)"></div>impossible</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #678 Valid Parenthesis String — track the min/max number of open brackets */
+let v103Steps = [], v103Idx = 0, v103Str = '';
+
+function v103Build(s) {
+  const steps = [];
+  let lo = 0, hi = 0;
+  steps.push({ i: -1, lo, hi, ans: null, msg: `<code>lo = hi = 0</code> — before reading anything exactly 0 brackets are open.` });
+
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    let what;
+    if (ch === '(') { lo++; hi++; what = `<code>'('</code> → one more open either way: lo, hi = ${lo}, ${hi}`; }
+    else if (ch === ')') { lo--; hi--; what = `<code>')'</code> → closes one: lo, hi = ${lo}, ${hi}`; }
+    else { lo--; hi++; what = `<code>'*'</code> → as ')' it lowers lo, as '(' it raises hi: lo, hi = ${lo}, ${hi}`; }
+    if (hi < 0) {
+      steps.push({ i, lo, hi, ans: false, bad: true, msg: `${what}. <code>hi &lt; 0</code> → too many ')' even if every * is '(' → return <code>False</code>.` });
+      steps.push({ i, lo, hi, ans: false, bad: true, fin: true, msg: `<strong>Answer: false</strong>.` });
+      return steps;
+    }
+    const clamped = lo < 0;
+    lo = Math.max(lo, 0);
+    steps.push({ i, lo, hi, ans: null, msg: what + (clamped ? `. lo can't be negative (we'd treat a * as empty instead) → clamp <code>lo = 0</code>.` : '.') });
+  }
+
+  const ans = lo === 0;
+  steps.push({ i: -1, lo, hi, ans, fin: true,
+    msg: ans ? `End: <code>lo == 0</code> → some choice of *'s leaves nothing open. <strong>Answer: true</strong>.`
+             : `End: <code>lo = ${lo}</code> → at least ${lo} '(' can never be closed. <strong>Answer: false</strong>.` });
+  return steps;
+}
+
+function v103Render() {
+  if (!v103Steps.length) return;
+  const s = v103Steps[v103Idx];
+  const strip = document.getElementById('v103-strip');
+  strip.innerHTML = '';
+  [...v103Str].forEach((ch, k) => {
+    const box = document.createElement('div');
+    box.className = 'char-box';
+    if (k === s.i) box.classList.add(s.bad ? 's-fail' : 's-cur');
+    else if (s.i >= 0 && k < s.i || (s.fin && !s.bad)) { box.style.opacity = '0.55'; }
+    box.innerHTML = `${ch}<span class="ci">${k}</span>`;
+    strip.appendChild(box);
+  });
+
+  const range = document.getElementById('v103-range');
+  range.innerHTML = '';
+  const top = Math.max(v103Str.length, 1);
+  for (let v = 0; v <= top; v++) {
+    const c = document.createElement('div');
+    c.className = 'arr-cell';
+    c.style.width = '36px'; c.style.height = '36px'; c.style.fontSize = '13px';
+    const inRange = v >= s.lo && v <= s.hi;
+    if (s.bad) { c.style.background = 'var(--red-bg)'; c.style.borderColor = 'var(--red-border)'; c.style.color = 'var(--red-text)'; c.style.opacity = '0.6'; }
+    else if (s.fin && v === 0) c.classList.add(s.ans ? 'is-l' : 'is-target');
+    else if (inRange) c.classList.add('in-window');
+    c.textContent = v;
+    range.appendChild(c);
+  }
+
+  document.getElementById('v103-info').innerHTML = s.msg;
+  document.getElementById('v103-sch').textContent = s.i >= 0 ? `'${v103Str[s.i]}'` : '—';
+  document.getElementById('v103-slh').textContent = `${s.lo}, ${s.hi}`;
+  document.getElementById('v103-sans').textContent = s.ans === null ? '—' : String(s.ans);
+  document.getElementById('v103-prog').textContent = `Step ${v103Idx + 1} / ${v103Steps.length}`;
+}
+
+function v103Init() {
+  const s = document.getElementById('v103-in').value.trim();
+  if (!/^[()*]{1,30}$/.test(s)) {
+    document.getElementById('v103-info').innerHTML = `<span style="color:var(--red-text)">s must be 1–30 characters of '(', ')' and '*'.</span>`;
+    return;
+  }
+  v103Str = s;
+  v103Steps = v103Build(s);
+  v103Idx = 0;
+  v103Render();
+}
+function v103Fwd()  { if (v103Idx < v103Steps.length - 1) { v103Idx++; v103Render(); } }
+function v103Back() { if (v103Idx > 0) { v103Idx--; v103Render(); } }
+function v103Skip() { v103Idx = v103Steps.length - 1; v103Render(); }
+
+v103Init();
+initPage('0678-valid-parenthesis-string.html', v103Fwd, v103Back);
+</script>
+
+</body>
+</html>

@@ -103,4 +103,5 @@ const PROBLEMS = [
   { num: '921', title: "Minimum Add to Make Parentheses Valid", file: '0921-minimum-add-to-make-parentheses-valid.html' },
   { num: '1791', title: "Find Center of Star Graph", file: '1791-find-center-of-star-graph.html' },
   { num: '547', title: "Number of Provinces", file: '0547-number-of-provinces.html' },
+  { num: '678', title: "Valid Parenthesis String", file: '0678-valid-parenthesis-string.html' },
 ];
