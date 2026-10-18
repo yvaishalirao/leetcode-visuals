@@ -105,4 +105,5 @@ const PROBLEMS = [
   { num: '547', title: "Number of Provinces", file: '0547-number-of-provinces.html' },
   { num: '678', title: "Valid Parenthesis String", file: '0678-valid-parenthesis-string.html' },
   { num: '207', title: "Course Schedule", file: '0207-course-schedule.html' },
+  { num: '200', title: "Number of Islands", file: '0200-number-of-islands.html' },
 ];

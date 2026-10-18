@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#200 Number of Islands · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-number-of-islands" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#200</div>
+      <h1>Number of Islands</h1>
+      <a href="https://leetcode.com/problems/number-of-islands/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Count groups of <code>'1'</code> cells connected up/down/left/right. Scan the grid; the first land cell of an unvisited island bumps the count, then a DFS <strong>sinks</strong> the whole island (turns every connected <code>'1'</code> into <code>'0'</code>) so none of its cells is counted again. Each cell is sunk at most once → O(rows · cols) time.</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def numIslands(self, grid):
+        rows, cols = len(grid), len(grid[0])
+
+        def sink(r, c):
+            if 0 &lt;= r &lt; rows and 0 &lt;= c &lt; cols and grid[r][c] == '1':
+                grid[r][c] = '0'
+                sink(r + 1, c)
+                sink(r - 1, c)
+                sink(r, c + 1)
+                sink(r, c - 1)
+
+        islands = 0
+        for r in range(rows):
+            for c in range(cols):
+                if grid[r][c] == '1':
+                    islands += 1
+                    sink(r, c)
+        return islands</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>grid (rows of 0/1 separated by ;)</label><input type="text" id="v105-in" value="11000; 11010; 00100; 00011; 10011" style="width:280px"></div>
+      <button onclick="v105Init()">Run</button>
+    </div>
+
+    <div class="section-label">grid — colour = which island sank the cell</div>
+    <div class="table-wrap"><table class="dp-table" id="v105-grid"></table></div>
+
+    <div class="info-box" id="v105-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">cell</div><div class="sval" id="v105-scell">—</div></div>
+      <div class="stat"><div class="slabel">island size</div><div class="sval" id="v105-ssize">—</div></div>
+      <div class="stat best"><div class="slabel">islands</div><div class="sval" id="v105-scount">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v105Back()">← Prev</button>
+      <button onclick="v105Fwd()">Next →</button>
+      <button onclick="v105Skip()">Skip to end</button>
+      <span class="prog" id="v105-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--text);outline-offset:-2px"></div>cell just sunk</div>
+      <div class="leg"><div class="lb" style="background:var(--surface);border-color:var(--border-strong)"></div>water</div>
+      <div class="leg"><div class="lb" style="background:var(--s2)"></div>land not reached yet</div>
+      <div class="leg"><div class="lb" style="background:var(--accent-bg);border-color:var(--accent-border)"></div><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>sunk, one colour per island</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #200 Number of Islands — count land cells that start a DFS, sinking each island */
+const v105Pal = ['accent', 'green', 'amber', 'red'];
+let v105Steps = [], v105Idx = 0, v105Orig = [];
+
+function v105Build(orig) {
+  const steps = [];
+  const g = orig.map(r => [...r]);
+  const R = g.length, C = g[0].length;
+  const owner = orig.map(r => r.map(() => -1));
+  let islands = 0, size = 0;
+  const snap = (o) => steps.push({ owner: owner.map(r => [...r]), islands, cur: null, size: null, ...o });
+  snap({ msg: `Scan row by row. Every '1' we find that's still land starts a new island.` });
+
+  function sink(r, c, from) {
+    if (r < 0 || r >= R || c < 0 || c >= C || g[r][c] !== '1') return;
+    g[r][c] = '0';
+    owner[r][c] = islands - 1;
+    size++;
+    if (from) snap({ cur: [r, c], size, msg: `From ${from}, <code>(${r}, ${c})</code> is land → sink it (island #${islands} now has ${size} cell${size === 1 ? '' : 's'}).` });
+    const here = `(${r}, ${c})`;
+    sink(r + 1, c, here); sink(r - 1, c, here); sink(r, c + 1, here); sink(r, c - 1, here);
+  }
+
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      if (g[r][c] !== '1') continue;
+      islands++; size = 0;
+      g[r][c] = '0'; owner[r][c] = islands - 1; size = 1;
+      snap({ cur: [r, c], size, msg: `<code>(${r}, ${c})</code> is unvisited land → new island! <code>islands = ${islands}</code>. Sink everything connected to it.` });
+      const here = `(${r}, ${c})`;
+      sink(r + 1, c, here); sink(r - 1, c, here); sink(r, c + 1, here); sink(r, c - 1, here);
+      snap({ size, msg: `Island #${islands} fully sunk (${size} cell${size === 1 ? '' : 's'}). Continue scanning.` });
+    }
+  }
+  snap({ fin: true, msg: `<strong>Answer: ${islands}</strong>.` });
+  return steps;
+}
+
+function v105Render() {
+  if (!v105Steps.length) return;
+  const s = v105Steps[v105Idx];
+  const t = document.getElementById('v105-grid');
+  t.innerHTML = '';
+  const head = t.insertRow();
+  head.innerHTML = '<th></th>' + v105Orig[0].map((_, j) => `<th>${j}</th>`).join('');
+  v105Orig.forEach((row, i) => {
+    const tr = t.insertRow();
+    tr.innerHTML = `<th>${i}</th>`;
+    row.forEach((v, j) => {
+      const td = tr.insertCell();
+      const k = s.owner[i][j];
+      td.textContent = k >= 0 ? '0' : v;
+      if (k >= 0) {
+        const c = v105Pal[k % v105Pal.length];
+        td.style.background = `var(--${c}-bg)`; td.style.color = `var(--${c}-text)`;
+      } else if (v === '1') { td.style.background = 'var(--s2)'; td.style.color = 'var(--text)'; }
+      else { td.className = 'cell-empty'; }
+      if (s.cur && s.cur[0] === i && s.cur[1] === j) { td.style.outline = '2.5px solid var(--text)'; td.style.outlineOffset = '-2px'; }
+    });
+  });
+
+  document.getElementById('v105-info').innerHTML = s.msg;
+  document.getElementById('v105-scell').textContent = s.cur ? `(${s.cur[0]}, ${s.cur[1]})` : '—';
+  document.getElementById('v105-ssize').textContent = s.size !== null ? s.size : '—';
+  document.getElementById('v105-scount').textContent = s.islands;
+  document.getElementById('v105-prog').textContent = `Step ${v105Idx + 1} / ${v105Steps.length}`;
+}
+
+function v105Init() {
+  const rows = document.getElementById('v105-in').value.split(';').map(r => r.trim().replace(/[,\s]/g, '')).filter(r => r.length);
+  const C = rows.length ? rows[0].length : 0;
+  if (!rows.length || rows.length > 10 || C > 12 || rows.some(r => r.length !== C || !/^[01]+$/.test(r))) {
+    document.getElementById('v105-info').innerHTML = `<span style="color:var(--red-text)">Enter up to 10 rows of equal length (≤ 12) using 0 and 1, separated by ;</span>`;
+    return;
+  }
+  v105Orig = rows.map(r => [...r]);
+  v105Steps = v105Build(v105Orig);
+  v105Idx = 0;
+  v105Render();
+}
+function v105Fwd()  { if (v105Idx < v105Steps.length - 1) { v105Idx++; v105Render(); } }
+function v105Back() { if (v105Idx > 0) { v105Idx--; v105Render(); } }
+function v105Skip() { v105Idx = v105Steps.length - 1; v105Render(); }
+
+v105Init();
+initPage('0200-number-of-islands.html', v105Fwd, v105Back);
+</script>
+
+</body>
+</html>
