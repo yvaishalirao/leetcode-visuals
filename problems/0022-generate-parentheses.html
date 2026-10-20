@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#22 Generate Parentheses · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-generate-parentheses" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#22</div>
+      <h1>Generate Parentheses</h1>
+      <a href="https://leetcode.com/problems/generate-parentheses/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">List every valid string of <code>n</code> pairs of parentheses. <strong>Backtracking</strong> that only ever builds valid prefixes: add <code>(</code> while fewer than <code>n</code> are open, and add <code>)</code> only if it closes something (<code>closed &lt; opened</code>). Because no invalid prefix is ever created, every string that reaches length <code>2n</code> is a valid answer — nothing is generated and thrown away. Time is proportional to the output (the n-th Catalan number of strings).</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def generateParenthesis(self, n):
+        result = []
+
+        def build(cur, opened, closed):
+            if len(cur) == 2 * n:
+                result.append(cur)
+                return
+            if opened &lt; n:
+                build(cur + '(', opened + 1, closed)
+            if closed &lt; opened:
+                build(cur + ')', opened, closed + 1)
+
+        build('', 0, 0)
+        return result</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>n</label><input type="number" id="v107-n" value="3" min="1" max="4" style="width:70px"></div>
+      <button onclick="v107Init()">Run</button>
+    </div>
+
+    <div class="section-label">cur — the prefix being built</div>
+    <div id="v107-cur" style="display:flex;gap:4px;margin-bottom:1rem;min-height:36px"></div>
+
+    <div class="section-label">result</div>
+    <div class="history-list" id="v107-res" style="margin-bottom:1rem"></div>
+
+    <div class="info-box" id="v107-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">opened</div><div class="sval" id="v107-so">0</div></div>
+      <div class="stat"><div class="slabel">closed</div><div class="sval" id="v107-sc">0</div></div>
+      <div class="stat best"><div class="slabel">found</div><div class="sval" id="v107-sfound">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v107Back()">← Prev</button>
+      <button onclick="v107Fwd()">Next →</button>
+      <button onclick="v107Skip()">Skip to end</button>
+      <span class="prog" id="v107-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>character just added</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>complete valid string</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #22 Generate Parentheses — backtrack, adding '(' while opened < n and ')' while closed < opened */
+let v107Steps = [], v107Idx = 0;
+
+function v107Build(n) {
+  const steps = [];
+  const result = [];
+  const snap = (o) => steps.push({ result: [...result], ...o });
+  snap({ cur: '', opened: 0, closed: 0, msg: `<code>build('', 0, 0)</code>. Rules: '(' if opened &lt; ${n}, ')' if closed &lt; opened.` });
+
+  function build(cur, opened, closed) {
+    if (cur.length === 2 * n) {
+      result.push(cur);
+      snap({ cur, opened, closed, complete: true, msg: `<code>"${cur}"</code> has length ${2 * n} → append it. Backtrack.` });
+      return;
+    }
+    if (opened < n) {
+      const nxt = cur + '(';
+      snap({ cur: nxt, opened: opened + 1, closed, msg: `opened ${opened} &lt; ${n} → add <code>'('</code> → <code>"${nxt}"</code>.` });
+      build(nxt, opened + 1, closed);
+    }
+    if (closed < opened) {
+      const nxt = cur + ')';
+      snap({ cur: nxt, opened, closed: closed + 1, msg: `Back at <code>"${cur}"</code>: closed ${closed} &lt; opened ${opened} → add <code>')'</code> → <code>"${nxt}"</code>.` });
+      build(nxt, opened, closed + 1);
+    }
+  }
+  build('', 0, 0);
+  snap({ cur: '', opened: 0, closed: 0, fin: true,
+    msg: `${result.length} strings. <strong>Answer: [${result.map(r => `"${r}"`).join(', ')}]</strong>.` });
+  return steps;
+}
+
+function v107Render() {
+  if (!v107Steps.length) return;
+  const s = v107Steps[v107Idx];
+  const cur = document.getElementById('v107-cur');
+  cur.innerHTML = '';
+  [...s.cur].forEach((ch, k) => {
+    const box = document.createElement('div');
+    box.className = 'char-box' + (s.complete ? ' s-match' : k === s.cur.length - 1 ? ' s-cur' : '');
+    box.innerHTML = `${ch}<span class="ci">${k}</span>`;
+    cur.appendChild(box);
+  });
+
+  const res = document.getElementById('v107-res');
+  res.innerHTML = '';
+  s.result.forEach(r => { const chip = document.createElement('span'); chip.className = 'h-chip'; chip.textContent = r; res.appendChild(chip); });
+
+  document.getElementById('v107-info').innerHTML = s.msg;
+  document.getElementById('v107-so').textContent = s.opened;
+  document.getElementById('v107-sc').textContent = s.closed;
+  document.getElementById('v107-sfound').textContent = s.result.length;
+  document.getElementById('v107-prog').textContent = `Step ${v107Idx + 1} / ${v107Steps.length}`;
+}
+
+function v107Init() {
+  const n = parseInt(document.getElementById('v107-n').value, 10);
+  if (!(n >= 1 && n <= 4)) {
+    document.getElementById('v107-info').innerHTML = `<span style="color:var(--red-text)">n must be between 1 and 4 (larger n has too many steps to step through).</span>`;
+    return;
+  }
+  v107Steps = v107Build(n);
+  v107Idx = 0;
+  v107Render();
+}
+function v107Fwd()  { if (v107Idx < v107Steps.length - 1) { v107Idx++; v107Render(); } }
+function v107Back() { if (v107Idx > 0) { v107Idx--; v107Render(); } }
+function v107Skip() { v107Idx = v107Steps.length - 1; v107Render(); }
+
+v107Init();
+initPage('0022-generate-parentheses.html', v107Fwd, v107Back);
+</script>
+
+</body>
+</html>
