@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#133 Clone Graph · DSA Visualizers</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div id="overlay" onclick="closeDrawer()"></div>
+<button id="toggle-btn" onclick="toggleDrawer()" aria-label="Open problem list">☰</button>
+
+<div id="drawer">
+  <div class="drawer-header">
+    <a class="back-link" href="../index.html">← All problems</a>
+    <input type="text" id="search" placeholder="Search by number or title…" oninput="filterProblems()">
+  </div>
+  <div class="problem-list" id="problem-list"></div>
+</div>
+
+<div id="main">
+<div id="tab-clone-graph" class="viz-section visible">
+    <div class="page-header">
+      <div class="lc-num">#133</div>
+      <h1>Clone Graph</h1>
+      <a href="https://leetcode.com/problems/clone-graph/" target="_blank">View on LeetCode ↗</a>
+    </div>
+    <div class="prob-desc">Deep-copy a connected undirected graph. The trap is cycles: a naive recursive copy would loop forever and copy nodes twice. Keep a map <code>clones</code> from each original node to its copy. <code>clone(n)</code> returns the existing copy if there is one; otherwise it creates the copy, <strong>stores it in the map first</strong>, then clones each neighbour and links it. Storing before recursing is what stops the cycles. Every node and edge is handled once → O(V + E).</div>
+    <details class="code-block"><summary>Solution code</summary><pre>class Solution(object):
+    def cloneGraph(self, node):
+        clones = {}
+
+        def clone(n):
+            if n in clones:
+                return clones[n]
+            copy = Node(n.val)
+            clones[n] = copy
+            for nb in n.neighbors:
+                copy.neighbors.append(clone(nb))
+            return copy
+
+        return clone(node) if node else None</pre></details>
+
+    <div class="row">
+      <div class="ig"><label>adjList (neighbours of node 1; node 2; …)</label><input type="text" id="v106-in" value="2,4; 1,3; 2,4; 1,3,5; 4" style="width:280px"></div>
+      <button onclick="v106Init()">Run</button>
+    </div>
+
+    <div style="display:flex;gap:24px;flex-wrap:wrap">
+      <div>
+        <div class="section-label">original</div>
+        <div class="tree-wrap"><div id="v106-orig" style="position:relative"></div></div>
+      </div>
+      <div>
+        <div class="section-label">clone (being built)</div>
+        <div class="tree-wrap"><div id="v106-copy" style="position:relative"></div></div>
+      </div>
+    </div>
+
+    <div class="section-label">call stack</div>
+    <div class="chain-row" id="v106-stack" style="min-height:40px"></div>
+
+    <div class="info-box" id="v106-info">Click <strong>Run</strong> to start.</div>
+
+    <div class="stats">
+      <div class="stat"><div class="slabel">node</div><div class="sval" id="v106-snode">—</div></div>
+      <div class="stat"><div class="slabel">clones made</div><div class="sval" id="v106-smade">0</div></div>
+      <div class="stat best"><div class="slabel">links added</div><div class="sval" id="v106-slinks">0</div></div>
+    </div>
+
+    <div class="controls">
+      <button onclick="v106Back()">← Prev</button>
+      <button onclick="v106Fwd()">Next →</button>
+      <button onclick="v106Skip()">Skip to end</button>
+      <span class="prog" id="v106-prog"></span>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="lb" style="outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--accent-bg)"></div>current node</div>
+      <div class="leg"><div class="lb" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>copy exists, still linking its neighbours</div>
+      <div class="leg"><div class="lb" style="background:var(--green-bg);border-color:var(--green-border)"></div>copy fully linked</div>
+      <div class="leg"><div class="lb" style="background:var(--s2)"></div>(clone side) not created yet</div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="../assets/common.js"></script>
+<script>
+/* #133 Clone Graph — DFS with an original→copy map; store the copy before recursing */
+let v106Steps = [], v106Idx = 0, v106Adj = [], v106Pos = {};
+
+function v106Build(adj) {
+  const steps = [];
+  const made = new Set(), done = new Set();
+  const links = [];   // [from, to] directed links on the copy
+  const stack = [];
+  const snap = (o) => steps.push({ made: [...made], done: [...done], links: links.map(l => [...l]), stack: [...stack], cur: null, hot: null, ...o });
+  snap({ msg: `<code>clones = {}</code>. Start with <code>clone(1)</code>.` });
+
+  function clone(n, from) {
+    if (made.has(n)) {
+      snap({ cur: n, msg: `<code>clone(${n})</code>: ${n} is already in <code>clones</code> → return the existing copy (this is what stops the cycle).` });
+      return;
+    }
+    made.add(n); stack.push(n);
+    snap({ cur: n, msg: `<code>clone(${n})</code>: no copy yet → create <code>Node(${n})</code> and store <code>clones[${n}]</code> <em>before</em> visiting neighbours <code>[${adj[n - 1].join(', ')}]</code>.` });
+    for (const nb of adj[n - 1]) {
+      clone(nb, n);
+      links.push([n, nb]);
+      snap({ cur: n, hot: [n, nb], msg: `Back in ${n}: <code>copy${n}.neighbors.append(copy${nb})</code>.` });
+    }
+    done.add(n); stack.pop();
+    snap({ cur: n, msg: `All of ${n}'s neighbours linked → return copy of ${n}.` });
+  }
+  clone(1, null);
+  snap({ fin: true, msg: `Clone complete: ${made.size} nodes, ${links.length / 2} edges, all new objects. <strong>Answer: [${adj.map(r => `[${r.join(',')}]`).join(',')}]</strong>.` });
+  return steps;
+}
+
+function v106Layout(elId) {
+  const n = v106Adj.length;
+  const R = n <= 2 ? 50 : 36 + n * 11, PAD = 30, SIZE = 40, W = 2 * (R + PAD);
+  v106Pos = {};
+  for (let p = 1; p <= n; p++) {
+    const ang = -Math.PI / 2 + (2 * Math.PI * (p - 1)) / n;
+    v106Pos[p] = { x: W / 2 + R * Math.cos(ang), y: W / 2 + R * Math.sin(ang) };
+  }
+  const g = document.getElementById(elId);
+  g.style.width = W + 'px'; g.style.height = W + 'px';
+  let html = `<svg id="${elId}-svg" width="${W}" height="${W}" style="position:absolute;top:0;left:0;pointer-events:none"></svg>`;
+  for (let p = 1; p <= n; p++) html += `<div class="tree-node" id="${elId}-n-${p}" style="left:${v106Pos[p].x - SIZE / 2}px;top:${v106Pos[p].y - SIZE / 2}px">${p}</div>`;
+  g.innerHTML = html;
+}
+
+function v106Line(svg, a, b, style) {
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', v106Pos[a].x); line.setAttribute('y1', v106Pos[a].y);
+  line.setAttribute('x2', v106Pos[b].x); line.setAttribute('y2', v106Pos[b].y);
+  line.setAttribute('style', style);
+  svg.appendChild(line);
+}
+
+function v106Render() {
+  if (!v106Steps.length) return;
+  const s = v106Steps[v106Idx];
+  const n = v106Adj.length;
+  const has = (a, b) => s.links.some(([x, y]) => x === a && y === b);
+  const isHot = (a, b) => s.hot && ((s.hot[0] === a && s.hot[1] === b) || (s.hot[0] === b && s.hot[1] === a));
+
+  const so = document.getElementById('v106-orig-svg'), sc = document.getElementById('v106-copy-svg');
+  so.innerHTML = ''; sc.innerHTML = '';
+  for (let a = 1; a <= n; a++) for (const b of v106Adj[a - 1]) {
+    if (b < a) continue;
+    v106Line(so, a, b, `stroke:${isHot(a, b) ? 'var(--accent)' : 'var(--border-strong)'};stroke-width:${isHot(a, b) ? 2.5 : 1.5}`);
+    const both = has(a, b) && has(b, a), one = has(a, b) || has(b, a);
+    if (one) v106Line(sc, a, b, `stroke:${isHot(a, b) ? 'var(--accent)' : both ? 'var(--green-border)' : 'var(--amber-border)'};stroke-width:${isHot(a, b) ? 2.5 : both ? 2 : 1.5};${both ? '' : 'stroke-dasharray:4 3'}`);
+  }
+
+  for (let p = 1; p <= n; p++) {
+    ['v106-orig', 'v106-copy'].forEach((side, k) => {
+      const el = document.getElementById(`${side}-n-${p}`);
+      el.className = 'tree-node';
+      el.style.background = el.style.color = el.style.borderColor = '';
+      el.style.opacity = '';
+      if (p === s.cur) el.classList.add('tn-current');
+      else if (s.done.includes(p)) el.classList.add('tn-done');
+      else if (s.made.includes(p)) el.classList.add('tn-queued');
+      else if (k === 1) { el.style.background = 'var(--s2)'; el.style.color = 'var(--text-muted)'; el.style.opacity = '0.5'; }
+      if (k === 1 && !s.made.includes(p)) el.textContent = '?'; else el.textContent = p;
+    });
+  }
+
+  const st = document.getElementById('v106-stack');
+  st.innerHTML = s.stack.length ? '' : '<span style="color:var(--text-muted);font-size:13px">empty</span>';
+  s.stack.forEach((p, i) => {
+    if (i) { const a = document.createElement('span'); a.className = 'chain-arrow'; a.textContent = '→'; st.appendChild(a); }
+    const node = document.createElement('div');
+    node.className = 'chain-node' + (i === s.stack.length - 1 ? ' cur-node' : '');
+    node.textContent = `clone(${p})`;
+    st.appendChild(node);
+  });
+
+  document.getElementById('v106-info').innerHTML = s.msg;
+  document.getElementById('v106-snode').textContent = s.cur !== null ? s.cur : '—';
+  document.getElementById('v106-smade').textContent = s.made.length;
+  document.getElementById('v106-slinks').textContent = s.links.length;
+  document.getElementById('v106-prog').textContent = `Step ${v106Idx + 1} / ${v106Steps.length}`;
+}
+
+function v106Init() {
+  const adj = document.getElementById('v106-in').value.split(';').map(r => r.split(',').map(x => x.trim()).filter(x => x !== '').map(Number));
+  const n = adj.length;
+  const ok = n >= 1 && n <= 10 && adj.every((r, i) => r.every(v => Number.isInteger(v) && v >= 1 && v <= n && v !== i + 1 && adj[v - 1].includes(i + 1)) && new Set(r).size === r.length);
+  const seen = new Set([1]), q = [1];
+  while (ok && q.length) { const u = q.shift(); for (const v of adj[u - 1]) if (!seen.has(v)) { seen.add(v); q.push(v); } }
+  if (!ok || seen.size !== n) {
+    document.getElementById('v106-info').innerHTML = `<span style="color:var(--red-text)">Enter a connected undirected graph (≤ 10 nodes): row i lists node i's neighbours, rows separated by ;</span>`;
+    return;
+  }
+  v106Adj = adj;
+  v106Layout('v106-orig'); v106Layout('v106-copy');
+  v106Steps = v106Build(adj);
+  v106Idx = 0;
+  v106Render();
+}
+function v106Fwd()  { if (v106Idx < v106Steps.length - 1) { v106Idx++; v106Render(); } }
+function v106Back() { if (v106Idx > 0) { v106Idx--; v106Render(); } }
+function v106Skip() { v106Idx = v106Steps.length - 1; v106Render(); }
+
+v106Init();
+initPage('0133-clone-graph.html', v106Fwd, v106Back);
+</script>
+
+</body>
+</html>
